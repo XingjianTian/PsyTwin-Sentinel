@@ -151,7 +151,7 @@ export function AiConfigView() {
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
           <BrainCircuit className="h-5 w-5 text-chart-4" />
           <CardTitle className="text-base font-semibold text-foreground">
-            Qwen大模型 Prompt 设定
+            心图 PsyTwin AI 设定
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-4">

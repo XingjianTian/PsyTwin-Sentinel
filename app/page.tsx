@@ -42,7 +42,7 @@ export default function DashboardPage() {
         return <OverviewView />
       case "风险溯源":
         return <RiskTraceView />
-      case "VR数据看板":
+      case "VR端数据":
         return <VrDashboardView />
       case "学生档案":
         return <StudentProfileView />

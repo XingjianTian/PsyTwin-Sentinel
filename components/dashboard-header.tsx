@@ -8,7 +8,7 @@ export function DashboardHeader() {
   const [searchFocused, setSearchFocused] = useState(false)
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-6">
+    <header className="flex h-14 items-center justify-between border-b border-primary/20 bg-[#0c1428] px-6 shadow-[0_1px_8px_rgba(0,212,255,0.06)]">
       {/* Left: Logo & Title */}
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -29,7 +29,7 @@ export function DashboardHeader() {
         </div>
         <h1 className="text-base font-semibold tracking-wide text-foreground">
           心图<span className="font-mono text-primary">PsyTwin</span>
-          <span className="ml-1 hidden text-sm font-normal text-muted-foreground md:inline">
+          <span className="ml-1 hidden text-sm font-bold text-muted-foreground md:inline">
             - 校园心理健康数字孪生管理平台
           </span>
         </h1>
@@ -65,11 +65,11 @@ export function DashboardHeader() {
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 border border-border">
             <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-              管
+              辅
             </AvatarFallback>
           </Avatar>
           <span className="hidden text-sm text-muted-foreground lg:inline">
-            管理员
+            辅导员
           </span>
         </div>
       </div>

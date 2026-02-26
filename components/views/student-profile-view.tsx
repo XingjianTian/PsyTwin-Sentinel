@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -12,6 +13,9 @@ import {
   Check,
   AlertTriangle,
   Activity,
+  Search,
+  ChevronDown,
+  Filter,
 } from "lucide-react"
 import {
   RadarChart,
@@ -136,9 +140,99 @@ function RadarTooltipContent({ active, payload }: RadarTooltipProps) {
   )
 }
 
+/* ── Grade & class options ── */
+const gradeOptions = ["全部年级", "2024级", "2025级", "2026级"]
+const classOptions = ["全部班级", "网络2401", "虚拟2503", "软件2402", "数媒2401", "信安2401", "大数据2502"]
+
 export function StudentProfileView() {
+  const [searchText, setSearchText] = useState("")
+  const [selectedGrade, setSelectedGrade] = useState("全部年级")
+  const [gradeDropdownOpen, setGradeDropdownOpen] = useState(false)
+  const [selectedClass, setSelectedClass] = useState("全部班级")
+  const [classDropdownOpen, setClassDropdownOpen] = useState(false)
+
   return (
     <div className="flex flex-col gap-4">
+      {/* ── Filter bar ── */}
+      <Card className="border-[#101a40]/60 bg-[#0a1030]/70 backdrop-blur-sm">
+        <CardContent className="flex flex-wrap items-center gap-4 p-4">
+          {/* Search */}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="搜索学生姓名、学号..."
+              className="w-48 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+
+          {/* Grade dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => { setGradeDropdownOpen(!gradeDropdownOpen); setClassDropdownOpen(false) }}
+              className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/50"
+            >
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span>{selectedGrade}</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${gradeDropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+            {gradeDropdownOpen && (
+              <div className="absolute left-0 top-full z-10 mt-1 min-w-[140px] rounded-lg border border-border bg-popover py-1 shadow-xl">
+                {gradeOptions.map((grade) => (
+                  <button
+                    key={grade}
+                    onClick={() => { setSelectedGrade(grade); setGradeDropdownOpen(false) }}
+                    className={`flex w-full items-center px-4 py-2 text-sm transition-colors ${
+                      selectedGrade === grade
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-secondary/50"
+                    }`}
+                  >
+                    {grade}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Class dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => { setClassDropdownOpen(!classDropdownOpen); setGradeDropdownOpen(false) }}
+              className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/50"
+            >
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span>{selectedClass}</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${classDropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+            {classDropdownOpen && (
+              <div className="absolute left-0 top-full z-10 mt-1 min-w-[140px] rounded-lg border border-border bg-popover py-1 shadow-xl">
+                {classOptions.map((cls) => (
+                  <button
+                    key={cls}
+                    onClick={() => { setSelectedClass(cls); setClassDropdownOpen(false) }}
+                    className={`flex w-full items-center px-4 py-2 text-sm transition-colors ${
+                      selectedClass === cls
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-secondary/50"
+                    }`}
+                  >
+                    {cls}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Result hint */}
+          <span className="ml-auto text-xs text-muted-foreground">
+            当前查看学生：<span className="font-semibold text-foreground">张宇</span>
+          </span>
+        </CardContent>
+      </Card>
+
       {/* Top: Student Info Card */}
       <Card className="border-[#2a1e0a]/50 bg-[#1a1408]/70 backdrop-blur-md">
         <CardContent className="flex flex-wrap items-center gap-6 p-5">

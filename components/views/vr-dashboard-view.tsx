@@ -136,30 +136,7 @@ function StressTooltip({ active, payload, label }: StressTooltipProps) {
 export function VrDashboardView() {
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Top: 4 stat cards ── */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
-          <Card
-            key={s.label}
-            className={`relative overflow-hidden border bg-gradient-to-br ${s.gradient} ${s.borderColor} backdrop-blur-sm`}
-          >
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className={`rounded-lg bg-background/40 p-2.5 ${s.iconColor}`}>
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="mt-0.5 text-xl font-bold text-foreground">{s.value}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{s.change}</p>
-              </div>
-            </CardContent>
-            {/* subtle glow corner */}
-            <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br ${s.gradient} opacity-40 blur-xl`} />
-          </Card>
-        ))}
-      </div>
-
-      {/* ── Middle: Two charts ── */}
+      {/* ── Top: Two charts (moved to front) ── */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Bar chart: Scene usage frequency */}
         <Card className="border-[#0a2a2e]/60 bg-[#081e22]/80 backdrop-blur-sm">
@@ -172,13 +149,17 @@ export function VrDashboardView() {
           <CardContent>
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sceneData} margin={{ top: 10, right: 10, bottom: 5, left: 0 }}>
+                <BarChart data={sceneData} margin={{ top: 10, right: 10, bottom: 30, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" vertical={false} />
                   <XAxis
                     dataKey="scene"
                     tick={{ fill: "#94a3b8", fontSize: 11 }}
                     axisLine={{ stroke: "#1e2a45" }}
                     tickLine={false}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={50}
                   />
                   <YAxis
                     tick={{ fill: "#64748b", fontSize: 10 }}
@@ -256,6 +237,29 @@ export function VrDashboardView() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* ── Middle: 4 stat cards ── */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((s) => (
+          <Card
+            key={s.label}
+            className={`relative overflow-hidden border bg-gradient-to-br ${s.gradient} ${s.borderColor} backdrop-blur-sm`}
+          >
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className={`rounded-lg bg-background/40 p-2.5 ${s.iconColor}`}>
+                <s.icon className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className="mt-0.5 text-xl font-bold text-foreground">{s.value}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{s.change}</p>
+              </div>
+            </CardContent>
+            {/* subtle glow corner */}
+            <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br ${s.gradient} opacity-40 blur-xl`} />
+          </Card>
+        ))}
       </div>
 
       {/* ── Bottom: Recent VR records table ── */}
