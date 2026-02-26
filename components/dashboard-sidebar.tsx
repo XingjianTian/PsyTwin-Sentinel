@@ -5,14 +5,14 @@ import {
   ScanSearch,
   Users,
   BrainCircuit,
-  BarChart3,
+  Gamepad2,
   FileText,
   Settings,
   ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type PageKey = "全域态势" | "风险溯源" | "数据看板" | "学生档案" | "干预记录" | "AI配置" | "系统设置"
+export type PageKey = "全域态势" | "风险溯源" | "VR数据看板" | "学生档案" | "干预记录" | "AI配置" | "系统设置"
 
 const menuGroups = [
   {
@@ -20,7 +20,7 @@ const menuGroups = [
     items: [
       { icon: Globe, label: "全域态势" as PageKey },
       { icon: ScanSearch, label: "风险溯源" as PageKey },
-      { icon: BarChart3, label: "数据看板" as PageKey },
+      { icon: Gamepad2, label: "VR数据看板" as PageKey },
     ],
   },
   {

@@ -10,6 +10,9 @@ import { FunnelCard } from "@/components/funnel-card"
 import { RiskTraceView } from "@/components/views/risk-trace-view"
 import { StudentProfileView } from "@/components/views/student-profile-view"
 import { AiConfigView } from "@/components/views/ai-config-view"
+import { VrDashboardView } from "@/components/views/vr-dashboard-view"
+import { InterventionRecordsView } from "@/components/views/intervention-records-view"
+import { SystemSettingsView } from "@/components/views/system-settings-view"
 
 function OverviewView() {
   return (
@@ -30,17 +33,6 @@ function OverviewView() {
   )
 }
 
-function PlaceholderView({ title }: { title: string }) {
-  return (
-    <div className="flex h-[60vh] items-center justify-center">
-      <div className="text-center">
-        <p className="text-lg font-medium text-foreground">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">该模块正在建设中...</p>
-      </div>
-    </div>
-  )
-}
-
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState<PageKey>("全域态势")
 
@@ -50,12 +42,18 @@ export default function DashboardPage() {
         return <OverviewView />
       case "风险溯源":
         return <RiskTraceView />
+      case "VR数据看板":
+        return <VrDashboardView />
       case "学生档案":
         return <StudentProfileView />
+      case "干预记录":
+        return <InterventionRecordsView />
       case "AI配置":
         return <AiConfigView />
+      case "系统设置":
+        return <SystemSettingsView />
       default:
-        return <PlaceholderView title={activePage} />
+        return <OverviewView />
     }
   }
 
