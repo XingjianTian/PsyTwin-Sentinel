@@ -5,7 +5,7 @@ import { Users, AlertTriangle, ShieldCheck, BrainCircuit } from "lucide-react"
 const stats = [
   {
     label: "在校学生总数",
-    value: "32,846",
+    value: "11,009",
     change: "+128",
     changeLabel: "较上周",
     icon: Users,

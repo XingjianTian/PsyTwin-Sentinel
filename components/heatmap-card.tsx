@@ -76,7 +76,7 @@ function HeatmapTooltip({ active, payload }: HeatmapTooltipProps) {
 
 export function HeatmapCard() {
   return (
-    <Card className="animate-pulse-glow border-border bg-card">
+    <Card className="animate-pulse-glow border-[#0a2a2a] bg-[#091a1f]/80 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
         <Activity className="h-5 w-5 text-primary" />
         <CardTitle className="text-base font-semibold text-foreground">

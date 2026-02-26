@@ -43,7 +43,7 @@ function FunnelTooltip({ active, payload }: FunnelTooltipProps) {
 
 export function FunnelCard() {
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-[#1a2040] bg-[#0d1225]/80 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
         <TrendingUp className="h-5 w-5 text-success" />
         <CardTitle className="text-base font-semibold text-foreground">

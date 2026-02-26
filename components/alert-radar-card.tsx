@@ -6,28 +6,34 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Radio, Wifi } from "lucide-react"
 
+const CLASSES = ["网络2401", "虚拟2503", "软件2402", "数媒2401", "信安2401", "大数据2502"]
+function randomClass() {
+  return CLASSES[Math.floor(Math.random() * CLASSES.length)]
+}
+
 interface AlertItem {
   id: number
   name: string
+  className: string
   type: string
   level: "critical" | "warning"
   time: string
 }
 
 const initialAlerts: AlertItem[] = [
-  { id: 1, name: "张明远", type: "心率激增", level: "critical", time: "14:32:08" },
-  { id: 2, name: "李思琪", type: "语音颤抖", level: "warning", time: "14:31:45" },
-  { id: 3, name: "王博文", type: "睡眠异常", level: "warning", time: "14:30:22" },
-  { id: 4, name: "陈雨晴", type: "情绪波动", level: "critical", time: "14:29:10" },
-  { id: 5, name: "赵天宇", type: "社交退缩", level: "warning", time: "14:28:03" },
-  { id: 6, name: "刘思远", type: "心率激增", level: "critical", time: "14:27:50" },
-  { id: 7, name: "孙雅琪", type: "步态异常", level: "warning", time: "14:26:15" },
-  { id: 8, name: "周航宇", type: "语音颤抖", level: "critical", time: "14:25:33" },
-  { id: 9, name: "黄思萌", type: "进食异常", level: "warning", time: "14:24:48" },
-  { id: 10, name: "吴志远", type: "社交退缩", level: "critical", time: "14:23:12" },
+  { id: 1, name: "张明远", className: "网络2401", type: "心率激增", level: "critical", time: "14:32:08" },
+  { id: 2, name: "李思琪", className: "虚拟2503", type: "语音颤抖", level: "warning", time: "14:31:45" },
+  { id: 3, name: "王博文", className: "大数据2502", type: "睡眠异常", level: "warning", time: "14:30:22" },
+  { id: 4, name: "陈雨晴", className: "软件2402", type: "情绪波动", level: "critical", time: "14:29:10" },
+  { id: 5, name: "赵天宇", className: "信安2401", type: "社交退缩", level: "warning", time: "14:28:03" },
+  { id: 6, name: "刘思远", className: "数媒2401", type: "心率激增", level: "critical", time: "14:27:50" },
+  { id: 7, name: "孙雅琪", className: "网络2401", type: "步态异常", level: "warning", time: "14:26:15" },
+  { id: 8, name: "周航宇", className: "虚拟2503", type: "语音颤抖", level: "critical", time: "14:25:33" },
+  { id: 9, name: "黄思萌", className: "软件2402", type: "进食异常", level: "warning", time: "14:24:48" },
+  { id: 10, name: "吴志远", className: "大数据2502", type: "社交退缩", level: "critical", time: "14:23:12" },
 ]
 
-const newAlertPool: Omit<AlertItem, "id" | "time">[] = [
+const newAlertPool: Omit<AlertItem, "id" | "time" | "className">[] = [
   { name: "林志豪", type: "心率激增", level: "critical" },
   { name: "郑雨萱", type: "情绪波动", level: "warning" },
   { name: "韩明辉", type: "语音颤抖", level: "critical" },
@@ -54,6 +60,7 @@ export function AlertRadarCard() {
       const newAlert: AlertItem = {
         id: nextId.current++,
         name: pool.name,
+        className: randomClass(),
         type: pool.type,
         level: pool.level,
         time: getTimeStr(),
@@ -61,7 +68,6 @@ export function AlertRadarCard() {
       setAlerts((prev) => [newAlert, ...prev.slice(0, 19)])
     }, 3000)
 
-    // Simulate WebSocket reconnection blink
     const wsInterval = setInterval(() => {
       setConnected(false)
       setTimeout(() => setConnected(true), 200)
@@ -74,7 +80,7 @@ export function AlertRadarCard() {
   }, [])
 
   return (
-    <Card className="border-border bg-card">
+    <Card className="border-[#2a1a3a] bg-[#12101f]/80 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
         <Radio className="h-5 w-5 text-destructive" />
         <CardTitle className="text-base font-semibold text-foreground">
@@ -93,9 +99,8 @@ export function AlertRadarCard() {
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">
-        {/* Table header */}
         <div className="mb-2 grid grid-cols-[1fr_auto_auto] items-center gap-3 px-2 text-xs font-medium text-muted-foreground">
-          <span>学生姓名</span>
+          <span>学生姓名 / 班级</span>
           <span>预警类型</span>
           <span className="text-right">时间</span>
         </div>
@@ -108,12 +113,15 @@ export function AlertRadarCard() {
                 className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md px-2 py-2 transition-all ${
                   i === 0
                     ? "bg-destructive/10 ring-1 ring-destructive/20"
-                    : "bg-secondary/30 hover:bg-secondary/60"
+                    : "bg-[#1a1230]/60 hover:bg-[#1a1230]/90"
                 }`}
               >
-                <span className="truncate text-sm font-medium text-foreground">
-                  {alert.name}
-                </span>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {alert.name}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{alert.className}</span>
+                </div>
                 <Badge
                   variant={alert.level === "critical" ? "destructive" : "secondary"}
                   className={
@@ -132,8 +140,7 @@ export function AlertRadarCard() {
           </ul>
         </ScrollArea>
 
-        {/* Summary */}
-        <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center gap-4 border-t border-[#2a1a3a] pt-3 text-xs text-muted-foreground">
           <span>
             今日预警：
             <span className="font-mono font-semibold text-destructive">
