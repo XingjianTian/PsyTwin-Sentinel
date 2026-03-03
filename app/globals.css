@@ -1,0 +1,169 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ===== 明亮温暖主题 ===== */
+  
+  /* 主背景色 */
+  --background: #FAF8F5;
+  --foreground: #1F2937;
+  
+  /* 卡片组件 */
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  
+  /* 弹出层 */
+  --popover: #FFFFFF;
+  --popover-foreground: #1F2937;
+  
+  /* 主强调色 - 柔和蓝紫 */
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  
+  /* 次要色 */
+  --secondary: #F3F4F6;
+  --secondary-foreground: #374151;
+  
+  /* 静音色 */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  
+  /* 强调色 */
+  --accent: #EEF2FF;
+  --accent-foreground: #4F46E5;
+  
+  /* 状态色 */
+  --destructive: #EF4444;
+  --destructive-foreground: #FEF2F2;
+  --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
+  --success: #10B981;
+  --success-foreground: #F0FDF4;
+  
+  /* 边框与输入 */
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #7C3AED;
+  
+  /* 图表色 */
+  --chart-1: #7C3AED;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #EF4444;
+  --chart-5: #3B82F6;
+  
+  --radius: 0.5rem;
+  
+  /* 侧边栏 */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1F2937;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F3F4F6;
+  --sidebar-accent-foreground: #374151;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #7C3AED;
+  
+  /* 自定义 token */
+  --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
+  --success: #10B981;
+  --success-foreground: #F0FDF4;
+  
+  /* 风险等级色 */
+  --risk-red: #EF4444;
+  --risk-red-bg: #FEF2F2;
+  --risk-orange: #F59E0B;
+  --risk-orange-bg: #FFF7ED;
+  --risk-yellow: #D97706;
+  --risk-yellow-bg: #FFFBEB;
+  --risk-green: #10B981;
+  --risk-green-bg: #F0FDF4;
+}
+
+@theme inline {
+  --font-sans: 'Noto Sans SC', 'Geist', 'Geist Fallback', sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar for light theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Subtle card hover effect */
+.card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: ease;
+  transition-duration: 150ms;
+}
