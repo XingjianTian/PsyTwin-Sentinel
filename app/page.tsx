@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardSidebar, type PageKey } from "@/components/dashboard-sidebar"
 import { StatCards } from "@/components/stat-cards"
@@ -39,6 +39,13 @@ function OverviewView() {
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState<PageKey>("全域态势")
 
+  // 切换页面时滚动到顶部
+  const handlePageChange = useCallback((page: PageKey) => {
+    setActivePage(page)
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    document.querySelector('main')?.scrollTo(0, 0)
+  }, [])
+
   const renderContent = () => {
     switch (activePage) {
       case "全域态势":
@@ -70,7 +77,7 @@ export default function DashboardPage() {
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <DashboardHeader />
       <div className="flex flex-1 overflow-hidden">
-        <DashboardSidebar activePage={activePage} onPageChange={setActivePage} />
+        <DashboardSidebar activePage={activePage} onPageChange={handlePageChange} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {renderContent()}
         </main>
