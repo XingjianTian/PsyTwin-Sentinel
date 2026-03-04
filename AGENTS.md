@@ -127,7 +127,26 @@ look_at(file_path: "screenshots/xxx.png", goal: "描述/分析视觉效果")
 - 截图自动保存到 screenshots 目录
 - 分析后及时清理临时截图
 
-## NOTES
+## GIT 操作规则
+
+**重要**：所有 Git 操作（commit + push）只需用户**确认一次**即可执行。
+
+| 操作 | 规则 |
+|------|------|
+| commit + push | 工作完成后询问用户是否提交并推送 |
+| branch | 如需创建分支，先询问用户 |
+
+### 正确流程
+```
+1. 完成代码修改
+2. 询问用户："是否提交并推送？"（提供提交信息摘要）
+3. 用户确认后执行 commit + push
+```
+
+### 错误流程（禁止）
+- ❌ 自动 commit
+- ❌ 自动 push
+- ❌ 在完成任务后自动执行 git push
 - 无测试配置 (建议添加 Vitest)
 - 无CI/CD流水线
 - next.config.mjs 忽略TS错误需修复
