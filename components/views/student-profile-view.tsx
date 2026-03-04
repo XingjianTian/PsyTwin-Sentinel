@@ -262,7 +262,79 @@ export function StudentProfileView() {
 
       {/* Middle: Radar + Timeline */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Radar Chart */}
+        {/* Radar Chart - Enhanced */}
+        <Card className="border-border bg-card shadow-sm overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10 p-1.5">
+                <Radar className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle className="text-base font-semibold text-foreground">
+                心理画像雷达
+              </CardTitle>
+            </div>
+            <Badge variant="outline" className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-primary/20">
+              <span className="mr-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              实时数据
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full relative">
+              {/* 背景装饰 */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-lg" />
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData} outerRadius="75%">
+                  <defs>
+                    <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.2} />
+                    </linearGradient>
+                    <linearGradient id="radarStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#7C3AED" />
+                      <stop offset="100%" stopColor="#3B82F6" />
+                    </linearGradient>
+                  </defs>
+                  <PolarGrid stroke="#E5E7EB" strokeDasharray="3 3" />
+                  <PolarAngleAxis
+                    dataKey="dimension"
+                    tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 500 }}
+                    tickLine={false}
+                  />
+                  <PolarRadiusAxis
+                    domain={[0, 100]}
+                    tick={{ fill: '#9CA3AF', fontSize: 9 }}
+                    axisLine={false}
+                    tickCount={5}
+                  />
+                  <Tooltip content={<RadarTooltipContent />} />
+                  <RechartsRadar
+                    name="心理指标"
+                    dataKey="value"
+                    stroke="url(#radarStroke)"
+                    strokeWidth={2.5}
+                    fill="url(#radarGradient)"
+                    fillOpacity={0.35}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+              {/* 中心指数 */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                <div className="text-2xl font-bold text-primary">78</div>
+                <div className="text-[10px] text-muted-foreground">综合</div>
+              </div>
+            </div>
+            {/* 维度指标 */}
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {radarData.slice(0, 4).map((item, idx) => (
+                <div key={item.dimension} className="flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs dark:bg-slate-800">
+                  <div className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(${idx * 60 + 260}, 70%, 55%)` }} />
+                  <span className="text-muted-foreground">{item.dimension}</span>
+                  <span className="font-medium text-foreground">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
         <Card className="border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Radar className="h-5 w-5 text-primary" />
