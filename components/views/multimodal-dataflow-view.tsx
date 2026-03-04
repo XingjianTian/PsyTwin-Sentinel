@@ -141,6 +141,123 @@ const activeStudents = [
       beta: 12.4,
       theta: 5.2
     }
+  },
+  {
+    id: "stu-004",
+    name: "赵天宇",
+    studentId: "2024004",
+    room: "VR放松舱 C01",
+    scenario: "创伤后应激恢复",
+    startTime: "14:20",
+    duration: 35,
+    emotion: "低落",
+    riskLevel: "high",
+    vitals: {
+      heartRate: 65,
+      hrv: 22,
+      gsr: 1.2,
+      stress: 45
+    },
+    voice: {
+      sentiment: "negative" as const,
+      tremorIndex: 0.68,
+      情感标签: "低落"
+    },
+    expression: {
+      primary: "沮丧",
+      anxiety: 0.35,
+      sadness: 0.78,
+      anger: 0.02
+    },
+    behavior: {
+      interactionFreq: 0.8,
+      handTremor: 0.15,
+      responseDelay: 3.5,
+      avoidanceCount: 12
+    },
+    eeg: {
+      alpha: 4.2,
+      beta: 5.1,
+      theta: 18.5
+    }
+  },
+  {
+    id: "stu-005",
+    name: "刘思远",
+    studentId: "2024005",
+    room: "心理咨询室 A03",
+    scenario: "失眠认知行为治疗",
+    startTime: "14:40",
+    duration: 20,
+    emotion: "困倦",
+    riskLevel: "medium",
+    vitals: {
+      heartRate: 58,
+      hrv: 35,
+      gsr: 1.5,
+      stress: 18
+    },
+    voice: {
+      sentiment: "neutral" as const,
+      tremorIndex: 0.08,
+      情感标签: "困倦"
+    },
+    expression: {
+      primary: "眯眼",
+      anxiety: 0.12,
+      sadness: 0.08,
+      anger: 0.01
+    },
+    behavior: {
+      interactionFreq: 2.1,
+      handTremor: 0.05,
+      responseDelay: 1.8,
+      avoidanceCount: 3
+    },
+    eeg: {
+      alpha: 15.2,
+      beta: 4.2,
+      theta: 8.3
+    }
+  },
+  {
+    id: "stu-006",
+    name: "陈雨晴",
+    studentId: "2024006",
+    room: "减压舱 B02",
+    scenario: "学业压力疏导",
+    startTime: "14:50",
+    duration: 15,
+    emotion: "焦虑",
+    riskLevel: "medium",
+    vitals: {
+      heartRate: 105,
+      hrv: 25,
+      gsr: 6.2,
+      stress: 72
+    },
+    voice: {
+      sentiment: "negative" as const,
+      tremorIndex: 0.52,
+      情感标签: "焦虑"
+    },
+    expression: {
+      primary: "咬唇",
+      anxiety: 0.82,
+      sadness: 0.18,
+      anger: 0.08
+    },
+    behavior: {
+      interactionFreq: 1.2,
+      handTremor: 0.42,
+      responseDelay: 2.5,
+      avoidanceCount: 6
+    },
+    eeg: {
+      alpha: 5.8,
+      beta: 18.2,
+      theta: 10.5
+    }
   }
 ]
 
@@ -149,7 +266,9 @@ const emotionColors: Record<string, string> = {
   "紧张": "text-amber-600 bg-amber-50",
   "焦虑": "text-red-600 bg-red-50",
   "专注": "text-blue-600 bg-blue-50",
-  "轻松": "text-green-600 bg-green-50"
+  "轻松": "text-green-600 bg-green-50",
+  "低落": "text-slate-600 bg-slate-50",
+  "困倦": "text-indigo-600 bg-indigo-50"
 }
 
 const riskLevelColors: Record<string, string> = {

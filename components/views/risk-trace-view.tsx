@@ -1,26 +1,15 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   AlertTriangle,
-  AudioLines,
-  HeartPulse,
   BrainCircuit,
   ShieldCheck,
   ShieldAlert,
 } from "lucide-react"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts"
 
 const CLASSES = ["网络2401", "虚拟2503", "软件2402", "数媒2401", "信安2401", "大数据2502"]
 
@@ -46,72 +35,6 @@ const workOrders: WorkOrder[] = [
 ]
 
 const [selectedDefault] = workOrders
-
-// Voice waveform component
-function VoiceWaveform() {
-  const [bars, setBars] = useState<number[]>(() =>
-    Array.from({ length: 64 }, () => Math.random() * 80 + 10)
-  )
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBars((prev) =>
-        prev.map((h) => {
-          const delta = (Math.random() - 0.5) * 30
-          return Math.max(5, Math.min(95, h + delta))
-        })
-      )
-    }, 120)
-    return () => clearInterval(interval)
-  }, [])
-
-  return (
-    <div className="flex h-[140px] items-end gap-[2px] px-2">
-      {bars.map((h, i) => (
-        <div
-          key={i}
-          className="flex-1 rounded-t-sm transition-all duration-100"
-          style={{
-            height: `${h}%`,
-            background: h > 70
-              ? "linear-gradient(to top, #ef4444, #f97316)"
-              : h > 40
-                ? "linear-gradient(to top, #f97316, #facc15)"
-                : "linear-gradient(to top, #00d4ff, #22c55e)",
-            opacity: 0.8,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-// Heart rate chart data
-const hrData = Array.from({ length: 30 }, (_, i) => ({
-  time: `${String(Math.floor(i / 2) + 13).padStart(2, "0")}:${i % 2 === 0 ? "00" : "30"}`,
-  心率: Math.floor(75 + Math.sin(i * 0.5) * 15 + Math.random() * 20),
-  血氧: Math.floor(96 + Math.sin(i * 0.3) * 2 + Math.random() * 2),
-}))
-
-interface HrTooltipProps {
-  active?: boolean
-  payload?: Array<{ name: string; value: number; color: string }>
-  label?: string
-}
-
-function HrTooltip({ active, payload, label }: HrTooltipProps) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
-      <p className="mb-1 font-medium text-foreground">{label}</p>
-      {payload.map((p) => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name}：{p.value}{p.name === "心率" ? " bpm" : "%"}
-        </p>
-      ))}
-    </div>
-  )
-}
 
 // AI assessment text
 const aiAssessment = `【Qwen-14B 风险溯源分析报告】
@@ -188,120 +111,47 @@ export function RiskTraceView() {
         </Card>
       </div>
 
-      {/* Right: Detail cards */}
-      <div className="flex flex-col gap-4 lg:col-span-3">
-        {/* Card A: Voice Waveform */}
-        <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <AudioLines className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base font-semibold text-foreground">
-              语音情感波形图
-            </CardTitle>
-            <span className="ml-auto text-xs text-muted-foreground">
-              当前对象：{selectedOrder.name} ({selectedOrder.className})
-            </span>
-          </CardHeader>
-          <CardContent>
-            <VoiceWaveform />
-            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-destructive" />
-                <span>高唤醒区</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-warning" />
-                <span>中唤醒区</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-primary" />
-                <span>平稳区</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card B: Heart Rate Chart */}
-        <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <HeartPulse className="h-5 w-5 text-destructive" />
-            <CardTitle className="text-base font-semibold text-foreground">
-              生理特征曲线
-            </CardTitle>
-            <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full" style={{ background: "#ef4444" }} />
-                心率
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full" style={{ background: "#7C3AED" }} />
-                血氧
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[180px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={hrData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fill: "#6B7280", fontSize: 10 }}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                    axisLine={{ stroke: "#1e2a45" }}
-                    tickLine={false}
-                    interval={4}
-                  />
-                  <YAxis
-                    tick={{ fill: "#6B7280", fontSize: 10 }}
-                    axisLine={{ stroke: "#E5E7EB" }}
-                    axisLine={{ stroke: "#1e2a45" }}
-                    tickLine={false}
-                    domain={[60, 150]}
-                  />
-                  <Tooltip content={<HrTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="心率"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: "#ef4444" }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="血氧"
-                    stroke="#7C3AED"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: "#7C3AED" }}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: "#00d4ff" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card C: AI Risk Assessment */}
-        <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <BrainCircuit className="h-5 w-5 text-chart-4" />
-            <CardTitle className="text-base font-semibold text-foreground">
+      {/* Right: AI Risk Assessment only */}
+      {/* Right: AI Risk Assessment - aligned with work order list */}
+      <div className="lg:col-span-3">
+        {/* Card C: AI Risk Assessment - Full Width */}
+        <Card className="border-2 border-chart-4/30 bg-card shadow-lg">
+          <CardHeader className="flex flex-row items-center gap-3 pb-3">
+            <BrainCircuit className="h-6 w-6 text-chart-4" />
+            <CardTitle className="text-lg font-bold text-foreground">
               AI 风险评估结论
             </CardTitle>
             <Badge className="ml-auto border-chart-4/30 bg-chart-4/10 font-mono text-xs text-chart-4">
               Qwen-14B
             </Badge>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[200px]">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-secondary-foreground/90">
+          <CardContent className="space-y-4">
+            {/* 推荐策略 Tag 突出显示 */}
+            <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gradient-to-r from-chart-4/10 to-transparent p-4">
+              <span className="flex items-center gap-2 text-sm font-semibold text-chart-4">
+                <ShieldCheck className="h-5 w-5" />
+                推荐策略：
+              </span>
+              <Badge className="border-destructive/50 bg-destructive/15 px-3 py-1 text-sm font-bold text-destructive">
+                立即干预
+              </Badge>
+              <Badge className="border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600">
+                心理咨询
+              </Badge>
+              <Badge className="border-blue-500/50 bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600">
+                辅导员关注
+              </Badge>
+              <Badge className="border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600">
+                家长沟通
+              </Badge>
+            </div>
+
+            <ScrollArea className="h-[480px]">
+              <pre className="whitespace-pre-wrap font-sans text-m leading-relaxed text-secondary-foreground/90">
                 {aiAssessment}
               </pre>
             </ScrollArea>
-            <div className="mt-4 flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-3 pt-2">
               <button className="rounded-lg border border-success/30 bg-success/10 px-5 py-2 text-sm font-medium text-success shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all hover:bg-success/20 hover:shadow-[0_0_25px_rgba(34,197,94,0.25)]">
                 <span className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4" />
