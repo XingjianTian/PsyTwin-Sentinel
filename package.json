@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "changelog:generate": "auto-changelog -p --commit-limit 20 --template keepachangelog --output docs/CHANGELOG.md"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -64,6 +65,7 @@
     "@types/node": "^22",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "auto-changelog": "^2.5.0",
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
     "tw-animate-css": "1.3.3",
