@@ -172,7 +172,7 @@ export function HeatmapCard() {
           {[
             { label: "高风险院系", value: "4", color: "text-destructive" },
             { label: "中风险院系", value: "4", color: "text-warning" },
-            { label: "低风险院系", value: "4", color: "text-chart-4" },
+            { label: "低风险院系", value: "4", color: "text-yellow-500" },
           ].map((s) => (
             <div
               key={s.label}
