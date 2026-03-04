@@ -13,6 +13,9 @@ import { AiConfigView } from "@/components/views/ai-config-view"
 import { VrDashboardView } from "@/components/views/vr-dashboard-view"
 import { InterventionRecordsView } from "@/components/views/intervention-records-view"
 import { SystemSettingsView } from "@/components/views/system-settings-view"
+import { ConsultationRoomView } from "@/components/views/consultation-room-view"
+import { DeviceManagementView } from "@/components/views/device-management-view"
+import { MultimodalDataFlowView } from "@/components/views/multimodal-dataflow-view"
 
 function OverviewView() {
   return (
@@ -52,6 +55,12 @@ export default function DashboardPage() {
         return <AiConfigView />
       case "系统设置":
         return <SystemSettingsView />
+      case "心理咨询室":
+        return <ConsultationRoomView />
+      case "设备管理":
+        return <DeviceManagementView />
+      case "多模态数据流":
+        return <MultimodalDataFlowView />
       default:
         return <OverviewView />
     }

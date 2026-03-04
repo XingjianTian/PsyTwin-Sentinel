@@ -14,6 +14,18 @@
 | intervention-records-view | 干预记录中心 | ✅ 已完成基础 |
 | ai-config-view | AI智能配置 | ✅ 已完成基础 |
 | system-settings-view | 系统设置 | ✅ 已完成基础 |
+| consultation-room-view | 心理咨询室管理 | ✅ 新增 |
+| device-management-view | 设备管理 | ✅ 新增 |
+| multimodal-dataflow-view | 多模态数据流实时监控 | ✅ 新增 |
+
+| 页面 | 对应模块 | 状态 |
+|------|----------|------|
+| vr-dashboard-view | 全域态势指挥中心 | ✅ 已完成基础 |
+| risk-trace-view | 风险预警与溯源中心 | ✅ 已完成基础 |
+| student-profile-view | 学生心理孪生档案 | ✅ 已完成基础 |
+| intervention-records-view | 干预记录中心 | ✅ 已完成基础 |
+| ai-config-view | AI智能配置 | ✅ 已完成基础 |
+| system-settings-view | 系统设置 | ✅ 已完成基础 |
 
 ---
 

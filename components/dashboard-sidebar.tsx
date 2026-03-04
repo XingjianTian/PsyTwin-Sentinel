@@ -9,10 +9,13 @@ import {
   FileText,
   Settings,
   ChevronDown,
+  DoorOpen,
+  Monitor,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type PageKey = "全域态势" | "风险溯源" | "VR端数据" | "学生档案" | "干预记录" | "AI配置" | "系统设置"
+export type PageKey = "全域态势" | "风险溯源" | "VR端数据" | "学生档案" | "干预记录" | "AI配置" | "系统设置" | "心理咨询室" | "设备管理" | "多模态数据流"
 
 const menuGroups = [
   {
@@ -21,6 +24,14 @@ const menuGroups = [
       { icon: Globe, label: "全域态势" as PageKey },
       { icon: ScanSearch, label: "风险溯源" as PageKey },
       { icon: Gamepad2, label: "VR端数据" as PageKey },
+    ],
+  },
+  {
+    label: "资源管理",
+    items: [
+      { icon: DoorOpen, label: "心理咨询室" as PageKey },
+      { icon: Monitor, label: "设备管理" as PageKey },
+      { icon: Activity, label: "多模态数据流" as PageKey },
     ],
   },
   {
