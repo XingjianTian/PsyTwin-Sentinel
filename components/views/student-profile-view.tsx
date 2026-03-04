@@ -261,9 +261,9 @@ export function StudentProfileView() {
       </Card>
 
       {/* Middle: Radar + Timeline */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Radar Chart - Enhanced */}
-        <Card className="border-border bg-card shadow-sm overflow-hidden">
+        <Card className="border-border bg-card shadow-sm overflow-hidden lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div className="flex items-center gap-2">
               <div className="rounded-lg bg-primary/10 p-1.5">
@@ -332,42 +332,6 @@ export function StudentProfileView() {
                   <span className="font-medium text-foreground">{item.value}</span>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Radar className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base font-semibold text-foreground">
-              多维心理雷达图
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData} outerRadius="75%">
-                  <PolarGrid stroke="#E5E7EB" />
-                  <PolarAngleAxis
-                    dataKey="dimension"
-                    tick={{ fill: "#6B7280", fontSize: 12 }}
-                  />
-                  <PolarRadiusAxis
-                    domain={[0, 100]}
-                    tick={{ fill: "#475569", fontSize: 10 }}
-                    axisLine={false}
-                  />
-                  <Tooltip content={<RadarTooltipContent />} />
-                  <RechartsRadar
-                    name="心理指标"
-                    dataKey="value"
-                    stroke="#7C3AED"
-                    fill="#7C3AED"
-                    fill="#00d4ff"
-                    fillOpacity={0.15}
-                    strokeWidth={2}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
