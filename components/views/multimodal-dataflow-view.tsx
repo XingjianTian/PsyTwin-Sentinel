@@ -22,6 +22,16 @@ import {
   Clock,
   User
 } from "lucide-react"
+// Recharts 图表组件
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 // 模拟正在体验的学生数据
 const activeStudents = [
@@ -270,6 +280,109 @@ const emotionColors: Record<string, string> = {
   "低落": "text-slate-600 bg-slate-50",
   "困倦": "text-indigo-600 bg-indigo-50"
 }
+// 心率图表数据 - 修复时间显示，每30分钟一个数据点，从13:00开始
+const hrData = Array.from({ length: 30 }, (_, i) => {
+  const totalMinutes = 13 * 60 + i * 30
+  const hours = Math.floor(totalMinutes / 60) % 24
+  const minutes = totalMinutes % 60
+  return {
+    time: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
+    心率: Math.floor(75 + Math.sin(i * 0.5) * 15 + Math.random() * 20),
+    血氧: Math.floor(96 + Math.sin(i * 0.3) * 2 + Math.random() * 2),
+  }
+})
+
+interface HrTooltipProps {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string }>
+  label?: string
+}
+
+function HrTooltip({ active, payload, label }: HrTooltipProps) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
+      <p className="mb-1 font-medium text-foreground">{label}</p>
+      {payload.map((p) => (
+        <p key={p.name} style={{ color: p.color }}>
+          {p.name}：{p.value}{p.name === "心率" ? " bpm" : "%"}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+// 语音波形可视化组件 - 带渐变、动画、坐标轴和图例
+function VoiceWaveform() {
+  const [bars, setBars] = useState<number[]>(() =>
+    Array.from({ length: 64 }, () => Math.random() * 80 + 10)
+  )
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBars((prev) =>
+        prev.map((h) => {
+          const delta = (Math.random() - 0.5) * 30
+          return Math.max(5, Math.min(95, h + delta))
+        })
+      )
+    }, 120)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
+      <div className="mb-1 flex h-[180px] items-stretch gap-1">
+        <div className="flex flex-col justify-between py-0.5 pr-2 text-[10px] text-muted-foreground">
+          <span>强度</span>
+          <span>100%</span>
+          <span>50%</span>
+          <span>0%</span>
+        </div>
+        <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 items-end gap-[2px]">
+            {bars.map((h, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-t-sm transition-all duration-100"
+                style={{
+                  height: `${h}%`,
+                  background: h > 70
+                    ? "linear-gradient(to top, #ef4444, #f97316)"
+                    : h > 40
+                      ? "linear-gradient(to top, #f97316, #facc15)"
+                      : "linear-gradient(to top, #00d4ff, #22c55e)",
+                  opacity: 0.85,
+                }}
+              />
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+            <span>0s</span>
+            <span>2s</span>
+            <span>4s</span>
+            <span>6s</span>
+            <span>8s</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-gradient-to-t from-red-500 to-orange-500" />
+          <span>高唤醒区</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-gradient-to-t from-orange-500 to-yellow-400" />
+          <span>中唤醒区</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-gradient-to-t from-cyan-500 to-green-500" />
+          <span>平稳区</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const riskLevelColors: Record<string, string> = {
   "low": "bg-green-500",
@@ -461,12 +574,18 @@ export function MultimodalDataFlowView() {
                 />
               </div>
               {/* 实时曲线 */}
-              <div className="mt-4">
-                <p className="mb-2 text-xs text-muted-foreground">心率实时曲线</p>
-                <WaveformVisual 
-                  data={generateWaveData()} 
-                  color={selectedStudent.vitals.heartRate > 90 ? "#ef4444" : "#10b981"} 
-                />
+              <div className="mt-4 h-[180px] -mx-2">
+                <p className="mb-2 pl-2 text-xs text-muted-foreground">心率实时曲线</p>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={hrData} margin={{ top: 5, right: 30, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="time" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} interval={4} />
+                    <YAxis tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[60, 150]} />
+                    <Tooltip content={<HrTooltip />} />
+                    <Line type="monotone" dataKey="心率" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#ef4444" }} />
+                    <Line type="monotone" dataKey="血氧" stroke="#7C3AED" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#7C3AED" }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -503,12 +622,8 @@ export function MultimodalDataFlowView() {
                 </div>
               </div>
               <div className="mt-4">
-                <p className="mb-2 text-xs text-muted-foreground">语音情感波形</p>
-                <WaveformVisual 
-                  data={generateWaveData()} 
-                  color={selectedStudent.voice.sentiment === "positive" ? "#10b981" : 
-                         selectedStudent.voice.sentiment === "negative" ? "#ef4444" : "#6b7280"} 
-                />
+                <p className="mb-2 text-xs text-muted-foreground">实时情感波形图</p>
+                <VoiceWaveform />
               </div>
             </CardContent>
           </Card>
