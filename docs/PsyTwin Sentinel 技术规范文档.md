@@ -71,9 +71,9 @@ psy-twin-sentinel/
 
 ### 2.3 通信协议
 
-- **RESTful API**：通过 Next.js API Routes 实现
-- **Server Actions**：表单提交与数据变更
-- **Server-Sent Events**：风险预警实时推送
+- **Server Actions**（主要）：Next.js 14+ 推荐的 Server Actions 模式，实现表单提交与数据变更
+- **RESTful API**（辅助）：部分复杂接口通过 Next.js API Routes 实现
+- **Server-Sent Events**（计划中）：风险预警实时推送
 
 ---
 
@@ -641,19 +641,19 @@ npm run start   # 启动生产服务器
 - [x] 实现页面间数据流转
 - [x] 添加加载状态与错误处理
 
-### Phase 2: 后端 API 开发 🚧 进行中
+### Phase 2: 后端 API 开发 ✅ 已完成 *(2026-03-06 联调通过本地数据库)*
 
-- [ ] Prisma 数据库配置
-- [ ] 学生档案 CRUD API
-- [ ] 风险预警 API
-- [ ] 干预记录 API
+- [x] Prisma 数据库配置 *(schema.prisma 已定义，seed.ts 数据初始化完成)*
+- [x] 学生档案 CRUD API *(通过 Server Actions 实现: app/actions/* )*
+- [x] 风险预警 API *(risk-trace.ts: getRiskWorkOrders, confirmIntervention, resolveWarning)*
+- [x] 干预记录 API *(intervention-records.ts: getInterventionRecords)*
 
-### Phase 3: AI 集成 🚧 进行中
+### Phase 3: AI 集成 🚧 进行中 *(UI已完成，待接入真实API)*
 
-- [ ] Qwen API 对接
-- [ ] RAG 知识库基础功能
-- [x] AI 风险评估页面（已实现 UI）
-- [x] AI 配置页面（已实现 UI）
+- [ ] Qwen API 对接 *(需实现 lib/ai.ts 封装 Dashscope API)*
+- [ ] RAG 向量存储集成 *(向量数据库待选型: Pinecone/Milvus/Supabase pgvector)*
+- [x] AI 风险评估页面 UI *(已实现，components/views/risk-trace-view.tsx)*
+- [x] AI 配置页面 UI *(已实现，components/views/ai-config-view.tsx)*
 
 ### Phase 4: 部署与优化
 

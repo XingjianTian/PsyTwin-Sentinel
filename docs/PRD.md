@@ -557,20 +557,20 @@
 - [x] 设备管理
 - [x] 多模态数据流实时监控
 
-### Phase 2: 后端 API 开发
+### Phase 2: 后端 API 开发 ✅ 已完成 *(2026-03-06 联调通过本地数据库)*
 
-- [ ] PostgreSQL + Prisma 数据库配置
-- [ ] 学生档案 CRUD API
-- [ ] 风险预警 API
-- [ ] 干预记录 API
-- [ ] VR 数据同步 API
+- [x] PostgreSQL + Prisma 数据库配置 *(schema.prisma 已定义，seed.ts 数据初始化完成)*
+- [x] 学生档案 CRUD API *(通过 Server Actions 实现: app/actions/risk-trace.ts 等)*
+- [x] 风险预警 API *(getRiskWorkOrders, confirmIntervention, resolveWarning)*
+- [x] 干预记录 API *(getInterventionRecords 等 Server Actions 已实现)*
+- [x] VR 数据同步 API *(app/actions/vr-dashboard.ts 已实现)*
 
-### Phase 3: AI 集成
+### Phase 3: AI 集成 🚧 进行中 *(UI已完成，待接入真实API)*
 
-- [ ] Qwen API 对接
-- [ ] RAG 知识库基础功能
-- [ ] 智能干预建议生成
-- [ ] 风险评估报告自动生成
+- [ ] Qwen API 对接 *(需实现 lib/ai.ts 封装)*
+- [ ] RAG 向量存储集成 *(向量数据库待选型：Pinecone/Milvus/pgvector)*
+- [ ] 智能干预建议生成 *(后端API待实现)*
+- [ ] 风险评估报告自动生成 *(需对接Qwen API)*
 
 ### Phase 4: 部署与优化
 
@@ -583,15 +583,15 @@
 
 ## 8. 附录
 
-### Phase 2: 后端 API 开发
+### Phase 2: 后端 API 开发 ✅ 已完成 *(2026-03-06 联调通过本地数据库)*
 
-- [ ] PostgreSQL + Prisma 数据库配置
-- [ ] 学生档案 CRUD API
-- [ ] 风险预警 API
-- [ ] 干预记录 API
-- [ ] VR 数据同步 API
+- [x] PostgreSQL + Prisma 数据库配置
+- [x] 学生档案 CRUD API
+- [x] 风险预警 API
+- [x] 干预记录 API
+- [x] VR 数据同步 API
 
-### Phase 3: AI 集成
+### Phase 3: AI 集成 🚧 进行中 *(UI已完成，待接入真实API)*
 
 - [ ] Qwen API 对接
 - [ ] RAG 知识库基础功能
