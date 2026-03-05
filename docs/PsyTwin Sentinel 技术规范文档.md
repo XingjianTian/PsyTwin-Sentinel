@@ -648,12 +648,12 @@ npm run start   # 启动生产服务器
 - [x] 风险预警 API *(risk-trace.ts: getRiskWorkOrders, confirmIntervention, resolveWarning)*
 - [x] 干预记录 API *(intervention-records.ts: getInterventionRecords)*
 
-### Phase 3: AI 集成 🚧 进行中 *(UI已完成，待接入真实API)*
+### Phase 3: AI 集成 ✅ 已完成 *(2026-03-06 实现 Qwen API + RAG 向量存储)*
 
-- [ ] Qwen API 对接 *(需实现 lib/ai.ts 封装 Dashscope API)*
-- [ ] RAG 向量存储集成 *(向量数据库待选型: Pinecone/Milvus/Supabase pgvector)*
-- [x] AI 风险评估页面 UI *(已实现，components/views/risk-trace-view.tsx)*
-- [x] AI 配置页面 UI *(已实现，components/views/ai-config-view.tsx)*
+- [x] Qwen API 对接 *(lib/ai.ts 已封装，支持 Dashscope)*
+- [x] RAG 向量存储集成 *(pgvector + 文本搜索降级策略)*
+- [x] AI 风险评估页面 UI + API *(components/views/risk-trace-view.tsx, app/actions/ai-services.ts)*
+- [x] AI 配置页面 UI + API *(components/views/ai-config-view.tsx, app/api/documents)*
 
 ### Phase 4: 部署与优化
 
