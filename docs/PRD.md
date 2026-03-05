@@ -559,7 +559,7 @@
 
 ### Phase 2: 后端 API 开发
 
-- [ ] Prisma 数据库配置
+- [ ] PostgreSQL + Prisma 数据库配置
 - [ ] 学生档案 CRUD API
 - [ ] 风险预警 API
 - [ ] 干预记录 API
@@ -585,7 +585,7 @@
 
 ### Phase 2: 后端 API 开发
 
-- [ ] Prisma 数据库配置
+- [ ] PostgreSQL + Prisma 数据库配置
 - [ ] 学生档案 CRUD API
 - [ ] 风险预警 API
 - [ ] 干预记录 API

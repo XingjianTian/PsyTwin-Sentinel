@@ -32,7 +32,7 @@
 | **状态管理** | React Context + Zustand | 轻量级状态管理 |
 | **数据可视化** | Recharts + Tailwind Charts | 图表组件 |
 | **表单** | React Hook Form + Zod | 类型安全表单 |
-| **数据库** | Prisma + SQLite/PostgreSQL | ORM + 数据库 |
+| **数据库** | Prisma + PostgreSQL | ORM + 数据库 |
 | **AI 集成** | Qwen API (通义千问) | 大模型对话与 RAG |
 | **部署** | Vercel / 私有服务器 | 适配多种部署方案 |
 
