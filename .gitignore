@@ -8,6 +8,7 @@ node_modules/
 .next/
 .env*.local
 .env
+.sisyphus/evidence/**/task-1-env-files.txt
 .DS_Store
 #ZQ|# Symlinks
 心图-PsyTwin-校园心理健康数字孪生解决方案.md
