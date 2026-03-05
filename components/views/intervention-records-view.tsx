@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -13,37 +13,16 @@ import {
   Check,
 } from "lucide-react"
 
+import {
+  assignInterventionCounselor,
+  getInterventionWorkOrders,
+  setInterventionStatus,
+  type InterventionWorkOrder,
+} from "@/app/actions/intervention-records"
+import { WorkOrderDetailSheet } from "@/components/work-order-detail-sheet"
+
 /* ── Filter options ── */
 const riskLevels = ["全部", "高危", "中危", "低危"]
-
-/* ── Work order data ── */
-interface WorkOrder {
-  id: string
-  name: string
-  cls: string
-  trigger: string
-  riskLevel: "高危" | "中危" | "低危"
-  method: string
-  counselor: string
-  status: "已结案" | "跟进中" | "待分配" | "干预中"
-  date: string
-  detail: string
-}
-
-const orders: WorkOrder[] = [
-  { id: "GD-20260201", name: "陈雨晴", cls: "软件2402", trigger: "语音情感异常连续触发", riskLevel: "高危", method: "VR脱敏训练", counselor: "刘芳", status: "跟进中", date: "2026-02-18", detail: "第3次VR训练后焦虑指数下降18%" },
-  { id: "GD-20260202", name: "张明远", cls: "网络2401", trigger: "心率持续偏高（>110bpm）", riskLevel: "高危", method: "线下谈话", counselor: "张伟", status: "干预中", date: "2026-02-17", detail: "已安排心理咨询师面谈2次" },
-  { id: "GD-20260203", name: "刘思远", cls: "数媒2401", trigger: "连续7天睡眠不足4小时", riskLevel: "中危", method: "VR脱敏训练", counselor: "王丽", status: "已结案", date: "2026-02-15", detail: "完成正念冥想训练后睡眠改善，复查正常" },
-  { id: "GD-20260204", name: "吴志远", cls: "大数据2502", trigger: "14天未出宿舍门禁", riskLevel: "高危", method: "线下谈话", counselor: "刘芳", status: "跟进中", date: "2026-02-14", detail: "辅导员已上门家访，后续安排团体辅导" },
-  { id: "GD-20260205", name: "周航宇", cls: "虚拟2503", trigger: "语音颤抖频率超标", riskLevel: "中危", method: "VR脱敏训练", counselor: "张伟", status: "已结案", date: "2026-02-13", detail: "4次VR训练后声学指标恢复正常范围" },
-  { id: "GD-20260206", name: "赵天宇", cls: "信安2401", trigger: "突发心率飙升（145bpm）", riskLevel: "高危", method: "线下谈话", counselor: "刘芳", status: "待分配", date: "2026-02-12", detail: "等待排班安排，已通知辅导员关注" },
-  { id: "GD-20260207", name: "黄思萌", cls: "软件2402", trigger: "食堂消费记录连续7天为零", riskLevel: "中危", method: "线下谈话", counselor: "王丽", status: "已结案", date: "2026-02-10", detail: "确认为饮食习惯调整，非心理因素" },
-  { id: "GD-20260208", name: "林志豪", cls: "大数据2502", trigger: "行动轨迹异常收缩", riskLevel: "低危", method: "VR脱敏训练", counselor: "张伟", status: "已结案", date: "2026-02-08", detail: "经评估为期末备考期正常收缩，已解除关注" },
-  { id: "GD-20260209", name: "王语嫣", cls: "网络2401", trigger: "社交回避行为加剧", riskLevel: "中危", method: "VR脱敏训练", counselor: "刘芳", status: "跟进中", date: "2026-02-06", detail: "第2次社交焦虑VR脱敏训练进行中" },
-  { id: "GD-20260210", name: "孙浩然", cls: "虚拟2503", trigger: "情绪波动指数持续高位", riskLevel: "中危", method: "线下谈话", counselor: "王丽", status: "干预中", date: "2026-02-05", detail: "CBT认知重构疗法进行中，第1阶段" },
-  { id: "GD-20260211", name: "李瑶瑶", cls: "数媒2401", trigger: "VR训练中焦虑指数反弹", riskLevel: "低危", method: "VR脱敏训练", counselor: "张伟", status: "已结案", date: "2026-02-03", detail: "调整VR场景难度后指标恢复正常" },
-  { id: "GD-20260212", name: "何俊辉", cls: "信安2401", trigger: "课堂出勤率骤降至40%", riskLevel: "高危", method: "线下谈话", counselor: "刘芳", status: "跟进中", date: "2026-02-01", detail: "确认存在适应性问题，已建立辅导方案" },
-]
 
 const statusColor: Record<string, string> = {
   "已结案": "border-success/30 bg-success/10 text-success",
@@ -59,16 +38,72 @@ const riskColor: Record<string, string> = {
 }
 
 export function InterventionRecordsView() {
+  const [orders, setOrders] = useState<InterventionWorkOrder[]>([])
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [sheetWorkOrderId, setSheetWorkOrderId] = useState<string | null>(null)
   const [selectedRisk, setSelectedRisk] = useState("全部")
   const [riskDropdownOpen, setRiskDropdownOpen] = useState(false)
   const [dateRange, setDateRange] = useState("2026-02-01 至 2026-02-26")
   const [searchText, setSearchText] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [actingId, setActingId] = useState<string | null>(null)
+
+  async function loadOrders() {
+    try {
+      const data = await getInterventionWorkOrders()
+      setOrders(data)
+      setError(null)
+    } catch {
+      setError("工单加载失败，请稍后重试")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadOrders()
+  }, [])
 
   const filtered = orders.filter((o) => {
     if (selectedRisk !== "全部" && o.riskLevel !== selectedRisk) return false
     if (searchText && !o.name.includes(searchText) && !o.id.includes(searchText) && !o.cls.includes(searchText)) return false
     return true
   })
+
+  async function markInProgress(orderId: string) {
+    setActingId(orderId)
+    setActionMessage(null)
+    try {
+      await setInterventionStatus(orderId, "IN_PROGRESS")
+      setActionMessage(`工单 ${orderId} 已更新为干预中`)
+      await loadOrders()
+    } catch {
+      setError("状态更新失败，请稍后重试")
+    } finally {
+      setActingId(null)
+    }
+  }
+
+  async function assignCounselor(orderId: string) {
+    setActingId(orderId)
+    setActionMessage(null)
+    try {
+      await assignInterventionCounselor(orderId, "刘芳")
+      setActionMessage(`工单 ${orderId} 已指派给 刘芳`)
+      await loadOrders()
+    } catch {
+      setError("指派咨询师失败，请稍后重试")
+    } finally {
+      setActingId(null)
+    }
+  }
+
+  function openDetail(orderId: string) {
+    setSheetWorkOrderId(orderId)
+    setSheetOpen(true)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -130,6 +165,13 @@ export function InterventionRecordsView() {
         </CardContent>
       </Card>
 
+      {actionMessage ? (
+        <p className="text-right text-xs text-success">{actionMessage}</p>
+      ) : null}
+      {error ? (
+        <p className="text-right text-xs text-destructive">{error}</p>
+      ) : null}
+
       {/* ── Main table ── */}
       <Card className="border-border bg-card shadow-sm">
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
@@ -153,9 +195,17 @@ export function InterventionRecordsView() {
                     <th className="px-3 py-3 text-left font-medium">负责咨询师</th>
                     <th className="px-3 py-3 text-left font-medium">日期</th>
                     <th className="px-3 py-3 text-left font-medium">当前状态</th>
+                    <th className="px-3 py-3 text-left font-medium">操作</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={10} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                        正在加载工单数据...
+                      </td>
+                    </tr>
+                  ) : null}
                   {filtered.map((order) => (
                     <tr
                       key={order.id}
@@ -180,14 +230,53 @@ export function InterventionRecordsView() {
                           {order.status}
                         </Badge>
                       </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openDetail(order.id)}
+                            disabled={actingId === order.id}
+                            className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs text-foreground transition-colors hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            详情
+                          </button>
+                          <button
+                            onClick={() => markInProgress(order.id)}
+                            disabled={actingId === order.id}
+                            className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            设为干预中
+                          </button>
+                          <button
+                            onClick={() => assignCounselor(order.id)}
+                            disabled={actingId === order.id}
+                            className="rounded border border-chart-4/30 bg-chart-4/10 px-2 py-1 text-xs text-chart-4 transition-colors hover:bg-chart-4/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            指派刘芳
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
+                  {!isLoading && filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                        暂无符合筛选条件的工单
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
           </ScrollArea>
         </CardContent>
       </Card>
+
+      <WorkOrderDetailSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        workOrderId={sheetWorkOrderId}
+        onStatusChange={loadOrders}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -21,6 +22,12 @@ import {
   Line,
   Legend,
 } from "recharts"
+
+import {
+  createWorkOrderFromVrSession,
+  getDashboardVrRecords,
+  type DashboardVrRecord,
+} from "@/app/actions/vr-dashboard"
 
 /* ── KPI stats ── */
 const stats = [
@@ -82,20 +89,6 @@ const stressData = [
   { week: "第8周", 体验前: 74, 体验后: 36 },
 ]
 
-/* ── Recent VR records ── */
-const vrRecords = [
-  { name: "刘思远", cls: "数媒2401", scene: "社交焦虑脱敏", duration: "28分钟", before: "焦虑", after: "平静", result: "positive" as const },
-  { name: "陈雨晴", cls: "软件2402", scene: "考试压力释放", duration: "22分钟", before: "紧张", after: "放松", result: "positive" as const },
-  { name: "张明远", cls: "网络2401", scene: "正念冥想空间", duration: "30分钟", before: "烦躁", after: "安宁", result: "positive" as const },
-  { name: "吴志远", cls: "大数据2502", scene: "情绪宣泄训练", duration: "18分钟", before: "压抑", after: "舒畅", result: "positive" as const },
-  { name: "周航宇", cls: "虚拟2503", scene: "社交焦虑脱敏", duration: "25分钟", before: "回避", after: "中性", result: "neutral" as const },
-  { name: "赵天宇", cls: "信安2401", scene: "考试压力释放", duration: "20分钟", before: "焦虑", after: "放松", result: "positive" as const },
-  { name: "黄思萌", cls: "软件2402", scene: "正念冥想空间", duration: "35分钟", before: "低落", after: "平和", result: "positive" as const },
-  { name: "林志豪", cls: "大数据2502", scene: "情绪宣泄训练", duration: "15分钟", before: "愤怒", after: "中性", result: "neutral" as const },
-  { name: "王语嫣", cls: "网络2401", scene: "社交焦虑脱敏", duration: "26分钟", before: "恐惧", after: "平静", result: "positive" as const },
-  { name: "孙浩然", cls: "虚拟2503", scene: "考试压力释放", duration: "19分钟", before: "紧张", after: "轻松", result: "positive" as const },
-]
-
 /* ── Tooltips ── */
 interface SceneTooltipProps {
   active?: boolean
@@ -132,6 +125,41 @@ function StressTooltip({ active, payload, label }: StressTooltipProps) {
 }
 
 export function VrDashboardView() {
+  const [vrRecords, setVrRecords] = useState<DashboardVrRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [actingId, setActingId] = useState<string | null>(null)
+
+  async function loadRecords() {
+    try {
+      const data = await getDashboardVrRecords()
+      setVrRecords(data)
+      setError(null)
+    } catch {
+      setError("VR记录加载失败，请稍后重试")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadRecords()
+  }, [])
+
+  async function handleCreateWorkOrder(sessionId: string, studentName: string) {
+    setActingId(sessionId)
+    setActionMessage(null)
+    try {
+      await createWorkOrderFromVrSession(sessionId)
+      setActionMessage(`已为 ${studentName} 创建（或复用）跟进工单`)
+    } catch {
+      setError("创建工单失败，请稍后重试")
+    } finally {
+      setActingId(null)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── Top: Two charts (moved to front) ── */}
@@ -272,6 +300,12 @@ export function VrDashboardView() {
           </span>
         </CardHeader>
         <CardContent>
+          {actionMessage ? (
+            <p className="mb-2 text-right text-xs text-success">{actionMessage}</p>
+          ) : null}
+          {error ? (
+            <p className="mb-2 text-right text-xs text-destructive">{error}</p>
+          ) : null}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -283,12 +317,20 @@ export function VrDashboardView() {
                   <th className="px-3 py-2.5 text-left font-medium">体验前情绪</th>
                   <th className="px-3 py-2.5 text-left font-medium">体验后情绪</th>
                   <th className="px-3 py-2.5 text-left font-medium">转化结果</th>
+                  <th className="px-3 py-2.5 text-left font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {vrRecords.map((r, i) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                      正在加载VR记录...
+                    </td>
+                  </tr>
+                ) : null}
+                {vrRecords.map((r) => (
                   <tr
-                    key={i}
+                    key={r.id}
                     className="border-b border-border/30 transition-colors hover:bg-secondary/20"
                   >
                     <td className="px-3 py-2.5 font-medium text-foreground">{r.name}</td>
@@ -318,8 +360,24 @@ export function VrDashboardView() {
                         {r.result === "positive" ? "有效改善" : "持续观察"}
                       </Badge>
                     </td>
+                    <td className="px-3 py-2.5">
+                      <button
+                        onClick={() => handleCreateWorkOrder(r.id, r.name)}
+                        disabled={actingId === r.id}
+                        className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        生成跟进工单
+                      </button>
+                    </td>
                   </tr>
                 ))}
+                {!isLoading && vrRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                      暂无VR记录
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>

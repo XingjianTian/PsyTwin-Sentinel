@@ -17,6 +17,7 @@ import {
   resolveWarning,
   type RiskWorkOrder,
 } from "@/app/actions/risk-trace"
+import { WorkOrderDetailSheet } from "@/components/work-order-detail-sheet"
 
 // AI assessment text
 const aiAssessment = `【Qwen-14B 风险溯源分析报告】
@@ -35,6 +36,7 @@ const aiAssessment = `【Qwen-14B 风险溯源分析报告】
 export function RiskTraceView() {
   const [workOrders, setWorkOrders] = useState<RiskWorkOrder[]>([])
   const [selectedOrder, setSelectedOrder] = useState<RiskWorkOrder | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
@@ -93,6 +95,10 @@ export function RiskTraceView() {
     }
   }
 
+  function openDetail() {
+    setSheetOpen(true)
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-5">
       {/* Left: Work order list */}
@@ -119,9 +125,17 @@ export function RiskTraceView() {
                 <ul className="flex flex-col gap-2">
                   {workOrders.map((order) => (
                     <li key={order.id}>
-                      <button
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setSelectedOrder(order)}
-                        className={`w-full rounded-lg border px-3 py-3 text-left transition-all ${
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault()
+                            setSelectedOrder(order)
+                          }
+                        }}
+                        className={`w-full cursor-pointer rounded-lg border px-3 py-3 text-left transition-all ${
                           selectedOrder?.id === order.id
                             ? "border-destructive/40 bg-destructive/10 ring-1 ring-destructive/20"
                             : "border-border bg-muted/50 hover:bg-muted"
@@ -144,8 +158,21 @@ export function RiskTraceView() {
                         </div>
                         <p className="mt-1 text-xs font-medium text-muted-foreground">{order.riskType}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground/70">{order.summary}</p>
-                        <p className="mt-1 text-right font-mono text-xs text-muted-foreground/50">{order.time}</p>
-                      </button>
+                        <div className="mt-1 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setSelectedOrder(order)
+                              openDetail()
+                            }}
+                            className="rounded border border-border px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-secondary/60"
+                          >
+                            查看详情
+                          </button>
+                          <p className="font-mono text-xs text-muted-foreground/50">{order.time}</p>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -197,6 +224,16 @@ export function RiskTraceView() {
             </ScrollArea>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
+                onClick={() => {
+                  if (!selectedOrder) return
+                  openDetail()
+                }}
+                disabled={!selectedOrder || isSubmitting}
+                className="rounded-lg border border-border bg-secondary/30 px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                查看工单详情
+              </button>
+              <button
                 onClick={handleConfirmIntervention}
                 disabled={!selectedOrder || isSubmitting}
                 className="rounded-lg border border-success/30 bg-success/10 px-5 py-2 text-sm font-medium text-success shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all hover:bg-success/20 hover:shadow-[0_0_25px_rgba(34,197,94,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -223,6 +260,13 @@ export function RiskTraceView() {
           </CardContent>
         </Card>
       </div>
+
+      <WorkOrderDetailSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        workOrderId={selectedOrder?.id ?? null}
+        onStatusChange={loadOrders}
+      />
     </div>
   )
 }
