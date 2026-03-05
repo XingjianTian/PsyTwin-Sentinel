@@ -7,6 +7,7 @@ __v0_jsx-dev-runtime.ts
 node_modules/
 .next/
 .env*.local
+.env
 .DS_Store
 #ZQ|# Symlinks
 心图-PsyTwin-校园心理健康数字孪生解决方案.md

@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RiskLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertType {
+  HEART_RATE_SURGE
+  VOICE_TREMOR
+  SLEEP_ANOMALY
+  EMOTION_SWING
+  SOCIAL_WITHDRAWAL
+  GAIT_ANOMALY
+  EATING_ANOMALY
+}
+
+enum WorkOrderStatus {
+  COMPLETED
+  FOLLOWING
+  PENDING
+  IN_PROGRESS
+}
+
+enum InterventionType {
+  REGULAR_INTERVIEW
+  CBT_THERAPY
+  GROUP_COUNSELING
+  CRISIS_INTERVENTION
+  INITIAL_ASSESSMENT
+}
+
+enum DeviceType {
+  VR
+  BRACELET
+  EEG
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  IN_USE
+  MAINTENANCE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum Sentiment {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+enum DocStatus {
+  VECTORIZED
+  PROCESSING
+  FAILED
+}
+
+model Student {
+  id                  String               @id @default(uuid())
+  name                String
+  studentNo           String               @unique @map("student_no")
+  className           String               @map("class_name")
+  facultyId           String?              @map("faculty_id")
+  gender              String?
+  birthDate           DateTime?            @map("birth_date")
+  mbti                String?
+  riskLevel           RiskLevel            @default(LOW) @map("risk_level")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  faculty             Faculty?             @relation(fields: [facultyId], references: [id])
+  psychProfile        PsychProfile?
+  timelineEvents      TimelineEvent[]
+  alerts              Alert[]
+  workOrders          WorkOrder[]
+  interventionRecords InterventionRecord[]
+  vrSessions          VRSession[]
+  vitalSigns          VitalSign[]
+  voiceAnalyses       VoiceAnalysis[]
+  expressionData      ExpressionData[]
+  currentInRooms      ConsultationRoom[]   @relation("CurrentRoomStudent")
+
+  @@index([className])
+  @@index([facultyId])
+  @@index([riskLevel])
+  @@map("students")
+}
+
+model PsychProfile {
+  id                 String   @id @default(uuid())
+  studentId          String   @unique @map("student_id")
+  adversityQuotient  Int      @map("adversity_quotient")
+  emotionalStability Int      @map("emotional_stability")
+  socialTendency     Int      @map("social_tendency")
+  stressResistance   Int      @map("stress_resistance")
+  selfAwareness      Int      @map("self_awareness")
+  empathy            Int
+  willpower          Int
+  adaptability       Int
+  overallScore       Int      @map("overall_score")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("psych_profiles")
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  date        String
+  title       String
+  description String
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([status])
+  @@map("timeline_events")
+}
+
+model Faculty {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  campusX     Float?    @map("campus_x")
+  campusY     Float?    @map("campus_y")
+  stressIndex Float?    @map("stress_index")
+  riskLevel   RiskLevel @default(LOW) @map("risk_level")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  students    Student[]
+
+  @@index([riskLevel])
+  @@map("faculties")
+}
+
+model Alert {
+  id          String    @id @default(uuid())
+  studentId   String    @map("student_id")
+  type        AlertType
+  level       String
+  alertTime   DateTime  @map("alert_time")
+  source      String
+  description String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([type])
+  @@index([level])
+  @@index([alertTime])
+  @@map("alerts")
+}
+
+model WorkOrder {
+  id        String          @id @default(uuid())
+  studentId String          @map("student_id")
+  className String          @map("class_name")
+  trigger   String
+  riskLevel RiskLevel       @map("risk_level")
+  method    String
+  counselor String
+  status    WorkOrderStatus
+  date      DateTime
+  detail    String?
+  summary   String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  student   Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([status])
+  @@index([date])
+  @@map("work_orders")
+}
+
+model InterventionRecord {
+  id        String           @id @default(uuid())
+  studentId String           @map("student_id")
+  date      DateTime
+  type      InterventionType
+  counselor String
+  duration  String
+  result    String
+  status    String
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([type])
+  @@index([date])
+  @@index([status])
+  @@map("intervention_records")
+}
+
+model VRScene {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String?
+  usageCount  Int         @default(0) @map("usage_count")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  sessions    VRSession[]
+
+  @@map("vr_scenes")
+}
+
+model VRSession {
+  id            String    @id @default(uuid())
+  studentId     String    @map("student_id")
+  sceneId       String    @map("scene_id")
+  duration      String
+  emotionBefore String    @map("emotion_before")
+  emotionAfter  String    @map("emotion_after")
+  result        Sentiment
+  sessionAt     DateTime  @default(now()) @map("session_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  scene         VRScene   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([sceneId])
+  @@index([sessionAt])
+  @@map("vr_sessions")
+}
+
+model Device {
+  id           String       @id @default(uuid())
+  name         String
+  serialNumber String       @unique @map("serial_number")
+  type         DeviceType
+  model        String?
+  status       DeviceStatus
+  battery      Int?
+  room         String?
+  location     String?
+  lastActive   String?      @map("last_active")
+  lastSync     String?      @map("last_sync")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  roomDevices  RoomDevice[]
+
+  @@index([type])
+  @@index([status])
+  @@map("devices")
+}
+
+model ConsultationRoom {
+  id               String       @id @default(uuid())
+  name             String
+  location         String
+  status           RoomStatus
+  capacity         Int
+  currentStudentId String?      @map("current_student_id")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  currentStudent   Student?     @relation("CurrentRoomStudent", fields: [currentStudentId], references: [id])
+  roomDevices      RoomDevice[]
+
+  @@index([status])
+  @@index([currentStudentId])
+  @@map("consultation_rooms")
+}
+
+model RoomDevice {
+  id        String           @id @default(uuid())
+  roomId    String           @map("room_id")
+  deviceId  String           @map("device_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  room      ConsultationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  device    Device           @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, deviceId])
+  @@index([roomId])
+  @@index([deviceId])
+  @@map("room_devices")
+}
+
+model VitalSign {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  timestamp   DateTime
+  heartRate   Int      @map("heart_rate")
+  hrv         Float?
+  gsr         Float?
+  stressIndex Int?     @map("stress_index")
+  bloodOxygen Float?   @map("blood_oxygen")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([timestamp])
+  @@index([studentId, timestamp])
+  @@map("vital_signs")
+}
+
+model VoiceAnalysis {
+  id           String    @id @default(uuid())
+  studentId    String    @map("student_id")
+  timestamp    DateTime
+  sentiment    Sentiment
+  tremorIndex  Float     @map("tremor_index")
+  emotionLabel String    @map("emotion_label")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  student      Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([timestamp])
+  @@index([sentiment])
+  @@index([studentId, timestamp])
+  @@map("voice_analyses")
+}
+
+model ExpressionData {
+  id                String   @id @default(uuid())
+  studentId         String   @map("student_id")
+  timestamp         DateTime
+  primaryExpression String   @map("primary_expression")
+  anxietyLevel      Float    @map("anxiety_level")
+  sadnessLevel      Float    @map("sadness_level")
+  angerLevel        Float    @map("anger_level")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([timestamp])
+  @@index([studentId, timestamp])
+  @@map("expression_data")
+}
+
+model AIDocument {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  fileSize     String    @map("file_size")
+  uploadDate   DateTime  @map("upload_date")
+  status       DocStatus
+  vectorStatus String    @map("vector_status")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([uploadDate])
+  @@map("ai_documents")
+}
+
+model AIPromptPreset {
+  id         String   @id @default(uuid())
+  label      String
+  value      String   @unique
+  promptText String   @map("prompt_text")
+  isActive   Boolean  @default(false) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("ai_prompt_presets")
+}
