@@ -134,15 +134,15 @@ async function main() {
   }
 
   const workOrders = [
-    { id: 'wo-01', studentId: 'stu-chenyuqing', className: '软件2402', trigger: '语音情感异常连续触发', riskLevel: RiskLevel.HIGH, method: 'VR脱敏训练', counselor: '刘芳', status: WorkOrderStatus.IN_PROGRESS, date: '2026-02-18', detail: '第3次VR训练后焦虑指数下降18%', summary: '连续3次语音检测触发阈值' },
+    { id: 'wo-01', studentId: 'stu-chenyuqing', className: '软件2402', trigger: '语音情感异常连续触发', riskLevel: RiskLevel.HIGH, method: 'VR脱敏训练', counselor: '刘芳', status: WorkOrderStatus.FOLLOWING, date: '2026-02-18', detail: '第3次VR训练后焦虑指数下降18%', summary: '连续3次语音检测触发阈值' },
     { id: 'wo-02', studentId: 'stu-zhangmingyuan', className: '网络2401', trigger: '心率持续偏高（>110bpm）', riskLevel: RiskLevel.HIGH, method: '线下谈话', counselor: '张伟', status: WorkOrderStatus.IN_PROGRESS, date: '2026-02-17', detail: '已安排心理咨询师面谈2次', summary: '心率连续45分钟超过110bpm' },
     { id: 'wo-03', studentId: 'stu-liusiyuan', className: '数媒2401', trigger: '连续7天睡眠不足4小时', riskLevel: RiskLevel.MEDIUM, method: 'VR脱敏训练', counselor: '王丽', status: WorkOrderStatus.COMPLETED, date: '2026-02-15', detail: '复查正常', summary: '近7日睡眠不足' },
-    { id: 'wo-04', studentId: 'stu-wuzhiyuan', className: '大数据2502', trigger: '14天未出宿舍门禁', riskLevel: RiskLevel.HIGH, method: '线下谈话', counselor: '刘芳', status: WorkOrderStatus.IN_PROGRESS, date: '2026-02-14', detail: '安排团体辅导', summary: '社交隔离' },
+    { id: 'wo-04', studentId: 'stu-wuzhiyuan', className: '大数据2502', trigger: '14天未出宿舍门禁', riskLevel: RiskLevel.HIGH, method: '线下谈话', counselor: '刘芳', status: WorkOrderStatus.FOLLOWING, date: '2026-02-14', detail: '安排团体辅导', summary: '社交隔离' },
     { id: 'wo-05', studentId: 'stu-zhouhangyu', className: '虚拟2503', trigger: '语音颤抖频率超标', riskLevel: RiskLevel.MEDIUM, method: 'VR脱敏训练', counselor: '张伟', status: WorkOrderStatus.COMPLETED, date: '2026-02-13', detail: '声学指标恢复正常', summary: '语音颤抖频发' },
     { id: 'wo-06', studentId: 'stu-zhaotianyu', className: '信安2401', trigger: '突发心率飙升（145bpm）', riskLevel: RiskLevel.HIGH, method: '线下谈话', counselor: '刘芳', status: WorkOrderStatus.PENDING, date: '2026-02-12', detail: '等待排班安排', summary: '心率激增' },
     { id: 'wo-07', studentId: 'stu-huangsimeng', className: '软件2402', trigger: '食堂消费记录连续7天为零', riskLevel: RiskLevel.MEDIUM, method: '线下谈话', counselor: '王丽', status: WorkOrderStatus.COMPLETED, date: '2026-02-10', detail: '确认为饮食习惯调整', summary: '进食异常' },
     { id: 'wo-08', studentId: 'stu-linzhihao', className: '大数据2502', trigger: '行动轨迹异常收缩', riskLevel: RiskLevel.LOW, method: 'VR脱敏训练', counselor: '张伟', status: WorkOrderStatus.COMPLETED, date: '2026-02-08', detail: '解除关注', summary: '步态异常' },
-    { id: 'wo-09', studentId: 'stu-wangyuyan', className: '网络2401', trigger: '社交回避行为加剧', riskLevel: RiskLevel.MEDIUM, method: 'VR脱敏训练', counselor: '刘芳', status: WorkOrderStatus.IN_PROGRESS, date: '2026-02-06', detail: '第二次训练进行中', summary: '社交回避' },
+    { id: 'wo-09', studentId: 'stu-wangyuyan', className: '网络2401', trigger: '社交回避行为加剧', riskLevel: RiskLevel.MEDIUM, method: 'VR脱敏训练', counselor: '刘芳', status: WorkOrderStatus.FOLLOWING, date: '2026-02-06', detail: '第二次训练进行中', summary: '社交回避' },
     { id: 'wo-10', studentId: 'stu-zhangyu', className: '大数据2502', trigger: '情绪波动指数持续高位', riskLevel: RiskLevel.MEDIUM, method: '线下谈话', counselor: '王丽', status: WorkOrderStatus.IN_PROGRESS, date: '2026-02-05', detail: 'CBT 第一阶段', summary: '情绪波动' },
   ]
 

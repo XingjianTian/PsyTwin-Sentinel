@@ -24,9 +24,10 @@ enum AlertType {
 }
 
 enum WorkOrderStatus {
-  PENDING      // 待处理（高危列表，未指派咨询师）
-  IN_PROGRESS  // 干预中（干预记录，已指派咨询师）
-  COMPLETED    // 已完成
+  COMPLETED
+  FOLLOWING
+  PENDING
+  IN_PROGRESS
 }
 
 enum InterventionType {

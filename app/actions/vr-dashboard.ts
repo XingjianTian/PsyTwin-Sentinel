@@ -57,7 +57,7 @@ export async function createWorkOrderFromVrSession(sessionId: string): Promise<v
       studentId: session.student.id,
       trigger: `VR会话复盘：${session.scene.name}`,
       status: {
-        in: [WorkOrderStatus.PENDING, WorkOrderStatus.IN_PROGRESS],
+        in: [WorkOrderStatus.PENDING, WorkOrderStatus.FOLLOWING, WorkOrderStatus.IN_PROGRESS],
       },
     },
   })
