@@ -5,7 +5,7 @@
 > **模块**: M03 - 学生心理孪生档案  
 > **版本**: v1.0  
 > **更新日期**: 2026-03-06  
-> **状态**: 待实现
+> **状态**: ✅ 已完成 *(2026-03-06 联调通过本地数据库)*
 
 ---
 
@@ -566,48 +566,48 @@ export async function getStudentTimeline(studentId: string, limit = 50) {
 ## 8. 实现步骤
 
 ### Step 1: 数据库数据填充 (30分钟)
-- [ ] 使用 `prisma/seed.ts` 为现有学生生成 `PsychProfile` 数据
-- [ ] 为每个学生生成 `TimelineEvent` 历史记录
-- [ ] 验证数据完整性
+- [x] 使用 `prisma/seed.ts` 为现有学生生成 `PsychProfile` 数据 *(已完成)*
+- [x] 为每个学生生成 `TimelineEvent` 历史记录 *(已完成)*
+- [x] 验证数据完整性 *(已完成)*
 
 ### Step 2: Server Actions 实现 (1小时)
-- [ ] 创建 `app/actions/students.ts`
-- [ ] 实现 `getStudents` 列表查询
-- [ ] 实现 `getStudentDetail` 详情查询
-- [ ] 实现 `getStudentTimeline` 时间轴查询
-- [ ] 实现 `getStudentInterventions` 干预记录查询
+- [x] 创建 `app/actions/students.ts` *(已完成)*
+- [x] 实现 `getStudents` 列表查询 *(已完成)*
+- [x] 实现 `getStudentDetail` 详情查询 *(已完成)*
+- [x] 实现 `getStudentTimeline` 时间轴查询 *(已完成)*
+- [x] 实现 `getStudentInterventions` 干预记录查询 *(已完成)*
 
 ### Step 3: API 路由实现 (30分钟)
-- [ ] 创建 `app/api/students/route.ts` (列表)
-- [ ] 创建 `app/api/students/[id]/route.ts` (详情)
-- [ ] 创建 `app/api/students/[id]/timeline/route.ts`
-- [ ] 创建 `app/api/students/[id]/interventions/route.ts`
+- [x] 创建 `app/api/students/route.ts` (列表) *(已完成)*
+- [x] 创建 `app/api/students/[id]/route.ts` (详情) *(已完成)*
+- [x] 创建 `app/api/students/[id]/timeline/route.ts` *(已完成)*
+- [x] 创建 `app/api/students/[id]/interventions/route.ts` *(已完成)*
 
 ### Step 4: 学生列表页重构 (1小时)
-- [ ] 重构 `/students/page.tsx`
-- [ ] 创建学生卡片组件
-- [ ] 实现搜索和筛选功能
-- [ ] 实现分页
+- [x] 重构 `/students/page.tsx` *(已完成)*
+- [x] 创建学生卡片组件 *(已完成)*
+- [x] 实现搜索和筛选功能 *(已完成)*
+- [x] 实现分页 *(已完成)*
 
 ### Step 5: 学生详情页实现 (2小时)
-- [ ] 创建 `/students/[id]/layout.tsx` (详情页布局)
-- [ ] 创建 `/students/[id]/page.tsx` (重定向到 profile)
-- [ ] 创建 `/students/[id]/profile/page.tsx`
-- [ ] 创建 `/students/[id]/timeline/page.tsx`
-- [ ] 创建 `/students/[id]/interventions/page.tsx`
-- [ ] 实现子导航栏
+- [x] 创建 `/students/[id]/layout.tsx` (详情页布局) *(已完成)*
+- [x] 创建 `/students/[id]/page.tsx` (重定向到 profile) *(已完成)*
+- [x] 创建 `/students/[id]/profile/page.tsx` *(已完成)*
+- [x] 创建 `/students/[id]/timeline/page.tsx` *(已完成)*
+- [x] 创建 `/students/[id]/interventions/page.tsx` *(已完成)*
+- [x] 实现子导航栏 *(已完成)*
 
 ### Step 6: 组件提取和优化 (1小时)
-- [ ] 提取 `PsychRadar` 组件
-- [ ] 提取 `TimelineView` 组件
-- [ ] 提取 `InterventionTable` 组件
-- [ ] 提取 `StudentCard` 组件
+- [x] 提取 `PsychRadar` 组件 *(已完成)*
+- [x] 提取 `TimelineView` 组件 *(已完成)*
+- [x] 提取 `InterventionTable` 组件 *(已完成)*
+- [x] 提取 `StudentCard` 组件 *(已完成)*
 
 ### Step 7: 集成测试 (30分钟)
-- [ ] 验证列表页数据加载
-- [ ] 验证详情页跳转
-- [ ] 验证子路由切换
-- [ ] 验证数据一致性
+- [x] 验证列表页数据加载 *(已完成)*
+- [x] 验证详情页跳转 *(已完成)*
+- [x] 验证子路由切换 *(已完成)*
+- [x] 验证数据一致性 *(已完成)*
 
 ---
 
@@ -646,27 +646,27 @@ export async function getStudentTimeline(studentId: string, limit = 50) {
 ## 10. 验收标准
 
 ### 功能验收
-- [ ] 学生列表页显示真实数据库数据（非 Mock）
-- [ ] 点击学生卡片跳转到详情页
-- [ ] 详情页 URL 包含学生 ID (`/students/stu-xxxxx`)
-- [ ] 心理雷达图显示 8 维度数据（来自 PsychProfile）
-- [ ] 生命周期时间轴显示真实事件（来自 TimelineEvent）
-- [ ] 干预记录表格显示真实数据（来自 InterventionRecord）
-- [ ] 支持搜索、筛选、分页
-- [ ] 页面加载时间 < 2 秒
+- [x] 学生列表页显示真实数据库数据（非 Mock） *(已完成)*
+- [x] 点击学生卡片跳转到详情页 *(已完成)*
+- [x] 详情页 URL 包含学生 ID (`/students/stu-xxxxx`) *(已完成)*
+- [x] 心理雷达图显示 8 维度数据（来自 PsychProfile） *(已完成)*
+- [x] 生命周期时间轴显示真实事件（来自 TimelineEvent） *(已完成)*
+- [x] 干预记录表格显示真实数据（来自 InterventionRecord） *(已完成)*
+- [x] 支持搜索、筛选、分页 *(已完成)*
+- [x] 页面加载时间 < 2 秒 *(已完成)*
 
 ### 数据对齐验收
-- [ ] Student 模型所有字段都有对应 UI 展示
-- [ ] PsychProfile 8 个维度都参与雷达图绘制
-- [ ] TimelineEvent 按时间倒序排列
-- [ ] InterventionRecord 按日期倒序排列
-- [ ] 风险等级颜色与系统一致 (HIGH=红色, MEDIUM=橙色, LOW=绿色)
+- [x] Student 模型所有字段都有对应 UI 展示 *(已完成)*
+- [x] PsychProfile 8 个维度都参与雷达图绘制 *(已完成)*
+- [x] TimelineEvent 按时间倒序排列 *(已完成)*
+- [x] InterventionRecord 按日期倒序排列 *(已完成)*
+- [x] 风险等级颜色与系统一致 (HIGH=红色, MEDIUM=橙色, LOW=绿色) *(已完成)*
 
 ### 代码质量验收
-- [ ] 使用 Server Actions 获取数据
-- [ ] 组件职责单一，可复用
-- [ ] TypeScript 类型完整
-- [ ] 错误处理完善（loading、error 状态）
+- [x] 使用 Server Actions 获取数据 *(已完成)*
+- [x] 组件职责单一，可复用 *(已完成)*
+- [x] TypeScript 类型完整 *(已完成)*
+- [x] 错误处理完善（loading、error 状态） *(已完成)*
 
 ---
 
