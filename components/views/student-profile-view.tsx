@@ -317,7 +317,7 @@ export function StudentProfileView() {
                   />
                 </RadarChart>
               </ResponsiveContainer>
-              {/* 中心指数 */}
+              {/* 中心综合评分 */}
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
                 <div className="text-2xl font-bold text-primary">78</div>
                 <div className="text-[10px] text-muted-foreground">综合</div>

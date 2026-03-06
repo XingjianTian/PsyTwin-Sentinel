@@ -13,7 +13,9 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts"
-// import { getStudentDetail, type StudentDetail } from "@/app/actions/students"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Radar, Clock, Check, AlertTriangle, Activity } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface StudentDetail {
   id: string
@@ -30,54 +32,43 @@ interface StudentDetail {
     overallScore: number
   } | null
 }
-import { Skeleton } from "@/components/ui/skeleton"
-import { Radar, TrendingUp, TrendingDown, Minus } from "lucide-react"
 
-// 维度映射配置
-const dimensionConfig = [
-  { key: "adversityQuotient", label: "逆商", description: "面对逆境时的应对能力" },
-  { key: "emotionalStability", label: "情绪稳定", description: "情绪调节与控制能力" },
-  { key: "socialTendency", label: "社交倾向", description: "人际交往的积极性" },
-  { key: "stressResistance", label: "抗压能力", description: "承受压力的能力" },
-  { key: "selfAwareness", label: "自我认知", description: "对自我的了解程度" },
-  { key: "empathy", label: "共情能力", description: "理解他人情感的能力" },
-  { key: "willpower", label: "意志力", description: "坚持目标的毅力" },
-  { key: "adaptability", label: "适应性", description: "适应环境变化的能力" },
+interface TimelineEvent {
+  id: string
+  date: string
+  title: string
+  description: string
+  status: "success" | "warning" | "active"
+}
+
+// Radar chart data structure
+const radarDataStatic = [
+  { dimension: "逆商", value: 82 },
+  { dimension: "情绪稳定", value: 68 },
+  { dimension: "社交倾向", value: 75 },
+  { dimension: "抗压能力", value: 85 },
+  { dimension: "自我认知", value: 78 },
+  { dimension: "共情能力", value: 90 },
+  { dimension: "意志力", value: 72 },
+  { dimension: "适应性", value: 80 },
 ]
 
 interface RadarTooltipProps {
   active?: boolean
-  payload?: Array<{ payload: { dimension: string; value: number; fullMark: number } }>
+  payload?: Array<{ payload: { dimension: string; value: number } }>
 }
 
 function RadarTooltipContent({ active, payload }: RadarTooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload
-  const config = dimensionConfig.find(c => c.label === d.dimension)
   return (
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
       <p className="font-medium text-foreground">{d.dimension}</p>
-      <p className="text-muted-foreground">{config?.description}</p>
-      <p className="mt-1 text-muted-foreground">
+      <p className="text-muted-foreground">
         评分：<span className="font-mono font-semibold text-primary">{d.value}</span>
-        <span className="text-muted-foreground/60">/100</span>
       </p>
     </div>
   )
-}
-
-// 获取趋势图标
-function getTrendIcon(value: number) {
-  if (value >= 80) return <TrendingUp className="h-3.5 w-3.5 text-success" />
-  if (value >= 60) return <Minus className="h-3.5 w-3.5 text-warning" />
-  return <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-}
-
-// 获取评分颜色
-function getScoreColor(value: number): string {
-  if (value >= 80) return "text-success"
-  if (value >= 60) return "text-warning"
-  return "text-destructive"
 }
 
 export default function StudentProfilePage() {
@@ -85,22 +76,32 @@ export default function StudentProfilePage() {
   const studentId = params.id as string
   
   const [student, setStudent] = useState<StudentDetail | null>(null)
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchStudent() {
+    async function fetchData() {
       try {
-        const response = await fetch(`/api/students/${studentId}`)
-        if (!response.ok) throw new Error("Failed to fetch student")
-        const data = await response.json()
-        setStudent(data)
+        const [studentRes, timelineRes] = await Promise.all([
+          fetch(`/api/students/${studentId}`),
+          fetch(`/api/students/${studentId}/timeline`),
+        ])
+        
+        if (!studentRes.ok) throw new Error("Failed to fetch student")
+        if (!timelineRes.ok) throw new Error("Failed to fetch timeline")
+        
+        const studentData = await studentRes.json()
+        const timelineData = await timelineRes.json()
+        
+        setStudent(studentData)
+        setTimelineEvents(timelineData.events?.slice(0, 5) || [])
       } catch (error) {
-        console.error("Failed to fetch student:", error)
+        console.error("Failed to fetch data:", error)
       } finally {
         setLoading(false)
       }
     }
-    fetchStudent()
+    fetchData()
   }, [studentId])
 
   if (loading) {
@@ -117,216 +118,115 @@ export default function StudentProfilePage() {
     )
   }
 
-  // 构建雷达图数据
-  const radarData = dimensionConfig.map(config => ({
-    dimension: config.label,
-    value: student.psychProfile![config.key as keyof typeof student.psychProfile] as number,
-    fullMark: 100,
-  }))
-
   const overallScore = student.psychProfile.overallScore
 
-  // 计算维度统计
-  const scores = radarData.map(d => d.value)
-  const maxScore = Math.max(...scores)
-  const minScore = Math.min(...scores)
-  const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-
-  // 找出最强和最弱维度
-  const strongestDimension = radarData.find(d => d.value === maxScore)
-  const weakestDimension = radarData.find(d => d.value === minScore)
+  // 使用静态数据展示雷达图（确保能正常显示）
+  // 实际项目中应该用 student.psychProfile 的数据
+  const radarData = [
+    { dimension: "逆商", value: student.psychProfile.adversityQuotient },
+    { dimension: "情绪稳定", value: student.psychProfile.emotionalStability },
+    { dimension: "社交倾向", value: student.psychProfile.socialTendency },
+    { dimension: "抗压能力", value: student.psychProfile.stressResistance },
+    { dimension: "自我认知", value: student.psychProfile.selfAwareness },
+    { dimension: "共情能力", value: student.psychProfile.empathy },
+    { dimension: "意志力", value: student.psychProfile.willpower },
+    { dimension: "适应性", value: student.psychProfile.adaptability },
+  ]
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {/* Radar Chart */}
-      <Card className="border-border bg-card shadow-sm overflow-hidden lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary/10 p-1.5">
-              <Radar className="h-5 w-5 text-primary" />
-            </div>
+    <div className="flex flex-col gap-4">
+      {/* Top: Radar + Timeline */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Radar Chart */}
+        <Card className="border-border bg-card shadow-sm lg:col-span-2">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <Radar className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-semibold text-foreground">
-              心理画像雷达
+              多维心理雷达图
             </CardTitle>
-          </div>
-          <Badge variant="outline" className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-primary/20">
-            <span className="mr-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            实时数据
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[350px] w-full relative">
-            {/* 背景装饰 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 rounded-lg" />
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="70%">
-                <defs>
-                  <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="radarStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#7C3AED" />
-                    <stop offset="100%" stopColor="#3B82F6" />
-                  </linearGradient>
-                </defs>
-                <PolarGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                <PolarAngleAxis
-                  dataKey="dimension"
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-                  tickLine={false}
-                />
-                <PolarRadiusAxis
-                  domain={[0, 100]}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }}
-                  axisLine={false}
-                  tickCount={5}
-                />
-                <Tooltip content={<RadarTooltipContent />} />
-                <RechartsRadar
-                  name="心理指标"
-                  dataKey="value"
-                  stroke="url(#radarStroke)"
-                  strokeWidth={2.5}
-                  fill="url(#radarGradient)"
-                  fillOpacity={0.35}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-            {/* 中心指数 */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-              <div className={`text-2xl font-bold ${getScoreColor(overallScore)}`}>
-                {overallScore}
+            <Badge variant="outline" className="ml-auto">
+              综合 {overallScore}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData} outerRadius="75%">
+                  <PolarGrid stroke="#E5E7EB" />
+                  <PolarAngleAxis
+                    dataKey="dimension"
+                    tick={{ fill: "#6B7280", fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis
+                    domain={[0, 100]}
+                    tick={{ fill: "#9CA3AF", fontSize: 10 }}
+                    axisLine={false}
+                  />
+                  <Tooltip content={<RadarTooltipContent />} />
+                  <RechartsRadar
+                    name="心理指标"
+                    dataKey="value"
+                    stroke="#7C3AED"
+                    fill="#7C3AED"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+              {/* 中心综合评分 */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                <div className="text-2xl font-bold text-primary">{overallScore}</div>
+                <div className="text-[10px] text-muted-foreground">综合</div>
               </div>
-              <div className="text-[10px] text-muted-foreground">综合评分</div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* 维度指标 */}
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {radarData.slice(0, 4).map((item, idx) => (
-              <div 
-                key={item.dimension} 
-                className="flex flex-col items-center gap-1 rounded-lg bg-secondary/30 px-2 py-2 text-center"
-              >
-                <div 
-                  className="h-2 w-2 rounded-full" 
-                  style={{ background: `hsl(${idx * 60 + 260}, 70%, 55%)` }} 
-                />
-                <span className="text-[10px] text-muted-foreground">{item.dimension}</span>
-                <span className={`text-sm font-semibold ${getScoreColor(item.value)}`}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 grid grid-cols-4 gap-2">
-            {radarData.slice(4).map((item, idx) => (
-              <div 
-                key={item.dimension} 
-                className="flex flex-col items-center gap-1 rounded-lg bg-secondary/30 px-2 py-2 text-center"
-              >
-                <div 
-                  className="h-2 w-2 rounded-full" 
-                  style={{ background: `hsl(${(idx + 4) * 60 + 260}, 70%, 55%)` }} 
-                />
-                <span className="text-[10px] text-muted-foreground">{item.dimension}</span>
-                <span className={`text-sm font-semibold ${getScoreColor(item.value)}`}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Summary */}
-      <div className="flex flex-col gap-4">
-        {/* Overall Score Card */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              综合心理评分
+        {/* Timeline */}
+        <Card className="border-border bg-card shadow-sm">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <Clock className="h-5 w-5 text-chart-4" />
+            <CardTitle className="text-base font-semibold text-foreground">
+              全心理周期追踪
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-4xl font-bold ${getScoreColor(overallScore)}`}>
-                {overallScore}
-              </span>
-              <span className="text-sm text-muted-foreground">/100</span>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {overallScore >= 80 
-                ? "心理状态良好，各项指标均衡发展"
-                : overallScore >= 60
-                ? "心理状态正常，部分维度可加强"
-                : "建议关注，需进行心理干预"
-              }
-            </p>
+            <ScrollArea className="h-[300px] pr-3">
+              <div className="relative ml-3 border-l-2 border-border/60 pl-6">
+                {timelineEvents.map((event, i) => (
+                  <div key={i} className="relative mb-6 last:mb-0">
+                    <div
+                      className={`absolute -left-[31px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                        event.status === "warning"
+                          ? "border-warning bg-warning/20"
+                          : event.status === "active"
+                            ? "border-primary bg-primary/20"
+                            : "border-success bg-success/20"
+                      }`}
+                    >
+                      {event.status === "warning" ? (
+                        <AlertTriangle className="h-2.5 w-2.5 text-warning" />
+                      ) : event.status === "active" ? (
+                        <Activity className="h-2.5 w-2.5 text-primary" />
+                      ) : (
+                        <Check className="h-2.5 w-2.5 text-success" />
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      {event.date}
+                    </p>
+                    <p className="mt-0.5 text-sm font-medium text-foreground">
+                      {event.title}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground/80">
+                      {event.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
-
-        {/* Dimension Stats */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              维度统计
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">平均分</span>
-              <span className="font-semibold">{avgScore}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">最高分</span>
-              <span className="font-semibold text-success">{maxScore}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">最低分</span>
-              <span className="font-semibold text-destructive">{minScore}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Strongest Dimension */}
-        {strongestDimension && (
-          <Card className="border-success/30 bg-success/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-success flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                优势维度
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-semibold">{strongestDimension.dimension}</p>
-              <p className="text-2xl font-bold text-success">{strongestDimension.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {dimensionConfig.find(c => c.label === strongestDimension.dimension)?.description}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Weakest Dimension */}
-        {weakestDimension && (
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-destructive flex items-center gap-2">
-                <TrendingDown className="h-4 w-4" />
-                关注维度
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-semibold">{weakestDimension.dimension}</p>
-              <p className="text-2xl font-bold text-destructive">{weakestDimension.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {dimensionConfig.find(c => c.label === weakestDimension.dimension)?.description}
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   )
@@ -337,14 +237,14 @@ function ProfileSkeleton() {
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardContent className="p-6">
-          <Skeleton className="h-[350px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         </CardContent>
       </Card>
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
     </div>
   )
 }

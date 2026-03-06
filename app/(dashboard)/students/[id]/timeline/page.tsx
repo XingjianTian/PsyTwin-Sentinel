@@ -120,7 +120,7 @@ export default function StudentTimelinePage() {
     return (
       <Card>
         <CardContent className="flex h-64 items-center justify-center">
-          <p className="text-muted-foreground">暂无生命周期事件</p>
+          <p className="text-muted-foreground">暂无心理周期事件</p>
         </CardContent>
       </Card>
     )
@@ -195,7 +195,7 @@ export default function StudentTimelinePage() {
         <Card className="bg-muted/50">
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">
-              生命周期事件记录了学生从入学到当前的所有心理健康相关活动，包括测评、干预、训练等。
+              心理周期事件记录了学生从入学到当前的所有心理健康相关活动，包括测评、干预、训练等。
             </p>
           </CardContent>
         </Card>
@@ -206,7 +206,7 @@ export default function StudentTimelinePage() {
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
           <Clock className="h-5 w-5 text-chart-4" />
           <CardTitle className="text-base font-semibold text-foreground">
-            全生命周期追踪
+            全心理周期追踪
           </CardTitle>
           <Badge variant="outline" className="ml-auto">
             {filteredEvents.length} 条记录

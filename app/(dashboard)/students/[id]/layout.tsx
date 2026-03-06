@@ -42,7 +42,7 @@ import { riskLevelConfig } from "@/lib/student-config"
 
 const tabs = [
   { id: "profile", label: "心理画像", icon: Radar, href: "/profile" },
-  { id: "timeline", label: "生命周期", icon: Clock, href: "/timeline" },
+  { id: "timeline", label: "心理周期", icon: Clock, href: "/timeline" },
   { id: "interventions", label: "干预记录", icon: FileText, href: "/interventions" },
 ]
 

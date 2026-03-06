@@ -12,3 +12,17 @@ node_modules/
 .DS_Store
 #ZQ|# Symlinks
 心图-PsyTwin-校园心理健康数字孪生解决方案.md
+
+
+# Screenshots (temporary verification images)
+screenshots/
+
+# Playwright CLI logs and snapshots
+.playwright-cli/
+
+# Batch scripts (local helpers)
+*.bat
+
+# References and temp files
+references/
+public/reference-*.png

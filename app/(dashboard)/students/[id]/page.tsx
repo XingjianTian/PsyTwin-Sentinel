@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation"
 
-export default function StudentDetailRedirect({ params }: { params: { id: string } }) {
-  redirect(`/students/${params.id}/profile`)
+export default async function StudentDetailRedirect({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
+  const { id } = await params
+  redirect(`/students/${id}/profile`)
 }

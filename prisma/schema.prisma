@@ -103,7 +103,6 @@ model Student {
   // 小程序关系
   posts               Post[]
   appointments        Appointment[]
-  chatMessages        ChatMessage[]
   warnings            Warning[]
 
   @@index([className])
