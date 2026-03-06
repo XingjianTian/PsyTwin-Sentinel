@@ -159,15 +159,24 @@ git commit -m "docs: 更新 CHANGELOG"
 git push origin main
 ```
 
-**重要说明**：
-- CHANGELOG 基于 Git 标签生成，未打标签的提交会自动归入 `[Unreleased]`
-- 如需发布版本，请使用：`git tag -a v0.x.x -m "版本说明"`
 - **禁止**跳过此步骤，确保变更历史完整可追溯
+
+### ⚠️ 重要修正：混合维护模式
+
+经过实践，采用 **手动维护 [Unreleased] + 自动生成版本历史** 的混合模式：
+
 ```
-1. 完成代码修改
-2. 询问用户："是否提交并推送？"（提供提交信息摘要）
-3. 用户确认后执行 commit + push
+CHANGELOG.md 结构：
+├── [Unreleased]     ← 手动维护（开发过程中随时更新）
+├── 0.2.0            ← auto-changelog 生成（基于 Git 标签）
+├── 0.1.0            ← auto-changelog 生成（基于 Git 标签）
+└── ...
 ```
+
+**何时运行 auto-changelog：**
+- ✅ 发版时（打标签后）
+- ✅ 定期同步（每周或需要时）
+- ❌ 不是每次 push 都运行（会覆盖手动维护的 [Unreleased]）
 
 ### 错误流程（禁止）
 - ❌ 自动 commit
