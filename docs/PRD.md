@@ -572,9 +572,9 @@
 - [x] 智能干预建议生成 *(app/actions/ai-services.ts)*
 - [x] 风险评估报告自动生成 *(基于多模态数据的 AI 分析)*
 
-### Phase 4: 部署与优化
+### Phase 4: 部署与优化 ✅ 系统路由改造完成 *(2026-03-06 已重构为真实 App Router 路由)*
 
-- [ ] 生产环境构建
+- [x] Next.js App Router 路由架构重构 *(已创建物理路由: /dashboard, /risk-trace, /students 等)*
 - [ ] 性能优化
 - [ ] 安全加固
 - [ ] 移动端适配

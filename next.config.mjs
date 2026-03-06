@@ -23,16 +23,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_NAME: 'PsyTwin Sentinel',
     NEXT_PUBLIC_APP_VERSION: '1.0.0',
   },
-  // 重定向配置（可选）
-  async redirects() {
-    return [
-      {
-        source: '/dashboard',
-        destination: '/',
-        permanent: true,
-      },
-    ]
-  },
+
 }
 
 export default nextConfig

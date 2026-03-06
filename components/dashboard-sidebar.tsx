@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Globe,
   ScanSearch,
@@ -15,47 +17,53 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type PageKey = "全域态势" | "风险溯源" | "VR端数据" | "学生档案" | "干预记录" | "AI配置" | "系统设置" | "心理咨询室" | "设备管理" | "多模态数据流"
+interface MenuItem {
+  icon: React.ElementType
+  label: string
+  href: string
+}
 
-const menuGroups = [
+interface MenuGroup {
+  label: string
+  items: MenuItem[]
+}
+
+const menuGroups: MenuGroup[] = [
   {
     label: "态势分析",
     items: [
-      { icon: Globe, label: "全域态势" as PageKey },
-      { icon: ScanSearch, label: "风险溯源" as PageKey },
-      { icon: Gamepad2, label: "VR端数据" as PageKey },
+      { icon: Globe, label: "全域态势", href: "/dashboard" },
+      { icon: ScanSearch, label: "风险溯源", href: "/risk-trace" },
+      { icon: Gamepad2, label: "VR端数据", href: "/vr-dashboard" },
     ],
   },
   {
     label: "资源管理",
     items: [
-      { icon: DoorOpen, label: "心理咨询室" as PageKey },
-      { icon: Monitor, label: "设备管理" as PageKey },
-      { icon: Activity, label: "多模态数据流" as PageKey },
+      { icon: DoorOpen, label: "心理咨询室", href: "/consultation-room" },
+      { icon: Monitor, label: "设备管理", href: "/device-management" },
+      { icon: Activity, label: "多模态数据流", href: "/multimodal" },
     ],
   },
   {
     label: "学生管理",
     items: [
-      { icon: Users, label: "学生档案" as PageKey },
-      { icon: FileText, label: "干预记录" as PageKey },
+      { icon: Users, label: "学生档案", href: "/students" },
+      { icon: FileText, label: "干预记录", href: "/interventions" },
     ],
   },
   {
     label: "系统配置",
     items: [
-      { icon: BrainCircuit, label: "AI配置" as PageKey },
-      { icon: Settings, label: "系统设置" as PageKey },
+      { icon: BrainCircuit, label: "AI配置", href: "/ai-config" },
+      { icon: Settings, label: "系统设置", href: "/system-settings" },
     ],
   },
 ]
 
-interface DashboardSidebarProps {
-  activePage: PageKey
-  onPageChange: (page: PageKey) => void
-}
+export function DashboardSidebar() {
+  const pathname = usePathname()
 
-export function DashboardSidebar({ activePage, onPageChange }: DashboardSidebarProps) {
   return (
     <aside className="flex h-full w-56 flex-col border-r border-border bg-sidebar">
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -69,11 +77,11 @@ export function DashboardSidebar({ activePage, onPageChange }: DashboardSidebarP
             </div>
             <ul className="flex flex-col gap-1">
               {group.items.map((item) => {
-                const isActive = item.label === activePage
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (
-                  <li key={item.label}>
-                    <button
-                      onClick={() => onPageChange(item.label)}
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                         isActive
@@ -91,7 +99,7 @@ export function DashboardSidebar({ activePage, onPageChange }: DashboardSidebarP
                       {isActive && (
                         <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
                       )}
-                    </button>
+                    </Link>
                   </li>
                 )
               })}

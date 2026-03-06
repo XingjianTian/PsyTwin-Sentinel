@@ -655,9 +655,9 @@ npm run start   # 启动生产服务器
 - [x] AI 风险评估页面 UI + API *(components/views/risk-trace-view.tsx, app/actions/ai-services.ts)*
 - [x] AI 配置页面 UI + API *(components/views/ai-config-view.tsx, app/api/documents)*
 
-### Phase 4: 部署与优化
+### Phase 4: 部署与优化 ✅ 系统路由改造完成 *(2026-03-06 已重构为真实 App Router 路由)*
 
-- [ ] 生产环境构建
+- [x] Next.js App Router 路由架构重构 *(物理路由: /dashboard, /risk-trace, /students 等)*
 - [ ] 性能优化
 - [ ] 安全加固
 
@@ -669,11 +669,11 @@ npm run start   # 启动生产服务器
 
 | 页面 | 路径 | 功能 |
 |------|------|------|
-| 全域态势 | `/` | 心理热力分布图、预警雷达、干预转化漏斗 |
+| 全域态势 | `/dashboard` | 心理热力分布图、预警雷达、干预转化漏斗 |
 | 风险溯源 | `/risk-trace` | 高危预警工单列表、AI风险评估结论、推荐策略 |
 | VR端数据 | `/vr-dashboard` | 设备状态监控、会话数据流 |
-| 学生档案 | `/student-profile` | 心理画像雷达、全生命周期追踪 |
-| 干预记录 | `/intervention-records` | 咨询记录管理、统计报表 |
+| 学生档案 | `/students` | 心理画像雷达、全生命周期追踪 |
+| 干预记录 | `/interventions` | 咨询记录管理、统计报表 |
 | AI配置 | `/ai-config` | 模型参数配置、Prompt模板管理 |
 | 系统设置 | `/system-settings` | 用户管理、系统参数配置 |
 | 心理咨询室 | `/consultation-room` | 预约管理、咨询记录 |
