@@ -27,8 +27,7 @@ interface WorkOrderDetailSheetProps {
 
 const statusColor: Record<WorkOrderDetail["status"], string> = {
   已结案: "border-success/30 bg-success/10 text-success",
-  跟进中: "border-chart-4/30 bg-chart-4/10 text-chart-4",
-  待分配: "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
+  待处理: "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
   干预中: "border-primary/30 bg-primary/10 text-primary",
 }
 
@@ -183,24 +182,31 @@ export function WorkOrderDetailSheet({
                 <div className="rounded-lg border border-border/70 bg-muted/20 p-3">
                   <p className="text-xs text-muted-foreground">快捷状态操作</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="border border-sky-300/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20"
-                      onClick={() => void handleStatusUpdate(WorkOrderStatus.FOLLOWING)}
-                      disabled={isSubmitting}
-                    >
-                      设为跟进中
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="border border-violet-300/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
-                      onClick={() => void handleStatusUpdate(WorkOrderStatus.IN_PROGRESS)}
-                      disabled={isSubmitting}
-                    >
-                      设为干预中
-                    </Button>
+                    {detail.status === "待处理" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="border border-violet-300/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
+                        onClick={() => void handleStatusUpdate(WorkOrderStatus.IN_PROGRESS)}
+                        disabled={isSubmitting}
+                      >
+                        设为干预中
+                      </Button>
+                    )}
+                    {detail.status === "干预中" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="border border-success/40 bg-success/10 text-success hover:bg-success/20"
+                        onClick={() => void handleStatusUpdate(WorkOrderStatus.COMPLETED)}
+                        disabled={isSubmitting}
+                      >
+                        设为已完成
+                      </Button>
+                    )}
+                    {detail.status === "已结案" && (
+                      <p className="text-sm text-muted-foreground">该工单已结案</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -71,7 +71,21 @@ export function RiskTraceView() {
     try {
       await confirmIntervention(selectedOrder.id)
       setActionMessage(`已确认干预：${selectedOrder.name}`)
-      await loadOrders()
+      
+      // 获取当前选中工单的索引
+      const currentIndex = workOrders.findIndex(o => o.id === selectedOrder.id)
+      // 加载新数据
+      const orders = await getRiskWorkOrders()
+      setWorkOrders(orders)
+      
+      // 自动选择下一条工单
+      if (orders.length > 0) {
+        // 如果当前不是最后一条，选择下一条；否则选择第一条
+        const nextIndex = currentIndex < orders.length - 1 ? currentIndex : 0
+        setSelectedOrder(orders[nextIndex] ?? null)
+      } else {
+        setSelectedOrder(null)
+      }
     } catch {
       setError("确认干预失败，请稍后重试")
     } finally {
@@ -197,66 +211,83 @@ export function RiskTraceView() {
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 推荐策略 Tag 突出显示 */}
-            <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gradient-to-r from-chart-4/10 to-transparent p-4">
-              <span className="flex items-center gap-2 text-sm font-semibold text-chart-4">
-                <ShieldCheck className="h-5 w-5" />
-                推荐策略：
-              </span>
-              <Badge className="border-destructive/50 bg-destructive/15 px-3 py-1 text-sm font-bold text-destructive">
-                立即干预
-              </Badge>
-              <Badge className="border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600">
-                心理咨询
-              </Badge>
-              <Badge className="border-blue-500/50 bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600">
-                辅导员关注
-              </Badge>
-              <Badge className="border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600">
-                家长沟通
-              </Badge>
-            </div>
+            {workOrders.length > 0 && (
+              <>
+                {/* 推荐策略 Tag 突出显示 */}
+                <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gradient-to-r from-chart-4/10 to-transparent p-4">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-chart-4">
+                    <ShieldCheck className="h-5 w-5" />
+                    推荐策略：
+                  </span>
+                  <Badge className="border-destructive/50 bg-destructive/15 px-3 py-1 text-sm font-bold text-destructive">
+                    立即干预
+                  </Badge>
+                  <Badge className="border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600">
+                    心理咨询
+                  </Badge>
+                  <Badge className="border-blue-500/50 bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600">
+                    辅导员关注
+                  </Badge>
+                  <Badge className="border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600">
+                    家长沟通
+                  </Badge>
+                </div>
 
-            <ScrollArea className="h-[480px]">
-              <pre className="whitespace-pre-wrap font-sans text-m leading-relaxed text-secondary-foreground/90">
-                {aiAssessment}
-              </pre>
-            </ScrollArea>
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => {
-                  if (!selectedOrder) return
-                  openDetail()
-                }}
-                disabled={!selectedOrder || isSubmitting}
-                className="rounded-lg border border-border bg-secondary/30 px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                查看工单详情
-              </button>
-              <button
-                onClick={handleConfirmIntervention}
-                disabled={!selectedOrder || isSubmitting}
-                className="rounded-lg border border-success/30 bg-success/10 px-5 py-2 text-sm font-medium text-success shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all hover:bg-success/20 hover:shadow-[0_0_25px_rgba(34,197,94,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  确认干预
-                </span>
-              </button>
-              <button
-                onClick={handleResolveWarning}
-                disabled={!selectedOrder || isSubmitting}
-                className="rounded-lg border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary shadow-[0_0_15px_rgba(0,212,255,0.15)] transition-all hover:bg-primary/20 hover:shadow-[0_0_25px_rgba(0,212,255,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4" />
-                  解除预警
-                </span>
-              </button>
-            </div>
-            {actionMessage ? (
-              <p className="text-right text-xs text-success">{actionMessage}</p>
-            ) : null}
+                <ScrollArea className="h-[480px]">
+                  <pre className="whitespace-pre-wrap font-sans text-m leading-relaxed text-secondary-foreground/90">
+                    {aiAssessment}
+                  </pre>
+                </ScrollArea>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      if (!selectedOrder) return
+                      openDetail()
+                    }}
+                    disabled={!selectedOrder || isSubmitting}
+                    className="rounded-lg border border-border bg-secondary/30 px-5 py-2 text-sm font-medium text-foreground transition-all hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    查看工单详情
+                  </button>
+                  <button
+                    onClick={handleConfirmIntervention}
+                    disabled={!selectedOrder || isSubmitting}
+                    className="rounded-lg border border-success/30 bg-success/10 px-5 py-2 text-sm font-medium text-success shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all hover:bg-success/20 hover:shadow-[0_0_25px_rgba(34,197,94,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      确认干预
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleResolveWarning}
+                    disabled={!selectedOrder || isSubmitting}
+                    className="rounded-lg border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary shadow-[0_0_15px_rgba(0,212,255,0.15)] transition-all hover:bg-primary/20 hover:shadow-[0_0_25px_rgba(0,212,255,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4" />
+                      解除预警
+                    </span>
+                  </button>
+                </div>
+                {actionMessage ? (
+                  <p className="text-right text-xs text-success">{actionMessage}</p>
+                ) : null}
+              </>
+            )}
+
+            {workOrders.length === 0 && (
+              <div className="flex h-[480px] flex-col items-center justify-center space-y-4 text-center">
+                <div className="rounded-full border-4 border-success/20 bg-success/10 p-8">
+                  <ShieldCheck className="h-16 w-16 text-success" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">太好了！</h3>
+                <p className="max-w-md text-muted-foreground">
+                  目前还没有高危工单需要处理。所有学生的心理健康状态都在正常范围内。
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -13,12 +13,8 @@ import {
   Check,
 } from "lucide-react"
 
-import {
-  assignInterventionCounselor,
-  getInterventionWorkOrders,
-  setInterventionStatus,
-  type InterventionWorkOrder,
-} from "@/app/actions/intervention-records"
+import { getInterventionWorkOrders, setInterventionStatus, type InterventionWorkOrder } from "@/app/actions/intervention-records"
+import { WorkOrderStatus } from "@prisma/client"
 import { WorkOrderDetailSheet } from "@/components/work-order-detail-sheet"
 
 /* ── Filter options ── */
@@ -26,8 +22,6 @@ const riskLevels = ["全部", "高危", "中危", "低危"]
 
 const statusColor: Record<string, string> = {
   "已结案": "border-success/30 bg-success/10 text-success",
-  "跟进中": "border-chart-4/30 bg-chart-4/10 text-chart-4",
-  "待分配": "border-muted-foreground/30 bg-muted/30 text-muted-foreground",
   "干预中": "border-primary/30 bg-primary/10 text-primary",
 }
 
@@ -72,29 +66,15 @@ export function InterventionRecordsView() {
     return true
   })
 
-  async function markInProgress(orderId: string) {
+  async function markCompleted(orderId: string) {
     setActingId(orderId)
     setActionMessage(null)
     try {
-      await setInterventionStatus(orderId, "IN_PROGRESS")
-      setActionMessage(`工单 ${orderId} 已更新为干预中`)
+      await setInterventionStatus(orderId, WorkOrderStatus.COMPLETED)
+      setActionMessage(`工单 ${orderId} 已设为结案`)
       await loadOrders()
     } catch {
-      setError("状态更新失败，请稍后重试")
-    } finally {
-      setActingId(null)
-    }
-  }
-
-  async function assignCounselor(orderId: string) {
-    setActingId(orderId)
-    setActionMessage(null)
-    try {
-      await assignInterventionCounselor(orderId, "刘芳")
-      setActionMessage(`工单 ${orderId} 已指派给 刘芳`)
-      await loadOrders()
-    } catch {
-      setError("指派咨询师失败，请稍后重试")
+      setError("设为结案失败，请稍后重试")
     } finally {
       setActingId(null)
     }
@@ -239,20 +219,15 @@ export function InterventionRecordsView() {
                           >
                             详情
                           </button>
-                          <button
-                            onClick={() => markInProgress(order.id)}
-                            disabled={actingId === order.id}
-                            className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            设为干预中
-                          </button>
-                          <button
-                            onClick={() => assignCounselor(order.id)}
-                            disabled={actingId === order.id}
-                            className="rounded border border-chart-4/30 bg-chart-4/10 px-2 py-1 text-xs text-chart-4 transition-colors hover:bg-chart-4/20 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            指派刘芳
-                          </button>
+                          {order.status !== "已结案" && (
+                            <button
+                              onClick={() => markCompleted(order.id)}
+                              disabled={actingId === order.id}
+                              className="rounded border border-success/30 bg-success/10 px-2 py-1 text-xs text-success transition-colors hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              设为结案
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
