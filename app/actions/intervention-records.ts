@@ -12,7 +12,7 @@ export interface InterventionWorkOrder {
   riskLevel: "高危" | "中危" | "低危"
   method: string
   counselor: string
-  status: "已结案" | "跟进中" | "待分配" | "干预中"
+  status: "已结案" | "干预中"
   date: string
   detail: string
 }
@@ -25,9 +25,7 @@ function mapRiskLevel(level: RiskLevel): InterventionWorkOrder["riskLevel"] {
 
 function mapStatus(status: WorkOrderStatus): InterventionWorkOrder["status"] {
   if (status === WorkOrderStatus.COMPLETED) return "已结案"
-  if (status === WorkOrderStatus.FOLLOWING) return "跟进中"
-  if (status === WorkOrderStatus.IN_PROGRESS) return "干预中"
-  return "待分配"
+  return "干预中"
 }
 
 function formatDate(date: Date): string {
@@ -42,6 +40,11 @@ function formatDate(date: Date): string {
 
 export async function getInterventionWorkOrders(): Promise<InterventionWorkOrder[]> {
   const orders = await prisma.workOrder.findMany({
+    where: {
+      status: {
+        in: [WorkOrderStatus.IN_PROGRESS, WorkOrderStatus.COMPLETED],
+      },
+    },
     include: {
       student: {
         select: {
@@ -84,7 +87,7 @@ export async function assignInterventionCounselor(workOrderId: string, counselor
     where: { id: workOrderId },
     data: {
       counselor: counselor.trim(),
-      status: WorkOrderStatus.FOLLOWING,
+      status: WorkOrderStatus.IN_PROGRESS,
     },
   })
 }

@@ -13,7 +13,7 @@ export interface WorkOrderDetail {
   riskLevel: "高危" | "中危" | "低危"
   method: string
   counselor: string
-  status: "已结案" | "跟进中" | "待分配" | "干预中"
+  status: "已结案" | "干预中" | "待处理"
   date: string
   detail: string
   summary: string
@@ -27,9 +27,8 @@ function mapRiskLevel(level: RiskLevel): WorkOrderDetail["riskLevel"] {
 
 function mapStatus(status: WorkOrderStatus): WorkOrderDetail["status"] {
   if (status === WorkOrderStatus.COMPLETED) return "已结案"
-  if (status === WorkOrderStatus.FOLLOWING) return "跟进中"
   if (status === WorkOrderStatus.IN_PROGRESS) return "干预中"
-  return "待分配"
+  return "待处理"
 }
 
 function formatDate(date: Date): string {

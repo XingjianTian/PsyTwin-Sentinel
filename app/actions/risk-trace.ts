@@ -32,7 +32,7 @@ export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
   const orders = await prisma.workOrder.findMany({
     where: {
       riskLevel: { in: [RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.LOW] },
-      status: { not: WorkOrderStatus.COMPLETED },
+      status: WorkOrderStatus.PENDING, // 只查询待处理的工单
     },
     include: {
       student: {
