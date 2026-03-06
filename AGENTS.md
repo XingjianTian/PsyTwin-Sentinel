@@ -141,6 +141,32 @@ look_at(file_path: "screenshots/xxx.png", goal: "描述/分析视觉效果")
 1. 完成代码修改
 2. 询问用户："是否提交并推送？"（提供提交信息摘要）
 3. 用户确认后执行 commit + push
+4. **自动调用 auto-changelog 更新 CHANGELOG**
+5. **自动提交并推送 CHANGELOG 更新**
+```
+
+### 变更日志 (CHANGELOG) 自动更新规则
+
+每次执行 `git push` 后，**必须**自动执行以下操作：
+
+```bash
+# 生成 CHANGELOG
+npm run changelog:generate
+
+# 添加并提交 CHANGELOG 更新
+git add docs/CHANGELOG.md
+git commit -m "docs: 更新 CHANGELOG"
+git push origin main
+```
+
+**重要说明**：
+- CHANGELOG 基于 Git 标签生成，未打标签的提交会自动归入 `[Unreleased]`
+- 如需发布版本，请使用：`git tag -a v0.x.x -m "版本说明"`
+- **禁止**跳过此步骤，确保变更历史完整可追溯
+```
+1. 完成代码修改
+2. 询问用户："是否提交并推送？"（提供提交信息摘要）
+3. 用户确认后执行 commit + push
 ```
 
 ### 错误流程（禁止）
