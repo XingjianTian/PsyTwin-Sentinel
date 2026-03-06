@@ -1,0 +1,251 @@
+// ============================================
+// PsyTwin Pocket 小程序扩展 Schema
+// 补充字段和表，与 Sentinel 后端对齐
+// ============================================
+
+// 1. 扩展 Student 表（添加登录相关字段）
+// 在现有 Student model 中添加：
+/*
+model Student {
+  // ... 已有字段 ...
+  
+  // 小程序扩展字段
+  phone       String?   @unique  // 手机号登录
+  avatar      String?           // 头像URL
+  nickname    String?           // 昵称
+  role        String    @default("student") // student/teacher
+  badges      Json?             // 成就徽章数组
+  stats       Json?             // 统计数据
+  settings    Json?             // 用户设置
+  lastLoginAt DateTime? @map("last_login_at")
+  
+  // 关系
+  posts       Post[]
+  appointments Appointment[]
+  chatMessages ChatMessage[]
+  warnings    Warning[]
+}
+*/
+
+// 2. 新建 Teacher 表
+model Teacher {
+  id                String   @id @default(uuid())
+  teacherId         String   @unique @map("teacher_id") // 工号
+  name              String
+  phone             String   @unique
+  avatar            String?
+  department        String
+  title             String   // 职称：心理咨询师/心理教师
+  qualifications    String[] // 资质认证
+  workStats         Json?    @map("work_stats") // {totalCounseling, totalHours, satisfactionRate}
+  badges            Json?    // 荣誉资质
+  role              String   @default("teacher")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // 关系
+  appointments      Appointment[]
+  warnings          Warning[] @relation("AssignedWarnings")
+  
+  @@map("teachers")
+}
+
+// 3. 新建 Appointment 预约表
+model Appointment {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  teacherId   String?  @map("teacher_id")
+  roomId      String?  @map("room_id")
+  type        AppointmentType // COUNSELING/VR/GROUP
+  date        DateTime
+  timeSlot    String   @map("time_slot") // 09:00-09:50
+  status      AppointmentStatus @default(PENDING) // PENDING/CONFIRMED/COMPLETED/CANCELLED
+  reason      String?  // 预约事由
+  cancelReason String? @map("cancel_reason")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // 关系
+  student     Student  @relation(fields: [studentId], references: [id])
+  teacher     Teacher? @relation(fields: [teacherId], references: [id])
+  
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([date])
+  @@index([status])
+  @@map("appointments")
+}
+
+enum AppointmentType {
+  COUNSELING
+  VR
+  GROUP
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// 4. 新建 Post 心墙动态表
+model Post {
+  id          String   @id @default(uuid())
+  authorId    String   @map("author_id") // 学生ID
+  content     String
+  images      String[] // 图片URL数组
+  location    String?
+  isAnonymous Boolean  @default(false) @map("is_anonymous")
+  tags        String[] // 标签：mood/study/life/emotion
+  likeCount   Int      @default(0) @map("like_count")
+  commentCount Int     @default(0) @map("comment_count")
+  riskScore   Float?   @map("risk_score") // AI风险评估分数
+  status      PostStatus @default(ACTIVE)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // 关系
+  author      Student  @relation(fields: [authorId], references: [id])
+  comments    Comment[]
+  
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  authorId  String   @map("author_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@index([postId])
+  @@map("comments")
+}
+
+enum PostStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+// 5. 新建 ChatMessage 消息表
+model ChatSession {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  type        SessionType // AI/COUNSELOR
+  title       String
+  lastMessage String?  @map("last_message")
+  lastMessageAt DateTime? @map("last_message_at")
+  unreadCount Int      @default(0) @map("unread_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  messages    ChatMessage[]
+  
+  @@index([studentId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  senderId   String   @map("sender_id") // user/ai/counselor
+  type       MessageType @default(TEXT) // TEXT/EMOTION_TAG/CBT_CARD
+  content    String
+  emotionTag String?  @map("emotion_tag") // 😢难过 😡愤怒 😰焦虑
+  cbtCard    Json?    @map("cbt_card") // CBT卡片数据
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+enum SessionType {
+  AI
+  COUNSELOR
+}
+
+enum MessageType {
+  TEXT
+  EMOTION_TAG
+  CBT_CARD
+  AUDIO
+}
+
+// 6. 新建 Warning 心理风险预警表（与 Alert 区分）
+// Alert: 系统自动检测的生理/行为预警
+// Warning: 心理风险预警（人工+AI评估）
+model Warning {
+  id            String      @id @default(uuid())
+  studentId     String      @map("student_id")
+  riskLevel     RiskLevel   // HIGH/MEDIUM/LOW
+  riskReason    String      @map("risk_reason") // 触发原因
+  triggerSource String      @map("trigger_source") // CHAT/POST/ASSESSMENT
+  triggerContent String?    @map("trigger_content") // 触发内容原文
+  status        WarningStatus @default(PENDING) // PENDING/PROCESSING/RESOLVED
+  assignedTo    String?     @map("assigned_to") // 负责教师ID
+  lastAction    Json?       @map("last_action") // {type, content, time}
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  
+  student       Student     @relation(fields: [studentId], references: [id])
+  counselor     Teacher?    @relation("AssignedWarnings", fields: [assignedTo], references: [id])
+  
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([status])
+  @@index([assignedTo])
+  @@map("warnings")
+}
+
+enum WarningStatus {
+  PENDING
+  PROCESSING
+  RESOLVED
+}
+
+// 7. 新建 Schedule 排班表（教师可预约时间）
+model Schedule {
+  id        String   @id @default(uuid())
+  teacherId String   @map("teacher_id")
+  dayOfWeek Int      @map("day_of_week") // 0-6 周日到周六
+  startTime String   @map("start_time") // 09:00
+  endTime   String   @map("end_time") // 17:00
+  isAvailable Boolean @default(true) @map("is_available")
+  maxAppointments Int @default(4) @map("max_appointments")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([teacherId])
+  @@index([dayOfWeek])
+  @@map("schedules")
+}
+
+// 8. 扩展 Faculty 表（添加小程序相关）
+/*
+model Faculty {
+  // ... 已有字段 ...
+  
+  // 小程序展示用
+  description String?
+  icon        String?
+  sortOrder   Int     @default(0) @map("sort_order")
+}
+*/
+
+// ============================================
+// 数据迁移说明
+// ============================================
+// 1. 先添加新表（Teacher, Appointment, Post, ChatSession, ChatMessage, Warning, Schedule）
+// 2. 再扩展 Student 表（添加 phone, avatar, nickname, role, badges, stats, settings）
+// 3. 运行 npx prisma migrate dev --name add_pocket_extensions
+// 4. 运行 npx prisma db seed 填充 mock 数据
