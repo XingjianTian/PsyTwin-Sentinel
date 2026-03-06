@@ -62,12 +62,37 @@ enum Sentiment {
   NEUTRAL
 }
 
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CommentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
 enum DocStatus {
   VECTORIZED
   PROCESSING
   FAILED
 }
-
 model Student {
   id                  String               @id @default(uuid())
   name                String
@@ -80,9 +105,11 @@ model Student {
   riskLevel           RiskLevel            @default(LOW) @map("risk_level")
   // 小程序扩展字段
   phone               String?              @unique
+  passwordHash        String?              @map("password_hash")
   avatar              String?
   nickname            String?
   role                String               @default("student")
+  status              StudentStatus        @default(ACTIVE)
   badges              Json?
   stats               Json?
   settings            Json?
@@ -102,6 +129,8 @@ model Student {
   currentInRooms      ConsultationRoom[]   @relation("CurrentRoomStudent")
   // 小程序关系
   posts               Post[]
+  comments            Comment[]
+  chatSessions        ChatSession[]
   appointments        Appointment[]
   warnings            Warning[]
 
@@ -426,7 +455,10 @@ model Appointment {
   timeSlot     String            @map("time_slot")
   status       AppointmentStatus @default(PENDING)
   reason       String?
-  cancelReason String?           @map("cancel_reason")
+  cancelReason    String?           @map("cancel_reason")
+  meetingLink     String?           @map("meeting_link")
+  feedbackScore   Int?              @map("feedback_score")
+  feedbackContent String?           @map("feedback_content")
   createdAt    DateTime          @default(now()) @map("created_at")
   updatedAt    DateTime          @updatedAt @map("updated_at")
   student      Student           @relation(fields: [studentId], references: [id])
@@ -450,6 +482,7 @@ enum AppointmentStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+  NO_SHOW
 }
 
 model Post {
@@ -463,6 +496,7 @@ model Post {
   likeCount    Int        @default(0) @map("like_count")
   commentCount Int        @default(0) @map("comment_count")
   riskScore    Float?     @map("risk_score")
+  viewCount    Int        @default(0) @map("view_count")
   status       PostStatus @default(ACTIVE)
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -475,19 +509,28 @@ model Post {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  postId    String   @map("post_id")
-  authorId  String   @map("author_id")
+  id        String        @id @default(uuid())
+  postId    String        @map("post_id")
+  authorId  String        @map("author_id")
+  parentId  String?       @map("parent_id")
+  replyToId String?       @map("reply_to_id")
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likeCount Int           @default(0) @map("like_count")
+  status    CommentStatus @default(ACTIVE)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    Student       @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
   @@map("comments")
 }
 
 enum PostStatus {
   ACTIVE
+  PENDING
   HIDDEN
   DELETED
 }
@@ -497,30 +540,43 @@ model ChatSession {
   studentId     String        @map("student_id")
   type          SessionType
   title         String
+  targetId      String?       @map("target_id")
+  targetName    String?       @map("target_name")
+  targetAvatar  String?       @map("target_avatar")
   lastMessage   String?       @map("last_message")
   lastMessageAt DateTime?     @map("last_message_at")
   unreadCount   Int           @default(0) @map("unread_count")
+  status        SessionStatus @default(ACTIVE)
   createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
   messages      ChatMessage[]
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
+  @@index([status])
+  @@index([lastMessageAt])
   @@map("chat_sessions")
 }
 
 model ChatMessage {
-  id         String      @id @default(uuid())
-  sessionId  String      @map("session_id")
-  senderId   String      @map("sender_id")
-  type       MessageType @default(TEXT)
+  id         String        @id @default(uuid())
+  sessionId  String        @map("session_id")
+  senderId   String        @map("sender_id")
+  type       MessageType   @default(TEXT)
   content    String
-  emotionTag String?     @map("emotion_tag")
-  cbtCard    Json?       @map("cbt_card")
-  isRead     Boolean     @default(false) @map("is_read")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  seq        Int           @default(0)
+  emotionTag String?       @map("emotion_tag")
+  cbtCard    Json?         @map("cbt_card")
+  status     MessageStatus @default(SENT)
+  isRead     Boolean       @default(false) @map("is_read")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  session    ChatSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([createdAt])
+  @@index([seq])
+  @@index([status])
   @@map("chat_messages")
 }
 

@@ -181,3 +181,12 @@ look_at(file_path: "screenshots/xxx.png", goal: "描述/分析视觉效果")
 - 本规范对本仓库全部智能体生效，默认纳入任务完成定义（Definition of Done）。
 
 ---
+
+
+**【跨端协作与 API 生产规范 (API Producer)】**
+本项目作为 PsyTwin 生态的中枢大脑，负责为移动端（PsyTwin-Pocket）提供 API 接口支持。为了确保跨端协作不串台，所有智能体必须严格遵守以下契约纪律：
+1. **边界隔离**：绝对禁止在此项目中编写任何微信小程序（WXML/WXSS/TDesign）相关代码。本项目的 UI 仅限 Next.js (React)。
+2. **契约驱动生产 (API First)**：
+   - 在开发任何供小程序调用的接口（如 `/api/pocket/...`）之前，必须先读取docs目录下的 `api_contract.md` 软链接文件。
+   - 接口的入参（Request）、出参（Response）和 HTTP 状态码，必须与 `api_contract.md` 中的定义**100% 保持一致**。
+   - 如果业务需求导致接口结构发生变更，**必须优先修改 `api_contract.md`**，然后再修改后端代码。
