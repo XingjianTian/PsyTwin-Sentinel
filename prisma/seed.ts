@@ -478,6 +478,125 @@ async function main() {
     })
   }
 
+  // Seed PsychProfile for all students
+  const psychProfiles = [
+    { studentId: 'stu-zhangyu', adversityQuotient: 82, emotionalStability: 75, socialTendency: 68, stressResistance: 85, selfAwareness: 78, empathy: 72, willpower: 80, adaptability: 76 },
+    { studentId: 'stu-liusiyuan', adversityQuotient: 68, emotionalStability: 62, socialTendency: 75, stressResistance: 70, selfAwareness: 72, empathy: 85, willpower: 65, adaptability: 78 },
+    { studentId: 'stu-chenyuqing', adversityQuotient: 55, emotionalStability: 48, socialTendency: 58, stressResistance: 52, selfAwareness: 60, empathy: 65, willpower: 50, adaptability: 55 },
+    { studentId: 'stu-zhangmingyuan', adversityQuotient: 72, emotionalStability: 68, socialTendency: 82, stressResistance: 75, selfAwareness: 70, empathy: 78, willpower: 73, adaptability: 80 },
+    { studentId: 'stu-wuzhiyuan', adversityQuotient: 48, emotionalStability: 45, socialTendency: 52, stressResistance: 50, selfAwareness: 55, empathy: 58, willpower: 48, adaptability: 52 },
+    { studentId: 'stu-zhouhangyu', adversityQuotient: 78, emotionalStability: 72, socialTendency: 85, stressResistance: 80, selfAwareness: 75, empathy: 80, willpower: 78, adaptability: 82 },
+    { studentId: 'stu-zhaotianyu', adversityQuotient: 52, emotionalStability: 50, socialTendency: 55, stressResistance: 48, selfAwareness: 58, empathy: 62, willpower: 50, adaptability: 54 },
+    { studentId: 'stu-huangsimeng', adversityQuotient: 70, emotionalStability: 75, socialTendency: 72, stressResistance: 68, selfAwareness: 74, empathy: 80, willpower: 72, adaptability: 76 },
+    { studentId: 'stu-linzhihao', adversityQuotient: 85, emotionalStability: 82, socialTendency: 78, stressResistance: 88, selfAwareness: 85, empathy: 75, willpower: 86, adaptability: 84 },
+    { studentId: 'stu-wangyuyan', adversityQuotient: 65, emotionalStability: 68, socialTendency: 62, stressResistance: 70, selfAwareness: 72, empathy: 78, willpower: 66, adaptability: 70 },
+  ]
+
+  for (let i = 0; i < psychProfiles.length; i++) {
+    const pp = psychProfiles[i]
+    const overallScore = Math.round(
+      (pp.adversityQuotient + pp.emotionalStability + pp.socialTendency + 
+       pp.stressResistance + pp.selfAwareness + pp.empathy + pp.willpower + pp.adaptability) / 8
+    )
+    
+    await prisma.psychProfile.upsert({
+      where: { studentId: pp.studentId },
+      update: {
+        adversityQuotient: pp.adversityQuotient,
+        emotionalStability: pp.emotionalStability,
+        socialTendency: pp.socialTendency,
+        stressResistance: pp.stressResistance,
+        selfAwareness: pp.selfAwareness,
+        empathy: pp.empathy,
+        willpower: pp.willpower,
+        adaptability: pp.adaptability,
+        overallScore,
+      },
+      create: {
+        id: `pp-${pp.studentId}`,
+        studentId: pp.studentId,
+        adversityQuotient: pp.adversityQuotient,
+        emotionalStability: pp.emotionalStability,
+        socialTendency: pp.socialTendency,
+        stressResistance: pp.stressResistance,
+        selfAwareness: pp.selfAwareness,
+        empathy: pp.empathy,
+        willpower: pp.willpower,
+        adaptability: pp.adaptability,
+        overallScore,
+      },
+    })
+  }
+
+  // Seed TimelineEvents for all students
+  const timelineEvents = [
+    { studentId: 'stu-zhangyu', date: '2025年9月', title: '入学普测完成', desc: 'SCL-90/SDS/SAS三量表联合筛查，评分正常范围', status: 'success' },
+    { studentId: 'stu-zhangyu', date: '2025年10月', title: 'VR脱敏训练（第一期）', desc: '完成社交焦虑VR脱敏训练6次，焦虑指数下降22%', status: 'success' },
+    { studentId: 'stu-zhangyu', date: '2026年1月', title: '期末复查', desc: '各项指标恢复正常，情绪稳定性提升18%', status: 'success' },
+    { studentId: 'stu-zhangyu', date: '2026年2月', title: '新学期跟踪中', desc: '持续监测中，当前状态良好', status: 'active' },
+    { studentId: 'stu-liusiyuan', date: '2025年9月', title: '入学普测完成', desc: 'SCL-90测评显示轻度焦虑倾向', status: 'warning' },
+    { studentId: 'stu-liusiyuan', date: '2025年10月', title: 'VR正念训练', desc: '开始VR正念冥想训练，睡眠质量改善', status: 'success' },
+    { studentId: 'stu-liusiyuan', date: '2025年12月', title: '定期咨询面谈', desc: '与咨询师建立信任关系，情绪管理能力提升', status: 'success' },
+    { studentId: 'stu-liusiyuan', date: '2026年2月', title: '复查评估', desc: '焦虑水平显著下降，继续保持', status: 'success' },
+    { studentId: 'stu-chenyuqing', date: '2025年9月', title: '入学普测完成', desc: '测评显示抑郁高风险，触发预警', status: 'warning' },
+    { studentId: 'stu-chenyuqing', date: '2025年10月', title: '预警响应', desc: '辅导员关注，转介至心理咨询中心', status: 'warning' },
+    { studentId: 'stu-chenyuqing', date: '2025年11月', title: '初次评估', desc: '建立干预方案，开始CBT疗法', status: 'success' },
+    { studentId: 'stu-chenyuqing', date: '2025年12月', title: '定期咨询', desc: '认知重构进展顺利，抑郁症状减轻', status: 'success' },
+    { studentId: 'stu-chenyuqing', date: '2026年1月', title: '复查评估', desc: '抑郁风险评估降低至中风险', status: 'success' },
+    { studentId: 'stu-chenyuqing', date: '2026年2月', title: '持续跟踪', desc: '继续保持CBT疗法，状态稳定', status: 'active' },
+    { studentId: 'stu-zhangmingyuan', date: '2025年9月', title: '入学普测完成', desc: '各项指标正常，心理素质良好', status: 'success' },
+    { studentId: 'stu-zhangmingyuan', date: '2025年11月', title: '团体辅导', desc: '参加人际沟通团体辅导，社交能力提升', status: 'success' },
+    { studentId: 'stu-zhangmingyuan', date: '2026年2月', title: '定期跟踪', desc: '状态保持良好，无需特殊干预', status: 'active' },
+    { studentId: 'stu-wuzhiyuan', date: '2025年9月', title: '入学普测完成', desc: '测评显示社交回避倾向', status: 'warning' },
+    { studentId: 'stu-wuzhiyuan', date: '2025年10月', title: '宿舍关系问题', desc: '室友反馈沟通困难，辅导员介入', status: 'warning' },
+    { studentId: 'stu-wuzhiyuan', date: '2025年11月', title: 'VR社交训练', desc: '开始VR社交焦虑脱敏训练', status: 'success' },
+    { studentId: 'stu-wuzhiyuan', date: '2025年12月', title: '团体辅导', desc: '参加社交技能团体辅导', status: 'success' },
+    { studentId: 'stu-wuzhiyuan', date: '2026年2月', title: '持续改善', desc: '社交互动有所改善，继续跟踪', status: 'active' },
+    { studentId: 'stu-zhouhangyu', date: '2025年9月', title: '入学普测完成', desc: '各项指标优秀，心理素质突出', status: 'success' },
+    { studentId: 'stu-zhouhangyu', date: '2025年10月', title: '心理委员培训', desc: '参加班级心理委员培训', status: 'success' },
+    { studentId: 'stu-zhouhangyu', date: '2026年2月', title: '健康监测', desc: '状态保持良好', status: 'active' },
+    { studentId: 'stu-zhaotianyu', date: '2025年9月', title: '入学普测完成', desc: '测评显示情绪不稳定', status: 'warning' },
+    { studentId: 'stu-zhaotianyu', date: '2025年10月', title: '情绪波动预警', desc: '多次情绪爆发，触发预警', status: 'warning' },
+    { studentId: 'stu-zhaotianyu', date: '2025年11月', title: '危机干预', desc: '情绪危机干预，建立安全计划', status: 'success' },
+    { studentId: 'stu-zhaotianyu', date: '2025年12月', title: '定期咨询', desc: '情绪调节能力有所改善', status: 'success' },
+    { studentId: 'stu-zhaotianyu', date: '2026年2月', title: '持续跟踪', desc: '情绪管理仍需关注', status: 'active' },
+    { studentId: 'stu-huangsimeng', date: '2025年9月', title: '入学普测完成', desc: '各项指标正常', status: 'success' },
+    { studentId: 'stu-huangsimeng', date: '2025年12月', title: '考试压力', desc: '期末考试压力大，参加减压活动', status: 'warning' },
+    { studentId: 'stu-huangsimeng', date: '2026年2月', title: '状态恢复', desc: '假期调整，状态恢复良好', status: 'success' },
+    { studentId: 'stu-linzhihao', date: '2025年9月', title: '入学普测完成', desc: '各项指标优秀', status: 'success' },
+    { studentId: 'stu-linzhihao', date: '2025年11月', title: '运动减压', desc: '参加体育活动和正念训练', status: 'success' },
+    { studentId: 'stu-linzhihao', date: '2026年2月', title: '保持健康', desc: '身心状态良好', status: 'active' },
+    { studentId: 'stu-wangyuyan', date: '2025年9月', title: '入学普测完成', desc: '轻度社交焦虑', status: 'warning' },
+    { studentId: 'stu-wangyuyan', date: '2025年10月', title: 'VR训练', desc: '开始VR社交焦虑脱敏训练', status: 'success' },
+    { studentId: 'stu-wangyuyan', date: '2025年12月', title: '改善明显', desc: '社交焦虑显著减轻', status: 'success' },
+    { studentId: 'stu-wangyuyan', date: '2026年2月', title: '巩固训练', desc: '继续VR训练，巩固效果', status: 'active' },
+  ]
+
+  for (let i = 0; i < timelineEvents.length; i++) {
+    const te = timelineEvents[i]
+    await prisma.timelineEvent.upsert({
+      where: { 
+        id: `te-${te.studentId}-${te.date.replace(/[^\w]/g, '')}`,
+      },
+      update: {
+        date: te.date,
+        title: te.title,
+        description: te.desc,
+        status: te.status,
+      },
+      create: {
+        id: `te-${te.studentId}-${te.date.replace(/[^\w]/g, '')}`,
+        studentId: te.studentId,
+        date: te.date,
+        title: te.title,
+        description: te.desc,
+        status: te.status,
+      },
+    })
+  }
+
+  console.log('Seed completed successfully.')
+
   console.log('Seed completed successfully.')
 }
 
