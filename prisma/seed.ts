@@ -640,9 +640,68 @@ async function main() {
       title: '心理咨询师',
       role: 'COUNSELOR',
       status: 'ACTIVE',
-      qualifications: ['国家三级心理咨询师'],
     },
   })
+
+// 创建示例预约数据
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  
+  await prisma.appointment.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        studentId: 'stu-zhangyu',
+        teacherId: (await prisma.teacher.findFirst({ where: { teacherId: 'T0001' } }))?.id,
+        type: 'COUNSELING',
+        date: tomorrow,
+        timeSlot: '09:00-09:50',
+        status: 'CONFIRMED',
+        reason: '焦虑情绪咨询',
+      },
+      {
+        studentId: 'stu-liusiyuan',
+        teacherId: (await prisma.teacher.findFirst({ where: { teacherId: 'T0002' } }))?.id,
+        type: 'COUNSELING',
+        date: tomorrow,
+        timeSlot: '14:00-14:50',
+        status: 'PENDING',
+        reason: '学业压力咨询',
+      },
+    ].filter(a => a.teacherId),
+  })
+  
+  // 创建咨询师排班
+  const teacher1 = await prisma.teacher.findFirst({ where: { teacherId: 'T0001' } })
+  const teacher2 = await prisma.teacher.findFirst({ where: { teacherId: 'T0002' } })
+  
+  if (teacher1) {
+    await prisma.schedule.createMany({
+      skipDuplicates: true,
+      data: [
+        { teacherId: teacher1.id, dayOfWeek: 1, startTime: '09:00', endTime: '12:00', isAvailable: true },
+        { teacherId: teacher1.id, dayOfWeek: 1, startTime: '14:00', endTime: '17:00', isAvailable: true },
+        { teacherId: teacher1.id, dayOfWeek: 2, startTime: '09:00', endTime: '12:00', isAvailable: true },
+        { teacherId: teacher1.id, dayOfWeek: 3, startTime: '14:00', endTime: '17:00', isAvailable: true },
+        { teacherId: teacher1.id, dayOfWeek: 4, startTime: '09:00', endTime: '12:00', isAvailable: true },
+        { teacherId: teacher1.id, dayOfWeek: 5, startTime: '14:00', endTime: '17:00', isAvailable: true },
+      ],
+    })
+  }
+  
+  if (teacher2) {
+    await prisma.schedule.createMany({
+      skipDuplicates: true,
+      data: [
+        { teacherId: teacher2.id, dayOfWeek: 1, startTime: '14:00', endTime: '17:00', isAvailable: true },
+        { teacherId: teacher2.id, dayOfWeek: 2, startTime: '09:00', endTime: '12:00', isAvailable: true },
+        { teacherId: teacher2.id, dayOfWeek: 3, startTime: '14:00', endTime: '17:00', isAvailable: true },
+        { teacherId: teacher2.id, dayOfWeek: 4, startTime: '09:00', endTime: '12:00', isAvailable: true },
+        { teacherId: teacher2.id, dayOfWeek: 5, startTime: '14:00', endTime: '17:00', isAvailable: true },
+      ],
+    })
+  }
 
   console.log('Seed completed successfully.')
 }
