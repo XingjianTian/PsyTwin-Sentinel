@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getStudents } from "@/app/actions/students"
+import { sanitizeStudentForList } from "@/lib/sanitization"
 
 /**
  * GET /api/students
@@ -29,7 +30,25 @@ export async function GET(request: NextRequest) {
       riskLevel,
     })
 
-    return NextResponse.json(result)
+    // 获取用户角色（从 middleware 设置的 header）
+    const userRole = request.headers.get("x-user-role") || ""
+    const isAdmin = userRole === "ADMIN"
+    const isCounselor = userRole === "COUNSELOR"
+    
+    // 对结果进行脱敏处理
+    const sanitizedStudents = result.students.map((student: any) => {
+      if (isAdmin || isCounselor) {
+        // 管理员和咨询师可以看到完整数据
+        return student
+      }
+      // 其他用户看到脱敏数据
+      return sanitizeStudentForList(student)
+    })
+
+    return NextResponse.json({
+      ...result,
+      students: sanitizedStudents,
+    })
   } catch (error) {
     console.error("[API] Failed to fetch students:", error)
     return NextResponse.json(

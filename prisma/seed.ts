@@ -1,3 +1,4 @@
+import { hashPassword } from "../lib/auth"
 import {
   AlertType,
   DeviceStatus,
@@ -595,7 +596,53 @@ async function main() {
     })
   }
 
-  console.log('Seed completed successfully.')
+  // 创建管理员账号
+  const adminPassword = await hashPassword('admin123')
+  await prisma.user.upsert({
+    where: { email: 'admin@psytwin.com' },
+    update: {},
+    create: {
+      email: 'admin@psytwin.com',
+      name: '系统管理员',
+      passwordHash: adminPassword,
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    },
+  })
+
+  // 创建示例教师账号
+  const teacherPassword = await hashPassword('teacher123')
+  await prisma.teacher.upsert({
+    where: { phone: '13800000001' },
+    update: {},
+    create: {
+      teacherId: 'T0001',
+      name: '王老师',
+      phone: '13800000001',
+      passwordHash: teacherPassword,
+      department: '心理咨询中心',
+      title: '高级心理咨询师',
+      role: 'COUNSELOR',
+      status: 'ACTIVE',
+      qualifications: ['国家二级心理咨询师', '沙盘游戏治疗师'],
+    },
+  })
+
+  await prisma.teacher.upsert({
+    where: { phone: '13800000002' },
+    update: {},
+    create: {
+      teacherId: 'T0002',
+      name: '李老师',
+      phone: '13800000002',
+      passwordHash: teacherPassword,
+      department: '学生工作处',
+      title: '心理咨询师',
+      role: 'COUNSELOR',
+      status: 'ACTIVE',
+      qualifications: ['国家三级心理咨询师'],
+    },
+  })
 
   console.log('Seed completed successfully.')
 }

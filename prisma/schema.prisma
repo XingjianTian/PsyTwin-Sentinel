@@ -56,6 +56,19 @@ enum RoomStatus {
   MAINTENANCE
 }
 
+enum UserRole {
+  ADMIN           // 系统管理员
+  COUNSELOR       // 心理咨询师
+  ASSISTANT       // 咨询助理/辅导员
+  TEACHER         // 普通教师
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
 enum Sentiment {
   POSITIVE
   NEGATIVE
@@ -430,18 +443,23 @@ model Teacher {
   teacherId      String          @unique @map("teacher_id")
   name           String
   phone          String          @unique
+  passwordHash   String          @map("password_hash")
   avatar         String?
   department     String
   title          String
   qualifications String[]
   workStats      Json?           @map("work_stats")
   badges         Json?
-  role           String          @default("teacher")
+  role           UserRole        @default(TEACHER)
+  status         TeacherStatus   @default(ACTIVE)
+  lastLoginAt    DateTime?       @map("last_login_at")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   appointments   Appointment[]
   warnings       Warning[]       @relation("AssignedWarnings")
 
+  @@index([role])
+  @@index([status])
   @@map("teachers")
 }
 
@@ -635,4 +653,48 @@ model Schedule {
   @@index([teacherId])
   @@index([dayOfWeek])
   @@map("schedules")
+}
+
+// ============================================
+// 系统用户与认证
+// ============================================
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  name        String
+  passwordHash String   @map("password_hash")
+  avatar      String?
+  role        UserRole  @default(TEACHER)
+  status      UserStatus @default(ACTIVE)
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  action      String
+  resource    String
+  resourceId  String?  @map("resource_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
