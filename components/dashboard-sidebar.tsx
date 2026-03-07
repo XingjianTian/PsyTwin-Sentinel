@@ -40,9 +40,9 @@ const menuGroups: MenuGroup[] = [
   {
     label: "资源管理",
     items: [
-      { icon: DoorOpen, label: "心理咨询室", href: "/consultation-room" },
-      { icon: Monitor, label: "设备管理", href: "/device-management" },
       { icon: Activity, label: "多模态数据流", href: "/multimodal" },
+      { icon: DoorOpen, label: "疗愈空间", href: "/consultation-room" },
+      { icon: Monitor, label: "设备管理", href: "/device-management" },
     ],
   },
   {

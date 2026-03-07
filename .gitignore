@@ -26,3 +26,4 @@ screenshots/
 # References and temp files
 references/
 public/reference-*.png
+.opencode

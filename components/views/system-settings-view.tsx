@@ -16,11 +16,12 @@ import {
   Bell,
   Database,
   ChevronRight,
+  RefreshCw,
   Users,
 } from "lucide-react"
 const settingsTabs = [
   { label: "基础设置", icon: Settings },
-  { label: "设备管理", icon: Cpu },
+
   { label: "用户管理", icon: Users },
   { label: "数据同步", icon: Cloud },
   { label: "安全策略", icon: Shield },
@@ -93,7 +94,7 @@ const statusConfig = {
 }
 
 export function SystemSettingsView() {
-  const [activeTab, setActiveTab] = useState("设备管理")
+  const [activeTab, setActiveTab] = useState("基础设置")
   const [switches, setSwitches] = useState<Record<string, boolean>>(
     Object.fromEntries(switchSettings.map((s) => [s.label, s.defaultOn]))
   )
@@ -137,158 +138,7 @@ export function SystemSettingsView() {
 
       {/* ── Right: Content panel ── */}
       <div className="flex-1">
-        {activeTab === "设备管理" && (
-          <div className="flex flex-col gap-4">
-            {/* Pico devices */}
-            <Card className="border-border bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Glasses className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Pico VR 头显设备
-                </CardTitle>
-                <Badge className="ml-auto border-primary/30 bg-primary/10 font-mono text-xs text-primary">
-                  {picoDevices.filter((d) => d.status === "在线").length}/{picoDevices.length} 在线
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {picoDevices.map((device) => (
-                    <div
-                      key={device.id}
-                      className="rounded-lg border border-border/50 bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${statusConfig[device.status].dot}`} />
-                        <span className="text-sm font-medium text-foreground">{device.name}</span>
-                      </div>
-                      <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>型号</span>
-                          <span className="text-foreground">{device.model}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>状态</span>
-                          <span className={statusConfig[device.status].text}>{device.status}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>电量</span>
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={`h-full rounded-full ${
-                                  device.battery > 50 ? "bg-success" : device.battery > 20 ? "bg-warning" : "bg-destructive"
-                                }`}
-                                style={{ width: `${device.battery}%` }}
-                              />
-                            </div>
-                            <span className="font-mono">{device.battery}%</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>位置</span>
-                          <span className="text-foreground">{device.location}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>上次同步</span>
-                          <span className="text-foreground">{device.lastSync}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Band devices */}
-            <Card className="border-border bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Watch className="h-5 w-5 text-chart-4" />
-                <CardTitle className="text-base font-semibold text-foreground">
-                  生理监测手环
-                </CardTitle>
-                <Badge className="ml-auto border-chart-4/30 bg-chart-4/10 font-mono text-xs text-chart-4">
-                  {bandDevices.filter((d) => d.status === "在线").length}/{bandDevices.length} 在线
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {bandDevices.map((device) => (
-                    <div
-                      key={device.id}
-                      className="rounded-lg border border-border/50 bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${statusConfig[device.status].dot}`} />
-                        <span className="text-sm font-medium text-foreground">{device.name}</span>
-                      </div>
-                      <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                          <span>型号</span>
-                          <span className="text-foreground">{device.model}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>状态</span>
-                          <span className={statusConfig[device.status].text}>{device.status}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>电量</span>
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={`h-full rounded-full ${
-                                  device.battery > 50 ? "bg-success" : device.battery > 20 ? "bg-warning" : "bg-destructive"
-                                }`}
-                                style={{ width: `${device.battery}%` }}
-                              />
-                            </div>
-                            <span className="font-mono">{device.battery}%</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>位置</span>
-                          <span className="text-foreground">{device.location}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>上次同步</span>
-                          <span className="text-foreground">{device.lastSync}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* System switches */}
-            <Card className="border-border bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Database className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-base font-semibold text-foreground">
-                  系统功能开关
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-4">
-                  {switchSettings.map((setting) => (
-                    <div
-                      key={setting.label}
-                      className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 px-4 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{setting.label}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{setting.desc}</p>
-                      </div>
-                      <ToggleSwitch
-                        checked={switches[setting.label]}
-                        onChange={(v) => setSwitches((prev) => ({ ...prev, [setting.label]: v }))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {activeTab === "基础设置" && (
           <Card className="border-border bg-card shadow-sm">

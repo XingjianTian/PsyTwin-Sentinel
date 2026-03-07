@@ -116,13 +116,7 @@ export default function StudentsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">学生档案</h1>
-        <p className="text-sm text-muted-foreground">
-          共 <span className="font-semibold text-foreground">{pagination.total}</span> 名学生
-        </p>
-      </div>
+
 
       {/* Filter Bar */}
       <Card className="border-border bg-card shadow-sm">

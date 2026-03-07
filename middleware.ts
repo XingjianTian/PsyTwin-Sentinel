@@ -46,10 +46,16 @@ export function middleware(request: NextRequest) {
 
   // API 路由认证检查
   if (pathname.startsWith("/api/")) {
+    // 首先尝试从 Header 获取 token
     const authHeader = request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ")
+    let token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
       : null;
+
+    // 如果没有 Header，尝试从 Cookie 获取
+    if (!token) {
+      token = request.cookies.get("token")?.value || null;
+    }
 
     if (!token) {
       return NextResponse.json(

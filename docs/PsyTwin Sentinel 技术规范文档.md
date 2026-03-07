@@ -832,7 +832,7 @@ npm run start   # 启动生产服务器
 | 干预记录 | `/interventions` | 咨询记录管理、统计报表 |
 | AI配置 | `/ai-config` | 模型参数配置、Prompt模板管理 |
 | 系统设置 | `/system-settings` | 用户管理、系统参数配置 |
-| 心理咨询室 | `/consultation-room` | 预约管理、咨询记录 |
+| 疗愈空间 | `/consultation-room` | 预约管理、咨询记录、VR体验、减压舱 |
 | 设备管理 | `/device-management` | VR设备状态监控 |
 | 多模态数据流 | `/multimodal` | 实时生理/语音/视觉/脑电数据流 |
 
@@ -889,7 +889,7 @@ npm run start   # 启动生产服务器
 │   └── VR端数据
 │
 ├── 资源管理
-│   ├── 心理咨询室
+│   ├── 疗愈空间
 │   ├── 设备管理
 │   └── 多模态数据流
 │
