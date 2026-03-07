@@ -1,7 +1,9 @@
 # PsyTwin Sentinel 产品需求文档 (PRD)
 
 > **产品名称**：PsyTwin Sentinel（心理孪生·哨兵）
-> **版本**：v1.0
+> **版本**：v1.1
+> **更新日期**：2026-03-07
+> **状态**：已对齐项目现状（数据库模型、路由结构、组件状态）
 > **更新日期**：2026-03-03
 > **状态**：已完成前端原型开发
 
@@ -514,6 +516,43 @@
 
 | 实体 | 说明 | 关联 |
 |------|------|------|
+| Student | 学生档案 | 1:N → Alert, WorkOrder, InterventionRecord, VRSession, TimelineEvent |
+| PsychProfile | 心理画像 | 1:1 → Student |
+| Faculty | 院系/班级 | 1:N → Student |
+| Alert | 风险预警 | N:1 → Student |
+| WorkOrder | 预警工单 | N:1 → Student |
+| InterventionRecord | 干预记录 | N:1 → Student |
+| VRSession | VR 会话记录 | N:1 → Student, N:1 → VRScene |
+| VRScene | VR 场景 | 1:N → VRSession |
+| Device | 设备 (VR/手环/脑电) | 1:N → RoomDevice |
+| ConsultationRoom | 咨询室 | 1:N → RoomDevice |
+| Teacher | 教师/咨询师 | 1:N → Appointment, Warning |
+| Appointment | 心理咨询预约 | N:1 → Student, N:1 → Teacher |
+| AIDocument | RAG 知识库文档 | - |
+| AIPromptPreset | AI Prompt 预设 | - |
+| User | 系统用户 | - |
+
+### 5.2 枚举值
+
+| 枚举 | 值 |
+|------|-----|
+| RiskLevel | HIGH, MEDIUM, LOW |
+| AlertType | HEART_RATE_SURGE, VOICE_TREMOR, SLEEP_ANOMALY, EMOTION_SWING, SOCIAL_WITHDRAWAL, GAIT_ANOMALY, EATING_ANOMALY |
+| WorkOrderStatus | PENDING, IN_PROGRESS, COMPLETED |
+| InterventionType | REGULAR_INTERVIEW, CBT_THERAPY, GROUP_COUNSELING, CRISIS_INTERVENTION, INITIAL_ASSESSMENT |
+| DeviceType | VR, BRACELET, EEG |
+| DeviceStatus | ONLINE, OFFLINE, IN_USE, MAINTENANCE |
+| RoomStatus | AVAILABLE, IN_USE, MAINTENANCE |
+| UserRole | ADMIN, COUNSELOR, ASSISTANT, TEACHER |
+| AppointmentType | COUNSELING, VR, GROUP |
+| AppointmentStatus | PENDING, CONFIRMED, COMPLETED, CANCELLED, NO_SHOW |
+| Sentiment | POSITIVE, NEGATIVE, NEUTRAL |
+| WarningStatus | PENDING, PROCESSING, RESOLVED |
+
+### 5.1 核心实体
+
+| 实体 | 说明 | 关联 |
+|------|------|------|
 | Student | 学生档案 | 1:N → Alert, Intervention, VRSession |
 | Alert | 风险预警 | N:1 → Student |
 | Intervention | 干预记录 | N:1 → Student |
@@ -650,5 +689,8 @@
 **文档版本历史**
 
 | 版本 | 日期 | 说明 |
+|------|------|------|
+| v1.1 | 2026-03-07 | 对齐项目现状：更新数据模型、枚举值定义以匹配实际 Schema |
+| v1.0 | 2026-03-03 | 初始版本，基于前端原型整理 |
 |------|------|------|
 | v1.0 | 2026-03-03 | 初始版本，基于前端原型整理 |

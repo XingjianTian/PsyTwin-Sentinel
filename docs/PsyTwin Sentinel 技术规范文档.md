@@ -1,7 +1,8 @@
 # PsyTwin Sentinel 技术规范文档
 
 > **项目名称**：PsyTwin Sentinel（心理孪生·哨兵）
-> **版本**：v2.0（Next.js 全栈重构版）
+> **版本**：v2.1（已对齐项目现状）
+> **更新日期**：2026-03-07
 > **更新日期**：2026-03-06
 
 ---
@@ -453,104 +454,258 @@ Response: Intervention
 
 ### 5.1 核心模型
 
+详细 Schema 参见 `prisma/schema.prisma`，主要模型包括：
+
 ```prisma
+// 学生档案（含小程序扩展字段）
 model Student {
-  id            String    @id @default(cuid())
-  studentId     String    @unique
-  name          String
-  anonymousName String    @default("")
-  department    String
-  grade         String
-  mbti          String?
-  riskLevel     RiskLevel @default(GREEN)
+  id                  String    @id @default(uuid())
+  name                String
+  studentNo           String    @unique
+  className           String
+  facultyId           String?
+  gender              String?
+  birthDate           DateTime?
+  mbti                String?
+  riskLevel           RiskLevel @default(LOW)
+  // 小程序扩展字段
+  phone               String?   @unique
+  passwordHash        String?
+  avatar              String?
+  nickname            String?
+  role                String    @default("student")
+  status              StudentStatus @default(ACTIVE)
+  badges              Json?
+  stats               Json?
+  settings            Json?
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   
-  alerts        Alert[]
-  interventions Intervention[]
-  vrSessions    VRSession[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  faculty             Faculty?
+  psychProfile        PsychProfile?
+  timelineEvents      TimelineEvent[]
+  alerts              Alert[]
+  workOrders          WorkOrder[]
+  interventionRecords InterventionRecord[]
+  vrSessions          VRSession[]
+  appointments        Appointment[]
 }
 
-model Alert {
-  id            String    @id @default(cuid())
-  studentId     String
-  student       Student   @relation(fields: [studentId], references: [id])
-  
-  riskLevel     RiskLevel
-  triggerType   String
-  triggerValue  Float
-  evidence      Json
-  
-  status        AlertStatus @default(PENDING)
-  handlerId     String?
-  handlerNotes  String?
-  
-  createdAt     DateTime  @default(now())
-  resolvedAt    DateTime?
+// 心理画像
+model PsychProfile {
+  id                 String   @id @default(uuid())
+  studentId          String   @unique
+  adversityQuotient  Int
+  emotionalStability Int
+  socialTendency     Int
+  stressResistance   Int
+  selfAwareness      Int
+  empathy            Int
+  willpower          Int
+  adaptability       Int
+  overallScore       Int
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
-model Intervention {
-  id            String    @id @default(cuid())
-  studentId     String
-  student       Student   @relation(fields: [studentId], references: [id])
-  
-  handlerId     String
-  type          InterventionType
-  content       String    @db.Text
-  outcome       String    @db.Text
-  nextSteps     String?   @db.Text
-  
-  createdAt     DateTime  @default(now())
+// 院系/班级
+model Faculty {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  campusX     Float?
+  campusY     Float?
+  stressIndex Float?
+  riskLevel   RiskLevel @default(LOW)
+  students    Student[]
 }
 
+// 预警工单
+model WorkOrder {
+  id        String          @id @default(uuid())
+  studentId String
+  className String
+  trigger   String
+  riskLevel RiskLevel
+  method    String
+  counselor String
+  status    WorkOrderStatus
+  date      DateTime
+  detail    String?
+  summary   String?
+  student   Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// 干预记录
+model InterventionRecord {
+  id        String           @id @default(uuid())
+  studentId String
+  date      DateTime
+  type      InterventionType
+  counselor String
+  duration  String
+  result    String
+  status    String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// VR场景
+model VRScene {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String?
+  usageCount  Int         @default(0)
+  sessions    VRSession[]
+}
+
+// VR会话
 model VRSession {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   studentId     String
-  student       Student   @relation(fields: [studentId], references: [id])
-  
   sceneId       String
-  startTime     DateTime
-  endTime       DateTime?
-  
-  metrics       Json
+  duration      String
+  emotionBefore String
+  emotionAfter  String
+  result        Sentiment
+  sessionAt     DateTime  @default(now())
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  scene         VRScene   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
 }
 
+// 设备管理
+model Device {
+  id           String       @id @default(uuid())
+  name         String
+  serialNumber String       @unique
+  type         DeviceType
+  model        String?
+  status       DeviceStatus
+  battery      Int?
+  room         String?
+  location     String?
+  lastActive   String?
+}
+
+// 咨询室
+model ConsultationRoom {
+  id               String       @id @default(uuid())
+  name             String
+  location         String
+  status           RoomStatus
+  capacity         Int
+  currentStudentId String?
+  currentStudent   Student?     @relation(fields: [currentStudentId], references: [id])
+}
+
+// 教师/咨询师
+model Teacher {
+  id             String        @id @default(uuid())
+  teacherId      String        @unique
+  name           String
+  phone          String        @unique
+  passwordHash   String
+  avatar         String?
+  department     String
+  title          String
+  qualifications String[]
+  workStats      Json?
+  badges         Json?
+  role           UserRole      @default(TEACHER)
+  status         TeacherStatus @default(ACTIVE)
+  lastLoginAt    DateTime?
+  appointments   Appointment[]
+}
+
+// 心理咨询预约
+model Appointment {
+  id           String            @id @default(uuid())
+  studentId    String
+  teacherId    String?
+  roomId       String?
+  type         AppointmentType
+  date         DateTime
+  timeSlot     String
+  status       AppointmentStatus @default(PENDING)
+  reason       String?
+  cancelReason String?
+  feedbackScore Int?
+  student      Student           @relation(fields: [studentId], references: [id])
+  teacher      Teacher?          @relation(fields: [teacherId], references: [id])
+}
+
+// 系统用户
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  role          UserRole
-  
-  createdAt     DateTime  @default(now())
+  id           String     @id @default(uuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  avatar       String?
+  role         UserRole   @default(TEACHER)
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
 }
 
+// 枚举定义
 enum RiskLevel {
-  RED
-  ORANGE
-  YELLOW
-  GREEN
+  HIGH
+  MEDIUM
+  LOW
 }
 
-enum AlertStatus {
+enum WorkOrderStatus {
   PENDING
-  PROCESSING
-  RESOLVED
+  IN_PROGRESS
+  COMPLETED
 }
 
 enum InterventionType {
-  COUNSELING
-  REFERRAL
-  MEDICATION
-  OTHER
+  REGULAR_INTERVIEW
+  CBT_THERAPY
+  GROUP_COUNSELING
+  CRISIS_INTERVENTION
+  INITIAL_ASSESSMENT
+}
+
+enum DeviceType {
+  VR
+  BRACELET
+  EEG
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  IN_USE
+  MAINTENANCE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
 }
 
 enum UserRole {
   ADMIN
   COUNSELOR
-  COUNSELOR_ASSISTANT
+  ASSISTANT
+  TEACHER
+}
+
+enum AppointmentType {
+  COUNSELING
+  VR
+  GROUP
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
 }
 ```
+
 
 ---
 
@@ -803,6 +958,10 @@ npm run start   # 启动生产服务器
 **文档版本历史**
 
 | 版本 | 日期 | 说明 |
+|------|------|------|
+| v2.1 | 2026-03-07 | 对齐项目现状：更新数据库模型、删除重复内容、修正枚举值 |
+| v2.0 | 2026-03-06 | 同步 PRD，新增小程序数据库字段，完善用户流程 |
+| v1.0 | 2026-03-03 | 初始版本，基于前端原型整理 |
 |------|------|------|
 | v2.0 | 2026-03-06 | 同步 PRD，新增小程序数据库字段，完善用户流程 |
 | v1.0 | 2026-03-03 | 初始版本，基于前端原型整理 |
