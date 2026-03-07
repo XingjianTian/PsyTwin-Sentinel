@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { UserManagement } from "@/components/user-management"
 import {
   Settings,
   Cpu,
@@ -14,14 +15,13 @@ import {
   Cloud,
   Bell,
   Database,
-  RefreshCw,
   ChevronRight,
+  Users,
 } from "lucide-react"
-
-/* ── Settings navigation ── */
 const settingsTabs = [
   { label: "基础设置", icon: Settings },
   { label: "设备管理", icon: Cpu },
+  { label: "用户管理", icon: Users },
   { label: "数据同步", icon: Cloud },
   { label: "安全策略", icon: Shield },
   { label: "通知管理", icon: Bell },
@@ -338,6 +338,10 @@ export function SystemSettingsView() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "用户管理" && (
+          <UserManagement />
         )}
 
         {activeTab === "数据同步" && (
