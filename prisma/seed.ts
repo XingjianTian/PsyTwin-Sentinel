@@ -702,6 +702,20 @@ async function main() {
       ],
     })
   }
+// 创建示例设备数据
+  await prisma.device.createMany({
+    skipDuplicates: true,
+    data: [
+      { name: 'Pico 4 Enterprise #1', serialNumber: 'P4E202401001', type: 'VR', status: 'ONLINE', battery: 85, model: 'Pico 4 Enterprise', room: '心理咨询室 A01' },
+      { name: 'Pico 4 Enterprise #2', serialNumber: 'P4E202401002', type: 'VR', status: 'IN_USE', battery: 72, model: 'Pico 4 Enterprise', room: '心理咨询室 A02' },
+      { name: 'Pico 4 Pro', serialNumber: 'P4P202401001', type: 'VR', status: 'ONLINE', battery: 45, model: 'Pico 4 Pro', room: '减压舱 B01' },
+      { name: '小米手环 9 #1', serialNumber: 'MW9202401001', type: 'BRACELET', status: 'ONLINE', battery: 92, model: '小米手环 9', room: '心理咨询室 A01' },
+      { name: '小米手环 9 #2', serialNumber: 'MW9202401002', type: 'BRACELET', status: 'IN_USE', battery: 68, model: '小米手环 9', room: '心理咨询室 A02' },
+      { name: '小米手环 8', serialNumber: 'MW8202401001', type: 'BRACELET', status: 'OFFLINE', battery: 0, model: '小米手环 8', room: '减压舱 B01' },
+      { name: 'BrainCo Flex #1', serialNumber: 'BCF202401001', type: 'EEG', status: 'OFFLINE', model: 'BrainCo Flex', room: '心理咨询室 A01' },
+      { name: 'BrainCo Flex #2', serialNumber: 'BCF202401002', type: 'EEG', status: 'ONLINE', model: 'BrainCo Flex', room: '心理咨询室 A02' },
+    ],
+  })
 
   console.log('Seed completed successfully.')
 }
