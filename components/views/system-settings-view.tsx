@@ -1,289 +1,483 @@
 "use client";
 
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { UserManagement } from "@/components/user-management"
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserManagement } from "@/components/user-management";
 import {
   Settings,
-  Cpu,
-  Wifi,
-  WifiOff,
-  Watch,
-  Glasses,
-  Shield,
-  Cloud,
-  Bell,
-  Database,
-  ChevronRight,
-  RefreshCw,
   Users,
-} from "lucide-react"
-const settingsTabs = [
-  { label: "基础设置", icon: Settings },
+  Cloud,
+  Shield,
+  Bell,
+  RefreshCw,
+  Check,
+  Database,
+  Cpu,
+  HardDrive,
+  Trash2,
+  Plus,
+  Play,
+  Pause,
+  RotateCcw,
+  Lock,
+  Globe,
+  MessageSquare,
+  Mail,
+  Smartphone,
+  FileText,
+  MoreHorizontal,
+  Clock,
+} from "lucide-react";
 
-  { label: "用户管理", icon: Users },
-  { label: "数据同步", icon: Cloud },
-  { label: "安全策略", icon: Shield },
-  { label: "通知管理", icon: Bell },
-]
+import {
+  mockSystemStatus,
+  mockDatabaseStatus,
+  mockSystemResources,
+  mockCacheInfo,
+  mockDataSources,
+  mockSyncTasks,
+  mockSyncStats,
+  mockIPWhitelist,
+  mockAuditLogs,
+  mockNotificationChannels,
+  mockNotificationRules,
+  mockSilentHours,
+} from "@/lib/mock-settings";
 
-/* ── Devices data ── */
-interface Device {
-  id: string
-  name: string
-  type: "pico" | "band"
-  model: string
-  status: "在线" | "离线" | "维护中"
-  battery: number
-  lastSync: string
-  location: string
-}
+const formatBytes = (bytes: number, decimals = 2) => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+};
 
-const devices: Device[] = [
-  { id: "PICO-001", name: "一号体验室-Pico4U", type: "pico", model: "Pico 4 Ultra", status: "在线", battery: 85, lastSync: "2分钟前", location: "心理中心A201" },
-  { id: "PICO-002", name: "二号体验室-Pico4U", type: "pico", model: "Pico 4 Ultra", status: "在线", battery: 72, lastSync: "5分钟前", location: "心理中心A202" },
-  { id: "PICO-003", name: "三号体验室-Pico4", type: "pico", model: "Pico 4", status: "离线", battery: 0, lastSync: "3小时前", location: "心理中心A203" },
-  { id: "PICO-004", name: "团辅室-Pico4U", type: "pico", model: "Pico 4 Ultra", status: "在线", battery: 91, lastSync: "1分钟前", location: "团辅活动室B105" },
-  { id: "PICO-005", name: "流动设备-Pico4", type: "pico", model: "Pico 4", status: "维护中", battery: 45, lastSync: "1天前", location: "设备维护间" },
-  { id: "BAND-001", name: "监测手环-A组01", type: "band", model: "华为 Band 9", status: "在线", battery: 68, lastSync: "实时", location: "宿舍楼6栋" },
-  { id: "BAND-002", name: "监测手环-A组02", type: "band", model: "华为 Band 9", status: "在线", battery: 54, lastSync: "实时", location: "宿舍楼6栋" },
-  { id: "BAND-003", name: "监测手环-B组01", type: "band", model: "小米手环8 Pro", status: "在线", battery: 82, lastSync: "实时", location: "宿舍楼3栋" },
-  { id: "BAND-004", name: "监测手环-B组02", type: "band", model: "小米手环8 Pro", status: "离线", battery: 12, lastSync: "6小时前", location: "宿舍楼3栋" },
-  { id: "BAND-005", name: "监测手环-C组01", type: "band", model: "华为 Band 9", status: "在线", battery: 77, lastSync: "实时", location: "宿舍楼9栋" },
-]
+const getRelativeTime = (isoString: string | null) => {
+  if (!isoString) return "从未";
+  const date = new Date(isoString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return "刚刚";
+  if (minutes < 60) return `${minutes}分钟前`;
+  if (hours < 24) return `${hours}小时前`;
+  return `${days}天前`;
+};
 
-/* ── Toggle switches ── */
-interface SwitchSetting {
-  label: string
-  desc: string
-  defaultOn: boolean
-}
-
-const switchSettings: SwitchSetting[] = [
-  { label: "开启多模态数据云端同步", desc: "将VR设备、手环、语音数据实时上传至云端数据湖", defaultOn: true },
-  { label: "异常心率自动告警推送", desc: "当监测到心率超过阈值时自动触发预警流程", defaultOn: true },
-  { label: "设备低电量提醒", desc: "设备电量低于20%时向管理员发送通知", defaultOn: true },
-  { label: "自动固件OTA升级", desc: "设备连接WiFi后自动检查并安装固件更新", defaultOn: false },
-  { label: "数据本地缓存加密", desc: "设备离线时缓存数据采用AES-256加密存储", defaultOn: true },
-]
-
-/* ── Toggle component ── */
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function BasicSettings() {
   return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-primary" : "bg-muted"
-      }`}
-      aria-label="切换开关"
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground shadow transition-transform ${
-          checked ? "left-[22px]" : "left-0.5"
-        }`}
-      />
-    </button>
-  )
-}
-
-const statusConfig = {
-  "在线": { dot: "bg-success shadow-[0_0_6px_rgba(34,197,94,0.5)]", text: "text-success" },
-  "离线": { dot: "bg-muted-foreground", text: "text-muted-foreground" },
-  "维护中": { dot: "bg-warning shadow-[0_0_6px_rgba(249,115,22,0.5)]", text: "text-warning" },
-}
-
-export function SystemSettingsView() {
-  const [activeTab, setActiveTab] = useState("基础设置")
-  const [switches, setSwitches] = useState<Record<string, boolean>>(
-    Object.fromEntries(switchSettings.map((s) => [s.label, s.defaultOn]))
-  )
-
-  const picoDevices = devices.filter((d) => d.type === "pico")
-  const bandDevices = devices.filter((d) => d.type === "band")
-
-  return (
-    <div className="flex gap-4">
-      {/* ── Left: Settings nav ── */}
-      <Card className="w-56 shrink-0 border-border bg-card shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-foreground">
-            系统设置
-          </CardTitle>
+    <div className="space-y-6">
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Database className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base font-semibold text-foreground">系统状态监控</CardTitle>
         </CardHeader>
-        <CardContent className="px-2 pb-3">
-          <ul className="flex flex-col gap-1">
-            {settingsTabs.map((tab) => {
-              const isActive = tab.label === activeTab
-              return (
-                <li key={tab.label}>
-                  <button
-                    onClick={() => setActiveTab(tab.label)}
-                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
-                      isActive
-                        ? "bg-primary/10 font-medium text-primary"
-                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                    }`}
-                  >
-                    <tab.icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                    <span>{tab.label}</span>
-                    {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5 text-primary" />}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground">平台名称</p>
+              <p className="text-sm font-medium text-foreground mt-1">{mockSystemStatus.platformName}</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground">版本号</p>
+              <p className="text-sm font-medium text-foreground mt-1">{mockSystemStatus.version}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground">运行时间</p>
+              <p className="text-sm font-medium text-foreground mt-1">{mockSystemStatus.uptime}</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground">系统状态</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                <span className="text-sm font-medium text-success">正常运行</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* ── Right: Content panel ── */}
-      <div className="flex-1">
-
-
-        {activeTab === "基础设置" && (
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center gap-2 pb-2">
-              <Settings className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-base font-semibold text-foreground">基础设置</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="text-sm font-medium text-foreground">系统名称</p>
-                  <input
-                    defaultValue="心图PsyTwin-校园心理健康数字孪生管理平台"
-                    className="mt-2 w-full rounded-md border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="text-sm font-medium text-foreground">数据保留策略</p>
-                  <p className="mt-1 text-xs text-muted-foreground">设置历史数据的自动清理周期</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <select className="rounded-md border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none">
-                      <option>保留 12 个月</option>
-                      <option>保留 24 个月</option>
-                      <option>保留 36 个月</option>
-                      <option>永久保留</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="text-sm font-medium text-foreground">预警阈值配置</p>
-                  <p className="mt-1 text-xs text-muted-foreground">调整心率异常触发预警的 BPM 阈值</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="number"
-                      defaultValue={110}
-                      className="w-24 rounded-md border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                    <span className="text-sm text-muted-foreground">BPM</span>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_rgba(0,212,255,0.25)] transition-all hover:bg-primary/90 hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
-                    <RefreshCw className="h-4 w-4" />
-                    保存设置
-                  </button>
-                </div>
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Database className="h-5 w-5 text-chart-4" />
+          <CardTitle className="text-base font-semibold text-foreground">数据库连接</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <Database className="h-4 w-4 text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "用户管理" && (
-          <UserManagement />
-        )}
-
-        {activeTab === "数据同步" && (
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center gap-2 pb-2">
-              <Cloud className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base font-semibold text-foreground">数据同步配置</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4 text-sm text-muted-foreground">
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">云端数据湖连接</p>
-                      <p className="mt-0.5 text-xs">阿里云 OSS + MaxCompute</p>
-                    </div>
-                    <Badge className="border-success/30 bg-success/10 text-success">已连接</Badge>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">实时流数据管道</p>
-                      <p className="mt-0.5 text-xs">Kafka 消息队列</p>
-                    </div>
-                    <Badge className="border-success/30 bg-success/10 text-success">运行中</Badge>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">向量数据库</p>
-                      <p className="mt-0.5 text-xs">Milvus 2.3 集群</p>
-                    </div>
-                    <Badge className="border-success/30 bg-success/10 text-success">已连接</Badge>
-                  </div>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">PostgreSQL</p>
+                <p className="text-xs text-muted-foreground">主数据库</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "安全策略" && (
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center gap-2 pb-2">
-              <Shield className="h-5 w-5 text-chart-4" />
-              <CardTitle className="text-base font-semibold text-foreground">安全策略管理</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4 text-sm text-muted-foreground">
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">数据加密标准</p>
-                  <p className="mt-1 text-xs">传输层：TLS 1.3 | 存储层：AES-256-GCM</p>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">访问控制策略</p>
-                  <p className="mt-1 text-xs">基于RBAC的四级权限体系：超级管理员 / 咨询师 / 辅导员 / 只读用户</p>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">审计日志</p>
-                  <p className="mt-1 text-xs">所有敏感操作记录保留36个月，支持全文检索</p>
-                </div>
+            </div>
+            <Badge className="border-success/30 bg-success/10 text-success">
+              <Check className="mr-1 h-3 w-3" />
+              已连接
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <RefreshCw className="h-4 w-4 text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "通知管理" && (
-          <Card className="border-border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center gap-2 pb-2">
-              <Bell className="h-5 w-5 text-chart-2" />
-              <CardTitle className="text-base font-semibold text-foreground">通知管理</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4 text-sm text-muted-foreground">
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">预警通知渠道</p>
-                  <p className="mt-1 text-xs">企业微信 + 短信 + App推送（三通道冗余）</p>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">通知频率限制</p>
-                  <p className="mt-1 text-xs">同一学生同一类型预警：每小时最多推送1次</p>
-                </div>
-                <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
-                  <p className="font-medium text-foreground">静默时段</p>
-                  <p className="mt-1 text-xs">23:00 - 07:00 仅发送高危级别通知，中低危通知延迟至次日推送</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Redis缓存</p>
+                <p className="text-xs text-muted-foreground">命中率 {mockDatabaseStatus.redis.hitRate}%</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+            <Badge className="border-success/30 bg-success/10 text-success">
+              <Check className="mr-1 h-3 w-3" />
+              已连接
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Cpu className="h-5 w-5 text-chart-2" />
+          <CardTitle className="text-base font-semibold text-foreground">系统资源</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">CPU 使用率</span>
+              <span className="font-medium text-foreground">{mockSystemResources.cpu.usage}%</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${mockSystemResources.cpu.usage}%` }} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">内存</span>
+              <span className="font-medium text-foreground">{mockSystemResources.memory.used}GB / {mockSystemResources.memory.total}GB</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 rounded-full bg-chart-4 transition-all" style={{ width: `${mockSystemResources.memory.usage}%` }} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <HardDrive className="h-5 w-5 text-chart-3" />
+          <CardTitle className="text-base font-semibold text-foreground">缓存管理</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">当前缓存大小</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Redis 缓存数据</p>
+            </div>
+            <span className="text-lg font-semibold text-foreground">{formatBytes(mockCacheInfo.size)}</span>
+          </div>
+          <Button variant="outline"><Trash2 className="mr-2 h-4 w-4" />清理缓存</Button>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_rgba(0,212,255,0.25)] transition-all hover:bg-primary/90 hover:shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+          <RefreshCw className="h-4 w-4" />
+          保存设置
+        </Button>
       </div>
     </div>
-  )
+  );
+}
+
+function DataSyncSettings() {
+  return (
+    <div className="space-y-6">
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Database className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base font-semibold text-foreground">数据源配置</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {mockDataSources.map((source) => (
+              <div key={source.id} className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-4">
+                <div className="flex items-center gap-3">
+                  <Cloud className={`h-4 w-4 ${source.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{source.name}</p>
+                    <p className="text-xs text-muted-foreground">上次同步：{getRelativeTime(source.lastSyncAt)}</p>
+                  </div>
+                </div>
+                <Badge className={source.status === 'CONNECTED' ? 'border-success/30 bg-success/10 text-success' : 'border-destructive/30 bg-destructive/10 text-destructive'}>
+                  {source.status === 'CONNECTED' ? '已启用' : '未连接'}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-chart-4" />
+            <CardTitle className="text-base font-semibold text-foreground">同步任务</CardTitle>
+          </div>
+          <Button size="sm"><Plus className="mr-1 h-4 w-4" />新建任务</Button>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[240px]">
+            <div className="space-y-2">
+              {mockSyncTasks.map((task) => (
+                <div key={task.id} className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-2 w-2 rounded-full ${task.status === 'RUNNING' ? 'bg-success animate-pulse' : 'bg-muted-foreground'}`} />
+                    <p className="text-sm font-medium text-foreground">{task.name}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">{task.status === 'RUNNING' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8"><RotateCcw className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Clock className="h-5 w-5 text-chart-2" />
+          <CardTitle className="text-base font-semibold text-foreground">今日同步统计</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{formatBytes(mockSyncStats.todayDataSize)}</p>
+              <p className="text-xs text-muted-foreground mt-1">同步数据量</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4 text-center">
+              <p className="text-2xl font-bold text-success">{mockSyncStats.successRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">成功率</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4 text-center">
+              <p className="text-2xl font-bold text-warning">{mockSyncStats.retryCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">失败重试</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function SecuritySettings() {
+  return (
+    <div className="space-y-6">
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Lock className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base font-semibold text-foreground">登录安全</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground mb-2">密码复杂度</p>
+              <select className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm" defaultValue="中（8位以上+数字）">
+                <option>低（6位以上）</option>
+                <option>中（8位以上+数字）</option>
+                <option>高（8位以上+数字+特殊字符）</option>
+                <option selected>中（8位以上+数字）</option>
+                <option>高（8位以上+数字+特殊字符）</option>
+              </select>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+              <p className="text-xs text-muted-foreground mb-2">最大登录失败次数</p>
+              <Input type="number" defaultValue={5} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-chart-4" />
+            <CardTitle className="text-base font-semibold text-foreground">IP白名单</CardTitle>
+          </div>
+          <Button size="sm"><Plus className="mr-1 h-4 w-4" />添加IP</Button>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[180px]">
+            <div className="space-y-2">
+              {mockIPWhitelist.map((ip) => (
+                <div key={ip.id} className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-3">
+                  <div className="flex items-center gap-3">
+                    <Badge variant={ip.enabled ? "default" : "secondary"}>{ip.enabled ? "启用" : "禁用"}</Badge>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{ip.ipAddress}</p>
+                      <p className="text-xs text-muted-foreground">{ip.description}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <FileText className="h-5 w-5 text-chart-2" />
+          <CardTitle className="text-base font-semibold text-foreground">操作日志审计</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[200px]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted-foreground">
+                  <th className="px-2 py-2 text-left">时间</th>
+                  <th className="px-2 py-2 text-left">用户</th>
+                  <th className="px-2 py-2 text-left">操作</th>
+                  <th className="px-2 py-2 text-left">结果</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockAuditLogs.slice(0, 5).map((log) => (
+                  <tr key={log.id} className="border-b border-border/30">
+                    <td className="px-2 py-2 text-xs text-muted-foreground">{getRelativeTime(log.createdAt)}</td>
+                    <td className="px-2 py-2 text-sm">{log.userName}</td>
+                    <td className="px-2 py-2 text-sm">{log.action}</td>
+                    <td className="px-2 py-2">
+                      <Badge className={log.status === 'SUCCESS' ? 'border-success/30 bg-success/10 text-success' : 'border-destructive/30 bg-destructive/10 text-destructive'}>
+                        {log.status === 'SUCCESS' ? '成功' : '失败'}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function NotificationSettings() {
+  return (
+    <div className="space-y-6">
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Bell className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base font-semibold text-foreground">通知渠道配置</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {mockNotificationChannels.map((channel) => (
+              <div key={channel.id} className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-4">
+                <div className="flex items-center gap-3">
+                  {channel.type === 'WECHAT_WORK' && <MessageSquare className="h-4 w-4 text-primary" />}
+                  {channel.type === 'SMS' && <Smartphone className="h-4 w-4 text-primary" />}
+                  {channel.type === 'EMAIL' && <Mail className="h-4 w-4 text-muted-foreground" />}
+                  {channel.type === 'APP_PUSH' && <Bell className="h-4 w-4 text-primary" />}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{channel.name}</p>
+                    <p className="text-xs text-muted-foreground">{channel.testStatus === 'SUCCESS' ? '上次测试成功' : '未测试'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={channel.enabled ? 'border-success/30 bg-success/10 text-success' : 'border-muted/30 bg-muted/10 text-muted-foreground'}>
+                    {channel.enabled ? '已配置' : '未配置'}
+                  </Badge>
+                  <Button variant="outline" size="sm">测试</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-chart-4" />
+            <CardTitle className="text-base font-semibold text-foreground">通知规则</CardTitle>
+          </div>
+          <Button size="sm"><Plus className="mr-1 h-4 w-4" />新建规则</Button>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[200px]">
+            <div className="space-y-2">
+              {mockNotificationRules.map((rule) => (
+                <div key={rule.id} className="flex items-center justify-between rounded-lg border border-border/30 bg-secondary/10 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${rule.enabled ? 'bg-success' : 'bg-muted-foreground'}`} />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{rule.name}</p>
+                      <p className="text-xs text-muted-foreground">触发条件: {rule.triggerType}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Clock className="h-5 w-5 text-chart-2" />
+          <CardTitle className="text-base font-semibold text-foreground">静默时段</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Input type="time" defaultValue={mockSilentHours.startTime} className="w-32" />
+              <span className="text-muted-foreground">至</span>
+              <Input type="time" defaultValue={mockSilentHours.endTime} className="w-32" />
+            </div>
+            <p className="text-xs text-muted-foreground">仅发送高危级别通知，其他通知延迟至次日推送</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 主组件
+function SystemSettingsContent() {
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab") || "basic";
+
+  return (
+    <div className="flex-1">
+      {activeTab === "basic" && <BasicSettings />}
+      {activeTab === "users" && <UserManagement />}
+      {activeTab === "sync" && <DataSyncSettings />}
+      {activeTab === "security" && <SecuritySettings />}
+      {activeTab === "notifications" && <NotificationSettings />}
+    </div>
+  );
+}
+
+export function SystemSettingsView() {
+  return (
+    <Suspense fallback={<div className="flex h-96 items-center justify-center"><RefreshCw className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <SystemSettingsContent />
+    </Suspense>
+  );
 }

@@ -772,3 +772,222 @@ model DocumentChunk {
   @@index([chunkIndex])
   @@map("document_chunks")
 }
+
+// ============================================
+// 系统设置 - 数据源与同步
+// ============================================
+
+enum DataSourceType {
+  VR_DEVICE
+  BAND
+  AUDIO
+  RAG
+}
+
+enum DataSourceStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+model DataSource {
+  id          String   @id @default(uuid())
+  name        String
+  type        DataSourceType
+  enabled     Boolean  @default(true)
+  config      Json?
+  lastSyncAt  DateTime? @map("last_sync_at")
+  status      DataSourceStatus @default(DISCONNECTED)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  syncTasks   SyncTask[]
+  
+  @@map("data_sources")
+}
+
+enum SyncTaskStatus {
+  IDLE
+  RUNNING
+  PAUSED
+  ERROR
+}
+
+model SyncTask {
+  id            String   @id @default(uuid())
+  name          String
+  dataSourceId  String   @map("data_source_id")
+  dataSource    DataSource @relation(fields: [dataSourceId], references: [id])
+  schedule      String
+  enabled       Boolean  @default(true)
+  status        SyncTaskStatus @default(IDLE)
+  lastSyncAt    DateTime? @map("last_sync_at")
+  nextSyncAt    DateTime? @map("next_sync_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  logs          SyncLog[]
+  
+  @@map("sync_tasks")
+}
+
+enum SyncLogStatus {
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+model SyncLog {
+  id          String   @id @default(uuid())
+  taskId      String   @map("task_id")
+  task        SyncTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  startedAt   DateTime @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+  status      SyncLogStatus
+  dataSize    Int?     @map("data_size")
+  recordCount Int?     @map("record_count")
+  errorMsg    String?  @map("error_msg")
+  
+  @@index([taskId, startedAt])
+  @@map("sync_logs")
+}
+
+// ============================================
+// 系统设置 - 安全策略
+// ============================================
+
+model IPWhitelist {
+  id          String   @id @default(uuid())
+  ipAddress   String   @map("ip_address")
+  description String?
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String?  @map("created_by")
+  
+  @@index([ipAddress])
+  @@map("ip_whitelist")
+}
+
+model SystemConfig {
+  id                    String   @id @default(uuid())
+  key                   String   @unique
+  value                 String
+  description           String?
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  updatedBy             String?  @map("updated_by")
+  
+  @@map("system_config")
+}
+
+// ============================================
+// 系统设置 - 通知管理
+// ============================================
+
+enum ChannelType {
+  WECHAT_WORK
+  SMS
+  EMAIL
+  APP_PUSH
+}
+
+enum TestStatus {
+  SUCCESS
+  FAILED
+}
+
+model NotificationChannel {
+  id            String   @id @default(uuid())
+  name          String
+  type          ChannelType
+  enabled       Boolean  @default(false)
+  config        Json?
+  lastTestedAt  DateTime? @map("last_tested_at")
+  testStatus    TestStatus?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  @@map("notification_channels")
+}
+
+enum TemplateType {
+  WARNING
+  CRISIS
+  REMINDER
+  SYSTEM
+}
+
+model NotificationTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  type        TemplateType
+  subject     String?
+  content     String
+  variables   Json?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+  
+  @@map("notification_templates")
+}
+
+enum TriggerType {
+  RISK_LEVEL
+  HEART_RATE
+  EMOTION_CHANGE
+  APPOINTMENT
+  SYSTEM_EVENT
+}
+
+model NotificationRule {
+  id            String   @id @default(uuid())
+  name          String
+  enabled       Boolean  @default(true)
+  triggerType   TriggerType @map("trigger_type")
+  triggerConfig Json     @map("trigger_config")
+  channels      String[]
+  recipients    Json
+  templateId    String?  @map("template_id")
+  silentOverride Boolean @default(false) @map("silent_override")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  histories     NotificationHistory[]
+  
+  @@map("notification_rules")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model NotificationHistory {
+  id          String   @id @default(uuid())
+  ruleId      String?  @map("rule_id")
+  rule        NotificationRule? @relation(fields: [ruleId], references: [id])
+  channelType ChannelType @map("channel_type")
+  recipient   String
+  title       String
+  content     String
+  status      NotificationStatus
+  errorMsg    String?  @map("error_msg")
+  sentAt      DateTime @default(now()) @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  readAt      DateTime? @map("read_at")
+  
+  @@index([sentAt])
+  @@index([recipient])
+  @@map("notification_histories")
+}
+
+model SilentHours {
+  id            String   @id @default(uuid())
+  enabled       Boolean  @default(true)
+  startTime     String   @map("start_time")
+  endTime       String   @map("end_time")
+  exceptLevel   RiskLevel @default(HIGH) @map("except_level")
+  
+  @@map("silent_hours")
+}
