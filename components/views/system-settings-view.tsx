@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserManagement } from "@/components/user-management";
+import { BasicSettingsReal } from "@/components/settings/basic-settings-real";
 import {
   Settings,
   Users,
@@ -465,7 +466,7 @@ function SystemSettingsContent() {
 
   return (
     <div className="flex-1">
-      {activeTab === "basic" && <BasicSettings />}
+      {activeTab === "basic" && <BasicSettingsReal />}
       {activeTab === "users" && <UserManagement />}
       {activeTab === "sync" && <DataSyncSettings />}
       {activeTab === "security" && <SecuritySettings />}
