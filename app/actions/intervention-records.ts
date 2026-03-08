@@ -1,31 +1,39 @@
 "use server"
 
-import { RiskLevel, WorkOrderStatus } from "@prisma/client"
+import { InterventionType } from "@prisma/client"
 
 import { prisma } from "@/lib/prisma"
 
-export interface InterventionWorkOrder {
+export interface InterventionRecordItem {
   id: string
   name: string
   cls: string
-  trigger: string
-  riskLevel: "高危" | "中危" | "低危"
-  method: string
+  type: string
   counselor: string
-  status: "已结案" | "干预中"
+  duration: string
+  result: string
+  status: string
   date: string
-  detail: string
 }
 
-function mapRiskLevel(level: RiskLevel): InterventionWorkOrder["riskLevel"] {
-  if (level === RiskLevel.HIGH) return "高危"
-  if (level === RiskLevel.MEDIUM) return "中危"
-  return "低危"
+function mapInterventionType(type: InterventionType): string {
+  const typeMap: Record<InterventionType, string> = {
+    [InterventionType.REGULAR_INTERVIEW]: "定期面谈",
+    [InterventionType.CBT_THERAPY]: "CBT治疗",
+    [InterventionType.GROUP_COUNSELING]: "团体辅导",
+    [InterventionType.CRISIS_INTERVENTION]: "危机干预",
+    [InterventionType.INITIAL_ASSESSMENT]: "初次评估",
+  }
+  return typeMap[type] || type
 }
 
-function mapStatus(status: WorkOrderStatus): InterventionWorkOrder["status"] {
-  if (status === WorkOrderStatus.COMPLETED) return "已结案"
-  return "干预中"
+function mapStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    "completed": "已完成",
+    "in_progress": "进展中",
+    "pending": "待开始",
+  }
+  return statusMap[status] || status
 }
 
 function formatDate(date: Date): string {
@@ -38,17 +46,13 @@ function formatDate(date: Date): string {
     .replace(/\//g, "-")
 }
 
-export async function getInterventionWorkOrders(): Promise<InterventionWorkOrder[]> {
-  const orders = await prisma.workOrder.findMany({
-    where: {
-      status: {
-        in: [WorkOrderStatus.IN_PROGRESS, WorkOrderStatus.COMPLETED],
-      },
-    },
+export async function getInterventionRecords(): Promise<InterventionRecordItem[]> {
+  const records = await prisma.interventionRecord.findMany({
     include: {
       student: {
         select: {
           name: true,
+          className: true,
         },
       },
     },
@@ -57,37 +61,38 @@ export async function getInterventionWorkOrders(): Promise<InterventionWorkOrder
     },
   })
 
-  return orders.map((order) => ({
-    id: order.id,
-    name: order.student.name,
-    cls: order.className,
-    trigger: order.trigger,
-    riskLevel: mapRiskLevel(order.riskLevel),
-    method: order.method,
-    counselor: order.counselor,
-    status: mapStatus(order.status),
-    date: formatDate(order.date),
-    detail: order.detail ?? order.summary ?? "暂无记录",
+  return records.map((record) => ({
+    id: record.id,
+    name: record.student.name,
+    cls: record.student.className,
+    type: mapInterventionType(record.type),
+    counselor: record.counselor,
+    duration: record.duration,
+    result: record.result,
+    status: mapStatus(record.status),
+    date: formatDate(record.date),
   }))
 }
 
-export async function setInterventionStatus(workOrderId: string, status: WorkOrderStatus): Promise<void> {
-  if (!workOrderId) return
+// 兼容旧接口名称
+export async function getInterventionWorkOrders(): Promise<InterventionRecordItem[]> {
+  return getInterventionRecords()
+}
 
-  await prisma.workOrder.update({
-    where: { id: workOrderId },
+export async function setInterventionStatus(recordId: string, status: string): Promise<void> {
+  if (!recordId) return
+
+  await prisma.interventionRecord.update({
+    where: { id: recordId },
     data: { status },
   })
 }
 
-export async function assignInterventionCounselor(workOrderId: string, counselor: string): Promise<void> {
-  if (!workOrderId || !counselor.trim()) return
+export async function assignInterventionCounselor(recordId: string, counselor: string): Promise<void> {
+  if (!recordId || !counselor.trim()) return
 
-  await prisma.workOrder.update({
-    where: { id: workOrderId },
-    data: {
-      counselor: counselor.trim(),
-      status: WorkOrderStatus.IN_PROGRESS,
-    },
+  await prisma.interventionRecord.update({
+    where: { id: recordId },
+    data: { counselor: counselor.trim() },
   })
 }

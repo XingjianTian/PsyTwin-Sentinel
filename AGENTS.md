@@ -42,12 +42,6 @@ Next.js 16 + React 19 校园心理健康监测预警系统，使用 shadcn/ui + 
 - 样式合并: 使用 `cn()` 工具
 - UI组件: @radix-ui/react-* + lucide-react
 
-## ANTI-PATTERNS (THIS PROJECT)
-1. **重复文件**: hooks/use-toast.ts 与 components/ui/use-toast.ts 完全相同
-2. **重复文件**: hooks/use-mobile.ts 与 components/ui/use-mobile.tsx 完全相同
-3. **未使用解构**: risk-trace-view.tsx:48 `const [selectedDefault] = workOrders`
-4. **忽略TS错误**: next.config.mjs 配置 `ignoreBuildErrors: true`
-
 ## UNIQUE STYLES
 - Tailwind CSS v4 (无需tailwind.config.js)
 - shadcn/ui 风格: new-york
@@ -61,6 +55,7 @@ npm run build    # 生产构建
 npm run start    # 生产启动
 npm run lint     # ESLint检查
 ```
+- **[环境红线] 禁止击杀 Node 进程**：严禁执行清理 Node 进程的命令，这会导致 Opencode 自身宿主崩溃。释放端口时，**必须且只能**按特定端口号精准击杀（npx kill-port <port>`）。
 
 ## FRONTEND VERIFICATION WORKFLOW
 
@@ -129,7 +124,7 @@ look_at(file_path: "screenshots/xxx.png", goal: "描述/分析视觉效果")
 
 ## GIT 操作规则
 
-**重要**：所有 Git 操作（commit + push）只需用户**确认一次**即可执行。
+**重要**：所有 Git 操作（commit + push）必须用户**确认**才可执行。
 
 | 操作 | 规则 |
 |------|------|
