@@ -34,15 +34,15 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: Globe, label: "全域态势", href: "/dashboard" },
       { icon: ScanSearch, label: "风险溯源", href: "/risk-trace" },
-      { icon: Gamepad2, label: "VR端数据", href: "/vr-dashboard" },
+      { icon: Gamepad2, label: "VR感知干预", href: "/vr-dashboard" },
     ],
   },
   {
     label: "资源管理",
     items: [
       { icon: Activity, label: "多模态数据流", href: "/multimodal" },
-      { icon: DoorOpen, label: "疗愈空间", href: "/consultation-room" },
-      { icon: Monitor, label: "设备管理", href: "/device-management" },
+      { icon: DoorOpen, label: "疗愈空间管理", href: "/consultation-room" },
+      { icon: Monitor, label: "硬件设备管理", href: "/device-management" },
     ],
   },
   {

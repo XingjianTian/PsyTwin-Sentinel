@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// pgvector 扩展用于向量存储
+generator db {
+  provider = "prisma-client-js"
+}
+
+
 enum RiskLevel {
   HIGH
   MEDIUM
@@ -746,4 +752,23 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ============================================
+// RAG 向量存储 - 文档分块
+// ============================================
+
+model DocumentChunk {
+  id           String   @id @default(uuid())
+  documentId   String   @map("document_id")
+  content      String
+  embedding    String?  // pgvector 向量存储
+  chunkIndex   Int      @map("chunk_index")
+  metadata     Json?    // 存储分块位置信息等
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([documentId])
+  @@index([chunkIndex])
+  @@map("document_chunks")
 }

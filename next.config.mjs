@@ -15,7 +15,7 @@ const nextConfig = {
   experimental: {
     // 启用 Server Actions 优化
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '10mb', // 支持最大 10MB 文件上传
     },
   },
   // 环境变量暴露给客户端（仅限前缀为 NEXT_PUBLIC_ 的）

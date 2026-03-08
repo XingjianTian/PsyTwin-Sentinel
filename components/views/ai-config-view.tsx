@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { queryRAGKnowledgeBase, indexDocumentToRAG, deleteDocumentFromRAG, checkAIStatus } from "@/app/actions/ai-services"
 import type { AIDocument } from "@prisma/client"
+import { RagQueryDialog } from "@/components/rag-query-dialog"
 
 // Prompt presets
 const promptPresets = [
@@ -57,8 +58,8 @@ export function AiConfigView() {
   
   // RAG Query state
   const [ragQuery, setRagQuery] = useState("")
-  const [ragResult, setRagResult] = useState<string>("")
-  const [isQuerying, setIsQuerying] = useState(false)
+  const [ragDialogOpen, setRagDialogOpen] = useState(false)
+  const [currentQuery, setCurrentQuery] = useState("")  // 存储当前查询内容用于弹窗显示
 
   const currentPresetLabel = promptPresets.find((p) => p.value === selectedPreset)?.label || ""
 
@@ -94,8 +95,11 @@ export function AiConfigView() {
     const file = files[0]
     
     // Check file type
-    if (!file.name.endsWith('.pdf') && !file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
-      toast.error("仅支持 PDF、TXT 或 Markdown 文件")
+    // 支持的文件扩展名
+    const allowedExts = ['.pdf', '.txt', '.md', '.markdown', '.doc', '.docx']
+    const fileExt = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+    if (!allowedExts.includes(fileExt)) {
+      toast.error("仅支持 PDF、TXT、Markdown 或 Word 文档(.doc/.docx)")
       return
     }
 
@@ -156,23 +160,9 @@ export function AiConfigView() {
   const handleRagQuery = async () => {
     if (!ragQuery.trim()) return
     
-    setIsQuerying(true)
-    setRagResult("")
-    
-    try {
-      const result = await queryRAGKnowledgeBase(ragQuery, 5)
-      
-      if (result.success) {
-        setRagResult(result.answer)
-      } else {
-        toast.error(result.error || "查询失败")
-      }
-    } catch (error) {
-      console.error("RAG query error:", error)
-      toast.error("查询失败")
-    } finally {
-      setIsQuerying(false)
-    }
+    // 保存当前查询内容，打开弹窗
+    setCurrentQuery(ragQuery)
+    setRagDialogOpen(true)
   }
 
   // Handle save prompt
@@ -235,7 +225,7 @@ export function AiConfigView() {
             >
               <Upload className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`} />
               <p className="text-sm font-medium text-foreground">
-                上传心理咨询手册 PDF / TXT
+                上传 PDF / TXT / Word 文档
               </p>
               <p className="text-xs text-muted-foreground">
                 拖拽文件到此处，或
@@ -243,7 +233,7 @@ export function AiConfigView() {
                   点击上传
                   <input
                     type="file"
-                    accept=".pdf,.txt,.md"
+                    accept=".pdf,.txt,.md,.doc,.docx"
                     className="hidden"
                     onChange={(e) => handleFileUpload(e.target.files)}
                   />
@@ -340,22 +330,14 @@ export function AiConfigView() {
               />
               <button
                 onClick={handleRagQuery}
-                disabled={isQuerying || !ragQuery.trim()}
+                disabled={!ragQuery.trim()}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
-                {isQuerying ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Send className="h-4 w-4" />
                 查询
               </button>
             </div>
-            {ragResult && (
-              <div className="rounded-lg border border-border bg-muted/30 p-4">
-                <p className="text-sm whitespace-pre-wrap text-foreground">{ragResult}</p>
-              </div>
-            )}
+
           </CardContent>
         </Card>
       </div>
@@ -435,6 +417,13 @@ export function AiConfigView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* RAG Query Dialog */}
+      <RagQueryDialog
+        query={currentQuery}
+        open={ragDialogOpen}
+        onOpenChange={setRagDialogOpen}
+      />
     </div>
   )
 }
