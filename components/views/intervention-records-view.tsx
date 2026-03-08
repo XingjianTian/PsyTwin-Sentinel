@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
+import { InterventionDetailDialog } from "@/components/intervention-detail-dialog"
 import {
   ChevronLeft,
   ChevronRight,
@@ -49,6 +50,8 @@ export function InterventionRecordsView() {
   const [error, setError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [actingId, setActingId] = useState<string | null>(null)
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
 
   async function loadRecords() {
     try {
@@ -246,6 +249,10 @@ export function InterventionRecordsView() {
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => {
+                              setSelectedRecordId(record.id)
+                              setDetailDialogOpen(true)
+                            }}
                             disabled={actingId === record.id}
                             className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs text-foreground transition-colors hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -321,6 +328,13 @@ export function InterventionRecordsView() {
           )}
         </CardContent>
       </Card>
+
+      {/* 详情弹窗 */}
+      <InterventionDetailDialog
+        recordId={selectedRecordId}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+      />
     </div>
   )
 }

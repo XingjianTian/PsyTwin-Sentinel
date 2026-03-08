@@ -258,12 +258,61 @@ model InterventionRecord {
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
   student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  detail    InterventionDetail?
 
   @@index([studentId])
   @@index([type])
   @@index([date])
   @@index([status])
   @@map("intervention_records")
+}
+
+// 干预记录详情表 - 存储完整的干预过程数据
+model InterventionDetail {
+  id                String   @id @default(uuid())
+  recordId          String   @unique @map("record_id")  // 一对一关系
+  
+  // === 干预前评估 ===
+  preMood           String?  @map("pre_mood")           // 干预前情绪状态
+  preAnxietyLevel   Int?     @map("pre_anxiety_level")  // 焦虑程度 1-10
+  preDepressionLevel Int?    @map("pre_depression_level") // 抑郁程度 1-10
+  preStressLevel    Int?     @map("pre_stress_level")   // 压力水平 1-10
+  mainIssues        String?  @map("main_issues")        // 主要问题描述
+  riskLevel         String?  @map("risk_level")         // 风险等级评估
+  riskAssessment    String?  @map("risk_assessment")    // 详细风险评估
+  
+  // === 干预过程 ===
+  sessionContent    String?  @map("session_content")    // 会话内容摘要
+  techniquesUsed    String[] @map("techniques_used")    // 使用的干预技术
+  studentEngagement String?  @map("student_engagement") // 学生参与度/反馈
+  keyPoints         String?  @map("key_points")        // 关键对话要点
+  emotionalChanges  String?  @map("emotional_changes")  // 情绪变化观察
+  
+  // === 干预效果 ===
+  postMood          String?  @map("post_mood")          // 干预后情绪状态
+  postAnxietyLevel  Int?     @map("post_anxiety_level") // 焦虑改善程度
+  postDepressionLevel Int?   @map("post_depression_level") // 抑郁改善程度
+  postStressLevel   Int?     @map("post_stress_level")  // 压力改善程度
+  improvementScore  Int?     @map("improvement_score")  // 整体改善评分 1-10
+  breakthroughPoints String? @map("breakthrough_points") // 关键突破点
+  unfinishedIssues  String?  @map("unfinished_issues")  // 未解决问题
+  
+  // === 后续建议 ===
+  followUpActions   String?  @map("follow_up_actions")  // 后续行动计划
+  nextAppointment   DateTime? @map("next_appointment")  // 建议下次预约时间
+  referrals         String?  @map("referrals")         // 转介建议
+  recommendations   String?  @map("recommendations")    // 给学生的建议
+  
+  // === 其他 ===
+  privateNotes      String?  @map("private_notes")      // 咨询师私人笔记
+  attachments       String[] @map("attachments")       // 附件链接数组
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  record            InterventionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+  @@map("intervention_details")
 }
 
 model VRScene {
