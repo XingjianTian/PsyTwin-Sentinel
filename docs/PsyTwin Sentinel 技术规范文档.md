@@ -1,6 +1,8 @@
 # PsyTwin Sentinel 技术规范文档
 
 > **项目名称**：PsyTwin Sentinel（心理孪生·哨兵）
+> **版本**：v2.2（已对齐项目现状）
+> **更新日期**：2026-03-09
 > **版本**：v2.1（已对齐项目现状）
 > **更新日期**：2026-03-07
 > **更新日期**：2026-03-06
@@ -883,7 +885,29 @@ npm run start   # 启动生产服务器
 - [x] AI 风险评估页面 UI + API *(components/views/risk-trace-view.tsx, app/actions/ai-services.ts)*
 - [x] AI 配置页面 UI + API *(components/views/ai-config-view.tsx, app/api/documents)*
 
-### Phase 4: 部署与优化 🚧 进行中 *(2026-03-08 Redis 缓存层已完成)*
+### Phase 4: 部署与优化 🚧 进行中 *(2026-03-09 Pocket API 已完成)*
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| Next.js App Router 路由架构重构 | ✅ 已完成 *(2026-03-06)* | 物理路由: /dashboard, /risk-trace, /students 等 |
+| Redis 缓存层集成 | ✅ 已完成 *(2026-03-08)* | 热点数据缓存，API 响应时间优化至 < 200ms |
+| **Pocket 小程序 API** | ✅ 已完成 *(2026-03-09)* | **25+ API 端点，完整支持学生端功能** |
+| 性能优化 | 🚧 进行中 | 缓存监控、查询优化 |
+| 安全加固 | ⏳ 待开始 | JWT 强化、RBAC 完善 |
+| 移动端适配 | ⏳ 待开始 | 响应式布局优化 |
+
+**Pocket API 开发详情：**
+- **认证模块**: `/auth/login`, `/auth/register`, `/auth/me`
+- **心墙动态**: `/student/home/feed`, `/posts`, `/comments`, `/like`, `/collect`
+- **预约咨询**: `/student/appointment/services`, `/appointments`
+- **消息通知**: `/student/message/sessions`, `/notifications`
+- **用户中心**: `/student/my/info`, `/user/profile`, `/user/collections`
+
+**技术实现：**
+- 统一响应格式: `{ code: 0, message: "...", data: ... }`
+- 认证方式: `Authorization: Bearer <token>` (演示模式)
+- 数据库: 新增 PostLike, PostCollection, StudentNotification 表
+- 缓存: Redis Cache-Aside 模式，TTL 分级策略
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
@@ -1039,6 +1063,11 @@ npm run start   # 启动生产服务器
 **文档版本历史**
 
 | 版本 | 日期 | 说明 |
+|------|------|------|
+| v2.2 | 2026-03-09 | 新增 Pocket 小程序 API 文档，Redis 缓存架构，数据库模型扩展 |
+| v2.1 | 2026-03-07 | 对齐项目现状：更新数据库模型、删除重复内容、修正枚举值 |
+| v2.0 | 2026-03-06 | 同步 PRD，新增小程序数据库字段，完善用户流程 |
+| v1.0 | 2026-03-03 | 初始版本，基于前端原型整理 |
 |------|------|------|
 | v2.1 | 2026-03-07 | 对齐项目现状：更新数据库模型、删除重复内容、修正枚举值 |
 | v2.0 | 2026-03-06 | 同步 PRD，新增小程序数据库字段，完善用户流程 |
