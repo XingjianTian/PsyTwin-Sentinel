@@ -132,7 +132,8 @@ model Student {
   badges              Json?
   stats               Json?
   settings            Json?
-  lastLoginAt         DateTime?            @map("last_login_at")
+  joinDate            DateTime?          @map("join_date")  // 入学时间
+  lastLoginAt         DateTime?          @map("last_login_at")
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
   faculty             Faculty?             @relation(fields: [facultyId], references: [id])
@@ -149,6 +150,9 @@ model Student {
   // 小程序关系
   posts               Post[]
   comments            Comment[]
+  postLikes           PostLike[]
+  postCollections     PostCollection[]
+  notifications       StudentNotification[]
   chatSessions        ChatSession[]
   appointments        Appointment[]
   warnings            Warning[]
@@ -503,6 +507,7 @@ model Teacher {
   department     String
   title          String
   qualifications String[]
+  nickname       String?         // 教师昵称/展示名
   workStats      Json?           @map("work_stats")
   badges         Json?
   role           UserRole        @default(TEACHER)
@@ -575,6 +580,8 @@ model Post {
   updatedAt    DateTime   @updatedAt @map("updated_at")
   author       Student    @relation(fields: [authorId], references: [id])
   comments     Comment[]
+  likes        PostLike[]
+  collections  PostCollection[]
 
   @@index([authorId])
   @@index([createdAt])
@@ -606,6 +613,71 @@ enum PostStatus {
   PENDING
   HIDDEN
   DELETED
+}
+
+// ============================================
+// PsyTwin Pocket 小程序扩展 - 社交互动
+// ============================================
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  studentId String   @map("student_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, studentId])
+  @@index([postId])
+  @@index([studentId])
+  @@index([createdAt])
+  @@map("post_likes")
+}
+
+model PostCollection {
+  id          String   @id @default(uuid())
+  postId      String   @map("post_id")
+  studentId   String   @map("student_id")
+  collectedAt DateTime @default(now()) @map("collected_at")
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, studentId])
+  @@index([postId])
+  @@index([studentId])
+  @@index([collectedAt])
+  @@map("post_collections")
+}
+
+enum NotificationType {
+  SYSTEM
+  APPOINTMENT
+  CHAT
+  WARNING
+  POST
+  COMMENT
+}
+
+model StudentNotification {
+  id          String           @id @default(uuid())
+  studentId   String           @map("student_id")
+  type        NotificationType
+  title       String
+  content     String
+  actionUrl   String?          @map("action_url")
+  isRead      Boolean          @default(false) @map("is_read")
+  readAt      DateTime?        @map("read_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  
+  student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("student_notifications")
 }
 
 model ChatSession {

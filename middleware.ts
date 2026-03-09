@@ -7,6 +7,7 @@ const publicRoutes = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
+  "/api/pocket", // Pocket 小程序 API（演示模式，使用简单 token）
 ];
 
 // 检查是否是公开路由
@@ -59,7 +60,7 @@ export function middleware(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { success: false, message: "未登录，请先登录" },
+        { code: 401, message: "未登录，请先登录", data: null },
         { status: 401 }
       );
     }
@@ -67,7 +68,7 @@ export function middleware(request: NextRequest) {
     const payload = verifyTokenSimple(token);
     if (!payload) {
       return NextResponse.json(
-        { success: false, message: "登录已过期，请重新登录" },
+        { code: 401, message: "登录已过期，请重新登录", data: null },
         { status: 401 }
       );
     }
@@ -105,6 +106,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // 匹配所有路由，除了静态资源
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

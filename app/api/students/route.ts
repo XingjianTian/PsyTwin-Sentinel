@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
     const className = searchParams.get("className") || undefined
     const riskLevel = searchParams.get("riskLevel") as "HIGH" | "MEDIUM" | "LOW" | undefined
 
+    // 获取用户角色
+    const userRole = request.headers.get("x-user-role") || ""
+    const isAdmin = userRole === "ADMIN"
+    const isCounselor = userRole === "COUNSELOR"
+
     const result = await getStudents({
       page,
       limit,
@@ -30,11 +35,6 @@ export async function GET(request: NextRequest) {
       riskLevel,
     })
 
-    // 获取用户角色（从 middleware 设置的 header）
-    const userRole = request.headers.get("x-user-role") || ""
-    const isAdmin = userRole === "ADMIN"
-    const isCounselor = userRole === "COUNSELOR"
-    
     // 对结果进行脱敏处理
     const sanitizedStudents = result.students.map((student: any) => {
       if (isAdmin || isCounselor) {

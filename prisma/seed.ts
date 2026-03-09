@@ -14,6 +14,33 @@ import {
 
 const prisma = new PrismaClient()
 
+// 通知内容生成辅助函数
+function generateNotificationTitle(type: string): string {
+  const titles: Record<string, string[]> = {
+    SYSTEM: ['系统公告', '维护通知', '新功能上线', '隐私政策更新'],
+    APPOINTMENT: ['预约确认', '预约提醒', '咨询时间变更', '预约取消'],
+    CHAT: ['新消息', '咨询师回复', 'AI助手消息'],
+    WARNING: ['预警提醒', '风险评估', '关注建议'],
+    POST: ['帖子被点赞', '收到评论', '新关注者'],
+    COMMENT: ['评论回复', '评论被点赞'],
+  }
+  const typeTitles = titles[type] || ['新通知']
+  return typeTitles[Math.floor(Math.random() * typeTitles.length)]
+}
+
+function generateNotificationContent(type: string): string {
+  const contents: Record<string, string[]> = {
+    SYSTEM: ['系统将于今晚22:00-23:00进行例行维护', '心图小程序新版本已上线，快来体验吧', '我们更新了隐私政策，请查看'],
+    APPOINTMENT: ['您的咨询预约已确认，请准时到场', '您的咨询将在30分钟后开始', '咨询师调整了您的预约时间'],
+    CHAT: ['您有一条未读消息', '咨询师回复了您的问题', 'AI助手为您生成了一份情绪报告'],
+    WARNING: ['系统检测到您的情绪有波动，建议关注', '您的心理健康评分需要关注', '建议进行一次心理咨询'],
+    POST: ['有人赞了您的帖子', '有人评论了您的帖子', '您有5个新关注者'],
+    COMMENT: ['有人回复了您的评论', '您的评论获得了10个赞'],
+  }
+  const typeContents = contents[type] || ['您有一条新通知']
+  return typeContents[Math.floor(Math.random() * typeContents.length)]
+}
+
 async function main() {
   const now = new Date()
   
@@ -126,6 +153,8 @@ async function main() {
     { id: 'ir-19', studentId: 'stu-yangbo', date: '2026-03-05', type: InterventionType.REGULAR_INTERVIEW, counselor: '王丽', duration: '45分钟', result: '适应性辅导持续中', status: 'in_progress' },
     { id: 'ir-20', studentId: 'stu-xiaoli', date: '2026-03-06', type: InterventionType.CBT_THERAPY, counselor: '刘芳', duration: '50分钟', result: '心理韧性培养进行中', status: 'in_progress' },
   ]
+
+  for (const r of interventionRecords) {
   const interventionRecords = [
     { id: 'ir-01', studentId: 'stu-zhangyu', date: '2026-02-15', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '状态良好', status: 'completed' },
     { id: 'ir-02', studentId: 'stu-zhangmingyuan', date: '2026-01-20', type: InterventionType.CBT_THERAPY, counselor: '张伟', duration: '60分钟', result: '认知重构进展顺利', status: 'completed' },
@@ -489,6 +518,99 @@ async function main() {
     })
   }
 
+  // ============================================
+  // PsyTwin Pocket 小程序扩展 - 社交互动测试数据
+  // ============================================
+  
+  // 清理旧数据
+  await prisma.postLike.deleteMany({})
+  await prisma.postCollection.deleteMany({})
+  await prisma.studentNotification.deleteMany({})
+  
+  // 获取所有学生和帖子
+  const allStudents = await prisma.student.findMany({ select: { id: true } })
+  const allPosts = await prisma.post.findMany({ select: { id: true } })
+  
+  if (allStudents.length > 0 && allPosts.length > 0) {
+    // 创建点赞数据（每个帖子随机1-5个点赞）
+    const postLikes = []
+    for (const post of allPosts) {
+      const likeCount = Math.floor(Math.random() * 5) + 1
+      const shuffledStudents = [...allStudents].sort(() => Math.random() - 0.5)
+      for (let i = 0; i < Math.min(likeCount, shuffledStudents.length); i++) {
+        postLikes.push({
+          postId: post.id,
+          studentId: shuffledStudents[i].id,
+        })
+      }
+    }
+    
+    for (const like of postLikes) {
+      await prisma.postLike.create({ data: like })
+    }
+    console.log(`- ${postLikes.length}条点赞记录`)
+    
+    // 创建收藏数据（每个学生随机收藏2-5个帖子）
+    const postCollections = []
+    for (const student of allStudents.slice(0, 10)) { // 只有前10个学生有收藏
+      const collectionCount = Math.floor(Math.random() * 4) + 2
+      const shuffledPosts = [...allPosts].sort(() => Math.random() - 0.5)
+      for (let i = 0; i < Math.min(collectionCount, shuffledPosts.length); i++) {
+        postCollections.push({
+          postId: shuffledPosts[i].id,
+          studentId: student.id,
+          collectedAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)), // 最近7天内
+        })
+      }
+    }
+    
+    for (const collection of postCollections) {
+      await prisma.postCollection.create({ data: collection })
+    }
+    console.log(`- ${postCollections.length}条收藏记录`)
+    
+    // 创建通知数据
+    const notificationTypes = ['SYSTEM', 'APPOINTMENT', 'CHAT', 'WARNING', 'POST', 'COMMENT'] as const
+    const notifications = []
+    
+    for (const student of allStudents.slice(0, 5)) { // 只有前5个学生有通知
+      const notificationCount = Math.floor(Math.random() * 5) + 3 // 3-7条通知
+      for (let i = 0; i < notificationCount; i++) {
+        const type = notificationTypes[Math.floor(Math.random() * notificationTypes.length)]
+        const isRead = Math.random() > 0.5
+        notifications.push({
+          studentId: student.id,
+          type: type,
+          title: generateNotificationTitle(type),
+          content: generateNotificationContent(type),
+          actionUrl: type === 'APPOINTMENT' ? '/pages/appointment/detail' : 
+                     type === 'CHAT' ? '/pages/chat/session' : 
+                     type === 'POST' ? '/pages/community/post' : null,
+          isRead: isRead,
+          readAt: isRead ? new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)) : null,
+          createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        })
+      }
+    }
+    
+    for (const notification of notifications) {
+      await prisma.studentNotification.create({ data: notification })
+    }
+    console.log(`- ${notifications.length}条通知记录`)
+  }
+
+  // 更新帖子的点赞数和收藏数
+  for (const post of allPosts) {
+    const likeCount = await prisma.postLike.count({ where: { postId: post.id } })
+    const collectionCount = await prisma.postCollection.count({ where: { postId: post.id } })
+    await prisma.post.update({
+      where: { id: post.id },
+      data: { likeCount, commentCount: collectionCount }, // 使用commentCount字段暂存收藏数
+    })
+  }
+
+  console.log('Seed completed successfully.')
+
   console.log('Seed completed successfully.')
   console.log(`- 20个学生（每人都有完整的心理画像和时间线）`)
   console.log(`- 20个心理画像（每人8维度+综合评分）`)
@@ -511,3 +633,4 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
+}

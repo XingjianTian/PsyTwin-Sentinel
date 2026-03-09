@@ -1,8 +1,19 @@
 "use server"
 
-import { InterventionType } from "@prisma/client"
+/**
+ * 干预记录相关 Server Actions
+ * 
+ * 提供干预记录的查询、状态更新、辅导员分配等功能
+ * 
+ * 缓存策略：
+ * - getInterventionRecords: Cache-Aside 模式，TTL 5 分钟
+ * - getInterventionRecordDetail: Cache-Aside 模式，TTL 10 分钟
+ * - 写操作后自动清除相关缓存
+ */
 
+import { InterventionType } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+import { cacheAside, cacheDelete, cacheDeletePattern } from "@/lib/cache"
 
 export interface InterventionRecordItem {
   id: string
@@ -84,32 +95,46 @@ function formatDate(date: Date): string {
     .replace(/\//g, "-")
 }
 
+/**
+ * 获取所有干预记录列表
+ * 
+ * 缓存策略：
+ * - 使用 Cache-Aside 模式
+ * - 缓存键：interventions:list:all
+ * - TTL：5 分钟
+ */
 export async function getInterventionRecords(): Promise<InterventionRecordItem[]> {
-  const records = await prisma.interventionRecord.findMany({
-    include: {
-      student: {
-        select: {
-          name: true,
-          className: true,
+  return cacheAside(
+    "interventions:list:all",
+    async () => {
+      const records = await prisma.interventionRecord.findMany({
+        include: {
+          student: {
+            select: {
+              name: true,
+              className: true,
+            },
+          },
         },
-      },
-    },
-    orderBy: {
-      date: "desc",
-    },
-  })
+        orderBy: {
+          date: "desc",
+        },
+      })
 
-  return records.map((record) => ({
-    id: record.id,
-    name: record.student.name,
-    cls: record.student.className,
-    type: mapInterventionType(record.type),
-    counselor: record.counselor,
-    duration: record.duration,
-    result: record.result,
-    status: mapStatus(record.status),
-    date: formatDate(record.date),
-  }))
+      return records.map((record) => ({
+        id: record.id,
+        name: record.student.name,
+        cls: record.student.className,
+        type: mapInterventionType(record.type),
+        counselor: record.counselor,
+        duration: record.duration,
+        result: record.result,
+        status: mapStatus(record.status),
+        date: formatDate(record.date),
+      }))
+    },
+    300 // 5 分钟 TTL
+  )
 }
 
 // 兼容旧接口名称
@@ -117,6 +142,11 @@ export async function getInterventionWorkOrders(): Promise<InterventionRecordIte
   return getInterventionRecords()
 }
 
+/**
+ * 更新干预记录状态
+ * 
+ * 写操作后自动清除相关缓存，确保数据一致性
+ */
 export async function setInterventionStatus(recordId: string, status: string): Promise<void> {
   if (!recordId) return
 
@@ -124,8 +154,16 @@ export async function setInterventionStatus(recordId: string, status: string): P
     where: { id: recordId },
     data: { status },
   })
+
+  // 清除缓存，确保下次读取获取最新数据
+  await invalidateInterventionCache(recordId)
 }
 
+/**
+ * 分配干预辅导员
+ * 
+ * 写操作后自动清除相关缓存
+ */
 export async function assignInterventionCounselor(recordId: string, counselor: string): Promise<void> {
   if (!recordId || !counselor.trim()) return
 
@@ -133,70 +171,110 @@ export async function assignInterventionCounselor(recordId: string, counselor: s
     where: { id: recordId },
     data: { counselor: counselor.trim() },
   })
+
+  // 清除缓存
+  await invalidateInterventionCache(recordId)
 }
 
-// 获取干预记录详情
+/**
+ * 获取干预记录详情
+ * 
+ * 缓存策略：
+ * - 使用 Cache-Aside 模式
+ * - 缓存键：interventions:detail:{recordId}
+ * - TTL：10 分钟（详情数据变动较少）
+ */
 export async function getInterventionRecordDetail(recordId: string): Promise<InterventionRecordDetail | null> {
   if (!recordId) return null
 
-  const record = await prisma.interventionRecord.findUnique({
-    where: { id: recordId },
-    include: {
-      student: {
-        select: {
-          name: true,
-          className: true,
+  return cacheAside(
+    `interventions:detail:${recordId}`,
+    async () => {
+      const record = await prisma.interventionRecord.findUnique({
+        where: { id: recordId },
+        include: {
+          student: {
+            select: {
+              name: true,
+              className: true,
+            },
+          },
+          detail: true,
         },
-      },
-      detail: true,
+      })
+
+      if (!record) return null
+
+      return {
+        id: record.id,
+        name: record.student.name,
+        cls: record.student.className,
+        type: mapInterventionType(record.type),
+        counselor: record.counselor,
+        duration: record.duration,
+        result: record.result,
+        status: mapStatus(record.status),
+        date: formatDate(record.date),
+        detail: record.detail ? {
+          // 干预前评估
+          preMood: record.detail.preMood,
+          preAnxietyLevel: record.detail.preAnxietyLevel,
+          preDepressionLevel: record.detail.preDepressionLevel,
+          preStressLevel: record.detail.preStressLevel,
+          mainIssues: record.detail.mainIssues,
+          riskLevel: record.detail.riskLevel,
+          riskAssessment: record.detail.riskAssessment,
+          // 干预过程
+          sessionContent: record.detail.sessionContent,
+          techniquesUsed: record.detail.techniquesUsed || [],
+          studentEngagement: record.detail.studentEngagement,
+          keyPoints: record.detail.keyPoints,
+          emotionalChanges: record.detail.emotionalChanges,
+          // 干预效果
+          postMood: record.detail.postMood,
+          postAnxietyLevel: record.detail.postAnxietyLevel,
+          postDepressionLevel: record.detail.postDepressionLevel,
+          postStressLevel: record.detail.postStressLevel,
+          improvementScore: record.detail.improvementScore,
+          breakthroughPoints: record.detail.breakthroughPoints,
+          unfinishedIssues: record.detail.unfinishedIssues,
+          // 后续建议
+          followUpActions: record.detail.followUpActions,
+          nextAppointment: record.detail.nextAppointment ? formatDate(record.detail.nextAppointment) : null,
+          referrals: record.detail.referrals,
+          recommendations: record.detail.recommendations,
+          // 其他
+          privateNotes: record.detail.privateNotes,
+          attachments: record.detail.attachments || [],
+          createdAt: formatDate(record.detail.createdAt),
+          updatedAt: formatDate(record.detail.updatedAt),
+        } : null,
+      }
     },
-  })
+    600 // 10 分钟 TTL
+  )
+}
 
-  if (!record) return null
-
-  return {
-    id: record.id,
-    name: record.student.name,
-    cls: record.student.className,
-    type: mapInterventionType(record.type),
-    counselor: record.counselor,
-    duration: record.duration,
-    result: record.result,
-    status: mapStatus(record.status),
-    date: formatDate(record.date),
-    detail: record.detail ? {
-      // 干预前评估
-      preMood: record.detail.preMood,
-      preAnxietyLevel: record.detail.preAnxietyLevel,
-      preDepressionLevel: record.detail.preDepressionLevel,
-      preStressLevel: record.detail.preStressLevel,
-      mainIssues: record.detail.mainIssues,
-      riskLevel: record.detail.riskLevel,
-      riskAssessment: record.detail.riskAssessment,
-      // 干预过程
-      sessionContent: record.detail.sessionContent,
-      techniquesUsed: record.detail.techniquesUsed || [],
-      studentEngagement: record.detail.studentEngagement,
-      keyPoints: record.detail.keyPoints,
-      emotionalChanges: record.detail.emotionalChanges,
-      // 干预效果
-      postMood: record.detail.postMood,
-      postAnxietyLevel: record.detail.postAnxietyLevel,
-      postDepressionLevel: record.detail.postDepressionLevel,
-      postStressLevel: record.detail.postStressLevel,
-      improvementScore: record.detail.improvementScore,
-      breakthroughPoints: record.detail.breakthroughPoints,
-      unfinishedIssues: record.detail.unfinishedIssues,
-      // 后续建议
-      followUpActions: record.detail.followUpActions,
-      nextAppointment: record.detail.nextAppointment ? formatDate(record.detail.nextAppointment) : null,
-      referrals: record.detail.referrals,
-      recommendations: record.detail.recommendations,
-      // 其他
-      privateNotes: record.detail.privateNotes,
-      attachments: record.detail.attachments || [],
-      createdAt: formatDate(record.detail.createdAt),
-      updatedAt: formatDate(record.detail.updatedAt),
-    } : null,
+/**
+ * 清除干预记录相关缓存
+ * 
+ * @param recordId 记录ID（可选，不提供则清除列表缓存）
+ */
+export async function invalidateInterventionCache(recordId?: string): Promise<void> {
+  try {
+    if (recordId) {
+      // 清除特定记录的缓存
+      await Promise.all([
+        cacheDelete(`interventions:detail:${recordId}`),
+        cacheDelete("interventions:list:all"),
+      ])
+      console.log(`[Cache] 已清除干预记录 ${recordId} 的缓存`)
+    } else {
+      // 清除所有干预记录缓存
+      await cacheDeletePattern("interventions:*")
+      console.log("[Cache] 已清除所有干预记录缓存")
+    }
+  } catch (error) {
+    console.error("[Cache] 清除干预记录缓存失败:", error)
   }
 }

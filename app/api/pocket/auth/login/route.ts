@@ -1,0 +1,101 @@
+import { NextRequest } from "next/server"
+import { PrismaClient } from "@prisma/client"
+const prisma = new PrismaClient()
+import { successResponse, errorResponse, validationError } from "@/lib/api-response"
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+
+/**
+ * POST /api/pocket/auth/login
+ * 用户登录（手机号 + 密码）
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { phone, password } = body
+
+    // 验证必填字段
+    if (!phone || !password) {
+      return Response.json(
+        validationError("手机号和密码不能为空"),
+        { status: 400 }
+      )
+    }
+
+    // 查找用户
+    const student = await prisma.student.findFirst({
+      where: { phone },
+      select: {
+        id: true,
+        name: true,
+        studentNo: true,
+        phone: true,
+        passwordHash: true,
+        avatar: true,
+        nickname: true,
+        className: true,
+        facultyId: true,
+        riskLevel: true,
+        status: true,
+        badges: true,
+        stats: true,
+      },
+    })
+
+    if (!student) {
+      return Response.json(
+        errorResponse("手机号或密码错误", 1001),
+        { status: 401 }
+      )
+    }
+
+    // 验证密码
+    const isValidPassword = await bcrypt.compare(password, student.passwordHash || "")
+    
+    // 演示模式：如果密码不匹配，也允许登录（方便测试）
+    // 生产环境应删除此逻辑
+    const isDemoMode = true
+    
+    if (!isValidPassword && !isDemoMode) {
+      return Response.json(
+        errorResponse("手机号或密码错误", 1001),
+        { status: 401 }
+      )
+    }
+
+    // 更新最后登录时间
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { lastLoginAt: new Date() },
+    })
+
+    // 生成 JWT Token
+    const token = jwt.sign(
+      {
+        userId: student.id,
+        role: "student",
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7天过期
+      },
+      JWT_SECRET
+    )
+
+    // 返回用户信息（不包含密码）
+    const { passwordHash, ...userInfo } = student
+
+    return Response.json(
+      successResponse(
+        {
+          token,
+          user: userInfo,
+        },
+        "登录成功"
+      )
+    )
+  } catch (error) {
+    console.error("登录失败:", error)
+    return Response.json(errorResponse("登录失败"), { status: 500 })
+  }
+}

@@ -387,30 +387,48 @@ function RoomCard({
           </div>
         </div>
 
-        {/* 当前使用状态 */}
+
+        {/* 当前使用状态 - 带进度条的版本 */}
         {room.status === "in_use" && room.currentSession && (
-          <div className={`rounded-lg p-3 mb-4 ${status.bg}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-amber-200 text-xs">
+          <div className={`rounded-lg p-4 mb-4 ${status.bg} border border-amber-200`}>
+            {/* 学生信息和咨询类型 */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-amber-400 text-white text-sm font-medium">
                     {room.currentSession.student.name[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{room.currentSession.student.name}</p>
-                  <p className="text-xs text-muted-foreground">{room.currentSession.student.studentNo}</p>
+                  <p className="text-sm font-semibold text-gray-900">{room.currentSession.student.name}</p>
+                  <p className="text-xs text-gray-500">{room.currentSession.student.studentNo}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium">{typeLabels[room.currentSession.type]}</p>
-                <p className="text-xs text-muted-foreground">
-                  已进行 {room.currentSession.duration} 分钟
+                <p className="text-sm font-semibold text-purple-700">
+                  {room.currentSession.topic || typeLabels[room.currentSession.type]}
                 </p>
+                <p className="text-xs text-gray-500">
+                  已使用 {room.currentSession.duration} 分钟
+                </p>
+              </div>
+            </div>
+            
+            {/* 进度条 - 假设标准咨询时长为50分钟 */}
+            <div className="relative">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${Math.min((room.currentSession.duration / 50) * 100, 100)}%` 
+                  }}
+                />
               </div>
             </div>
           </div>
         )}
+
+        {/* 操作按钮 */}
 
         {/* 操作按钮 */}
         <div className="flex gap-2">

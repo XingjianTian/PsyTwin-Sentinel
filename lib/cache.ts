@@ -10,6 +10,7 @@
  */
 
 import { getRedis } from "./redis";
+import { recordCacheHit, recordCacheMiss } from "./cache-monitor";
 
 // 默认缓存时间（秒）
 const DEFAULT_TTL = 300; // 5分钟
@@ -163,10 +164,14 @@ export async function cacheAside<T>(
   fetcher: () => Promise<T>,
   ttl: number = DEFAULT_TTL
 ): Promise<T> {
+  const start = Date.now();
+  
   // 1. 尝试从缓存读取
   const cached = await cacheGet<T>(key);
   if (cached !== null) {
-    console.log(`[Cache] 命中: ${key}`);
+    const latency = Date.now() - start;
+    recordCacheHit(latency);
+    console.log(`[Cache] 命中: ${key} (${latency}ms)`);
     return cached;
   }
   
@@ -177,44 +182,9 @@ export async function cacheAside<T>(
   // 3. 写入缓存
   await cacheSet(key, data, ttl);
   
+  const latency = Date.now() - start;
+  recordCacheMiss(latency);
+  console.log(`[Cache] 已写入: ${key} (总耗时 ${latency}ms)`);
+  
   return data;
-}
-
-/**
- * Write-Through 模式：写入数据库同时更新缓存
- * @param key 缓存键
- * @param data 数据
- * @param writer 数据库写入函数
- * @param ttl 过期时间
- */
-export async function cacheWriteThrough<T>(
-  key: string,
-  data: T,
-  writer: (data: T) => Promise<void>,
-  ttl: number = DEFAULT_TTL
-): Promise<void> {
-  // 1. 写入数据库
-  await writer(data);
-  
-  // 2. 更新缓存
-  await cacheSet(key, data, ttl);
-  
-  console.log(`[Cache] 写入并更新缓存: ${key}`);
-}
-
-/**
- * 使缓存失效（删除）
- * 适用于数据更新后清除相关缓存
- * @param keys 缓存键数组
- */
-export async function cacheInvalidate(keys: string[]): Promise<void> {
-  const redis = getRedis();
-  
-  try {
-    const fullKeys = keys.map(generateKey);
-    await redis.del(...fullKeys);
-    console.log(`[Cache] 使 ${keys.length} 个缓存失效`);
-  } catch (error) {
-    console.error("[Cache] 失效失败:", error);
-  }
 }

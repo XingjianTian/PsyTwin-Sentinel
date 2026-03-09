@@ -1,1 +1,1444 @@
-/usr/bin/bash: line 1: .node_modules.binnpm: command not found
+
+> my-project@0.1.0 dev
+> next dev --webpack
+
+▲ Next.js 16.1.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://198.18.0.1:3000
+- Environments: .env
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 2.3s
+ GET /system-settings?tab=basic 200 in 3.5s (compile: 3.2s, proxy.ts: 105ms, render: 255ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 196ms (compile: 10ms, proxy.ts: 35ms, render: 151ms)
+ GET /system-settings?tab=basic 200 in 95ms (compile: 7ms, proxy.ts: 9ms, render: 80ms)
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 22ms (compile: 5ms, proxy.ts: 6ms, render: 11ms)
+ GET /system-settings?tab=basic 200 in 111ms (compile: 11ms, proxy.ts: 36ms, render: 64ms)
+ GET /system-settings?tab=basic 200 in 112ms (compile: 11ms, proxy.ts: 36ms, render: 65ms)
+ GET /system-settings?tab=basic 200 in 38ms (compile: 6ms, proxy.ts: 11ms, render: 21ms)
+ GET /system-settings?tab=basic 200 in 36ms (compile: 4ms, proxy.ts: 10ms, render: 22ms)
+ GET /system-settings?tab=basic 200 in 43ms (compile: 7ms, proxy.ts: 10ms, render: 25ms)
+ GET /system-settings?tab=basic 200 in 44ms (compile: 6ms, proxy.ts: 13ms, render: 25ms)
+⨯ ./lib/cache.ts
+Error:   x Expected ';', '}' or <eof>
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\lib\cache.ts:191:1]
+ 188 |       
+ 189 |       return data;
+ 190 |     }
+ 191 | ,->   key: string,
+ 192 | |->   fetcher: () => Promise<T>,
+     : `---         ^
+     : `---- This is the expression part of an expression statement
+ 193 |       ttl: number = DEFAULT_TTL
+ 194 |     ): Promise<T> {
+ 195 |       // 1. 尝试从缓存读取
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/cache.ts
+./app/actions/settings.ts
+⨯ ./lib/cache.ts
+Error:   x Expected ';', '}' or <eof>
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\lib\cache.ts:191:1]
+ 188 |       
+ 189 |       return data;
+ 190 |     }
+ 191 | ,->   key: string,
+ 192 | |->   fetcher: () => Promise<T>,
+     : `---         ^
+     : `---- This is the expression part of an expression statement
+ 193 |       ttl: number = DEFAULT_TTL
+ 194 |     ): Promise<T> {
+ 195 |       // 1. 尝试从缓存读取
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/cache.ts
+./app/actions/settings.ts
+ GET /system-settings?tab=basic 500 in 1416ms (compile: 1283ms, proxy.ts: 7ms, render: 126ms)
+ GET /system-settings?tab=basic 500 in 21ms (compile: 5ms, proxy.ts: 7ms, render: 9ms)
+ GET /system-settings?tab=basic 500 in 24ms (compile: 5ms, proxy.ts: 6ms, render: 13ms)
+ GET /system-settings?tab=basic 500 in 24ms (compile: 6ms, proxy.ts: 6ms, render: 12ms)
+○ Compiling /_error ...
+ GET /system-settings?tab=basic 500 in 18ms (compile: 5ms, proxy.ts: 6ms, render: 7ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /system-settings?tab=basic 500 in 246ms (proxy.ts: 162ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⨯ ./lib/cache.ts
+Error:   x Expected ';', '}' or <eof>
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\lib\cache.ts:191:1]
+ 188 |       
+ 189 |       return data;
+ 190 |     }
+ 191 | ,->   key: string,
+ 192 | |->   fetcher: () => Promise<T>,
+     : `---         ^
+     : `---- This is the expression part of an expression statement
+ 193 |       ttl: number = DEFAULT_TTL
+ 194 |     ): Promise<T> {
+ 195 |       // 1. 尝试从缓存读取
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/cache.ts
+./app/actions/settings.ts
+ GET /system-settings?tab=basic 500 in 123ms (compile: 77ms, proxy.ts: 26ms, render: 19ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /system-settings?tab=basic 500 in 35ms (proxy.ts: 8ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /system-settings?tab=basic 500 in 88ms (proxy.ts: 10ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⨯ ./lib/cache.ts
+Error:   x Expected ';', '}' or <eof>
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\lib\cache.ts:191:1]
+ 188 |       
+ 189 |       return data;
+ 190 |     }
+ 191 | ,->   key: string,
+ 192 | |->   fetcher: () => Promise<T>,
+     : `---         ^
+     : `---- This is the expression part of an expression statement
+ 193 |       ttl: number = DEFAULT_TTL
+ 194 |     ): Promise<T> {
+ 195 |       // 1. 尝试从缓存读取
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/cache.ts
+./app/actions/settings.ts
+ GET /system-settings?tab=basic 500 in 230ms (compile: 176ms, proxy.ts: 34ms, render: 20ms)
+○ Compiling /_error ...
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /system-settings?tab=basic 500 in 102ms (proxy.ts: 20ms)
+ GET /system-settings?tab=basic 200 in 1143ms (compile: 887ms, proxy.ts: 49ms, render: 208ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /system-settings?tab=basic 200 in 231ms (compile: 8ms, proxy.ts: 16ms, render: 207ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 102ms (compile: 6ms, proxy.ts: 8ms, render: 88ms)
+ GET /system-settings?tab=basic 200 in 38ms (compile: 5ms, proxy.ts: 9ms, render: 23ms)
+ GET /system-settings?tab=basic 200 in 39ms (compile: 6ms, proxy.ts: 10ms, render: 23ms)
+ GET /system-settings?tab=basic 200 in 28ms (compile: 3ms, proxy.ts: 8ms, render: 17ms)
+ GET /system-settings?tab=basic 200 in 56ms (compile: 4ms, proxy.ts: 25ms, render: 27ms)
+ GET /system-settings?tab=basic 200 in 32ms (compile: 5ms, proxy.ts: 8ms, render: 18ms)
+ GET /system-settings?tab=basic 200 in 162ms (compile: 126ms, proxy.ts: 14ms, render: 21ms)
+ GET /system-settings?tab=basic 200 in 32ms (compile: 5ms, proxy.ts: 8ms, render: 19ms)
+ GET /system-settings?tab=basic 200 in 64ms (compile: 5ms, proxy.ts: 41ms, render: 18ms)
+ GET /system-settings?tab=basic 200 in 40ms (compile: 4ms, proxy.ts: 11ms, render: 25ms)
+ GET /system-settings?tab=basic 200 in 28ms (compile: 4ms, proxy.ts: 8ms, render: 17ms)
+ GET /system-settings?tab=basic 200 in 41ms (compile: 4ms, proxy.ts: 10ms, render: 27ms)
+ GET /system-settings?tab=basic 200 in 208ms (compile: 163ms, proxy.ts: 16ms, render: 29ms)
+ GET /system-settings?tab=basic 200 in 41ms (compile: 9ms, proxy.ts: 8ms, render: 23ms)
+ GET /system-settings?tab=basic 200 in 30ms (compile: 4ms, proxy.ts: 10ms, render: 17ms)
+ GET /system-settings?tab=basic 200 in 27ms (compile: 4ms, proxy.ts: 8ms, render: 15ms)
+ GET /system-settings?tab=basic 200 in 57ms (compile: 5ms, proxy.ts: 9ms, render: 43ms)
+ GET /system-settings?tab=basic 200 in 29ms (compile: 5ms, proxy.ts: 8ms, render: 16ms)
+ GET /system-settings?tab=basic 200 in 65ms (compile: 9ms, proxy.ts: 12ms, render: 44ms)
+ GET /system-settings?tab=basic 200 in 233ms (compile: 190ms, proxy.ts: 15ms, render: 27ms)
+ GET /system-settings?tab=basic 200 in 221ms (compile: 164ms, proxy.ts: 24ms, render: 32ms)
+ GET /system-settings?tab=basic 200 in 38ms (compile: 8ms, proxy.ts: 8ms, render: 22ms)
+ GET /system-settings?tab=basic 200 in 28ms (compile: 4ms, proxy.ts: 8ms, render: 16ms)
+ GET /system-settings?tab=basic 200 in 31ms (compile: 6ms, proxy.ts: 7ms, render: 19ms)
+ GET /system-settings?tab=basic 200 in 60ms (compile: 4ms, proxy.ts: 4ms, render: 52ms)
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 53ms (compile: 6ms, proxy.ts: 9ms, render: 39ms)
+ GET /students 200 in 1241ms (compile: 1206ms, proxy.ts: 5ms, render: 30ms)
+ GET /students 200 in 31ms (compile: 5ms, proxy.ts: 6ms, render: 20ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 未命中: students:list:1:12:_:_:_:_，从数据库获取
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."gender", "public"."students"."birth_date", "public"."students"."mbti", "public"."students"."risk_level"::text, "public"."students"."phone", "public"."students"."password_hash", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."role", "public"."students"."status"::text, "public"."students"."badges", "public"."students"."stats", "public"."students"."settings", "public"."students"."last_login_at", "public"."students"."created_at", "public"."students"."updated_at" FROM "public"."students" WHERE 1=1 ORDER BY "public"."students"."created_at" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."faculties"."id", "public"."faculties"."name" FROM "public"."faculties" WHERE "public"."faculties"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+prisma:query SELECT "public"."psych_profiles"."id", "public"."psych_profiles"."overall_score", "public"."psych_profiles"."student_id" FROM "public"."psych_profiles" WHERE "public"."psych_profiles"."student_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) OFFSET $13
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."students"."id" FROM "public"."students" WHERE 1=1 OFFSET $1) AS "sub"
+[Cache] 已写入: students:list:1:12:_:_:_:_ (总耗时 155ms)
+ GET /api/students?page=1&limit=12 200 in 1273ms (compile: 1087ms, proxy.ts: 7ms, render: 179ms)
+ GET /students 200 in 148ms (compile: 75ms, proxy.ts: 21ms, render: 53ms)
+[Cache] 命中: students:list:1:12:_:_:_:_ (2ms)
+ GET /api/students?page=1&limit=12 200 in 23ms (compile: 7ms, proxy.ts: 8ms, render: 8ms)
+ GET /students/stu-xiaoli 200 in 1433ms (compile: 1397ms, proxy.ts: 4ms, render: 33ms)
+ GET /students/stu-xiaoli 200 in 72ms (compile: 41ms, proxy.ts: 6ms, render: 24ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli 200 in 150ms (compile: 94ms, proxy.ts: 14ms, render: 42ms)
+[Cache] 未命中: students:detail:stu-xiaoli，从数据库获取
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."gender", "public"."students"."birth_date", "public"."students"."mbti", "public"."students"."risk_level"::text, "public"."students"."phone", "public"."students"."password_hash", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."role", "public"."students"."status"::text, "public"."students"."badges", "public"."students"."stats", "public"."students"."settings", "public"."students"."last_login_at", "public"."students"."created_at", "public"."students"."updated_at", COALESCE("aggr_selection_0_Alert"."_aggr_count_alerts", 0) AS "_aggr_count_alerts", COALESCE("aggr_selection_1_InterventionRecord"."_aggr_count_interventionRecords", 0) AS "_aggr_count_interventionRecords", COALESCE("aggr_selection_2_VRSession"."_aggr_count_vrSessions", 0) AS "_aggr_count_vrSessions" FROM "public"."students" LEFT JOIN (SELECT "public"."alerts"."student_id", COUNT(*) AS "_aggr_count_alerts" FROM "public"."alerts" WHERE 1=1 GROUP BY "public"."alerts"."student_id") AS "aggr_selection_0_Alert" ON ("public"."students"."id" = "aggr_selection_0_Alert"."student_id") LEFT JOIN (SELECT "public"."intervention_records"."student_id", COUNT(*) AS "_aggr_count_interventionRecords" FROM "public"."intervention_records" WHERE 1=1 GROUP BY "public"."intervention_records"."student_id") AS "aggr_selection_1_InterventionRecord" ON ("public"."students"."id" = "aggr_selection_1_InterventionRecord"."student_id") LEFT JOIN (SELECT "public"."vr_sessions"."student_id", COUNT(*) AS "_aggr_count_vrSessions" FROM "public"."vr_sessions" WHERE 1=1 GROUP BY "public"."vr_sessions"."student_id") AS "aggr_selection_2_VRSession" ON ("public"."students"."id" = "aggr_selection_2_VRSession"."student_id") WHERE ("public"."students"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."faculties"."id", "public"."faculties"."name" FROM "public"."faculties" WHERE "public"."faculties"."id" IN ($1) OFFSET $2
+[Redis] 连接成功
+prisma:query SELECT "public"."psych_profiles"."id", "public"."psych_profiles"."student_id", "public"."psych_profiles"."adversity_quotient", "public"."psych_profiles"."emotional_stability", "public"."psych_profiles"."social_tendency", "public"."psych_profiles"."stress_resistance", "public"."psych_profiles"."self_awareness", "public"."psych_profiles"."empathy", "public"."psych_profiles"."willpower", "public"."psych_profiles"."adaptability", "public"."psych_profiles"."overall_score", "public"."psych_profiles"."created_at", "public"."psych_profiles"."updated_at" FROM "public"."psych_profiles" WHERE "public"."psych_profiles"."student_id" IN ($1) OFFSET $2
+[Cache] 已写入: students:detail:stu-xiaoli (总耗时 20ms)
+ GET /api/students/stu-xiaoli 200 in 1311ms (compile: 1273ms, proxy.ts: 5ms, render: 33ms)
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 命中: students:detail:stu-xiaoli (2ms)
+ GET /api/students/stu-xiaoli 200 in 73ms (compile: 59ms, proxy.ts: 7ms, render: 7ms)
+[Redis] 连接成功
+[Redis] 准备就绪
+[WARN] Redis server does not require a password, but a password was supplied.
+ GET /students/stu-xiaoli/profile 200 in 3.4s (compile: 3.3s, proxy.ts: 7ms, render: 43ms)
+ GET /students/stu-xiaoli/profile 200 in 67ms (compile: 42ms, proxy.ts: 9ms, render: 16ms)
+ GET /students/stu-xiaoli/timeline 200 in 1828ms (compile: 1778ms, proxy.ts: 6ms, render: 43ms)
+ GET /students/stu-xiaoli/timeline 200 in 81ms (compile: 46ms, proxy.ts: 12ms, render: 23ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/timeline 200 in 110ms (compile: 63ms, proxy.ts: 12ms, render: 35ms)
+[Cache] 未命中: students:timeline:stu-xiaoli:50，从数据库获取
+prisma:query SELECT 1
+prisma:query SELECT "public"."timeline_events"."id", "public"."timeline_events"."student_id", "public"."timeline_events"."date", "public"."timeline_events"."title", "public"."timeline_events"."description", "public"."timeline_events"."status", "public"."timeline_events"."created_at", "public"."timeline_events"."updated_at" FROM "public"."timeline_events" WHERE "public"."timeline_events"."student_id" = $1 ORDER BY "public"."timeline_events"."date" DESC LIMIT $2 OFFSET $3
+[Cache] 已写入: students:timeline:stu-xiaoli:50 (总耗时 10ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 1412ms (compile: 1377ms, proxy.ts: 6ms, render: 30ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 53ms (compile: 40ms, proxy.ts: 6ms, render: 7ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/profile 200 in 60ms (compile: 40ms, proxy.ts: 4ms, render: 16ms)
+[Cache] 命中: students:detail:stu-xiaoli (39ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli 200 in 103ms (compile: 48ms, proxy.ts: 8ms, render: 47ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 103ms (compile: 88ms, proxy.ts: 8ms, render: 7ms)
+[Cache] 命中: students:detail:stu-xiaoli (8ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli 200 in 31ms (compile: 7ms, proxy.ts: 9ms, render: 15ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 31ms (compile: 13ms, proxy.ts: 9ms, render: 9ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/interventions 200 in 1560ms (compile: 1532ms, proxy.ts: 5ms, render: 24ms)
+ GET /students/stu-xiaoli/interventions 200 in 75ms (compile: 42ms, proxy.ts: 7ms, render: 27ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/interventions 200 in 102ms (compile: 63ms, proxy.ts: 10ms, render: 29ms)
+[Cache] 未命中: student:stu-xiaoli:interventions:1:10，从数据库获取
+[Cache] 干预记录缓存未命中: studentId=stu-xiaoli, page=1
+[Cache] 未命中: students:interventions:stu-xiaoli:1:10，从数据库获取
+prisma:query SELECT 1
+prisma:query SELECT "public"."intervention_records"."id", "public"."intervention_records"."student_id", "public"."intervention_records"."date", "public"."intervention_records"."type"::text, "public"."intervention_records"."counselor", "public"."intervention_records"."duration", "public"."intervention_records"."result", "public"."intervention_records"."status", "public"."intervention_records"."created_at", "public"."intervention_records"."updated_at" FROM "public"."intervention_records" WHERE "public"."intervention_records"."student_id" = $1 ORDER BY "public"."intervention_records"."date" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."intervention_records"."id" FROM "public"."intervention_records" WHERE "public"."intervention_records"."student_id" = $1 OFFSET $2) AS "sub"
+[Cache] 已写入: students:interventions:stu-xiaoli:1:10 (总耗时 8ms)
+[Cache] 已写入: student:stu-xiaoli:interventions:1:10 (总耗时 10ms)
+ GET /api/students/stu-xiaoli/interventions?page=1&limit=10 200 in 1489ms (compile: 1463ms, proxy.ts: 9ms, render: 17ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 命中: student:stu-xiaoli:interventions:1:10 (1ms)
+ GET /api/students/stu-xiaoli/interventions?page=1&limit=10 200 in 55ms (compile: 43ms, proxy.ts: 7ms, render: 6ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/timeline 200 in 63ms (compile: 39ms, proxy.ts: 5ms, render: 19ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 60ms (compile: 46ms, proxy.ts: 7ms, render: 8ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (0ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 29ms (compile: 6ms, proxy.ts: 16ms, render: 6ms)
+[Redis] 连接成功
+[Redis] 准备就绪
+[WARN] Redis server does not require a password, but a password was supplied.
+ GET /students/stu-xiaoli/profile 200 in 98ms (compile: 71ms, proxy.ts: 7ms, render: 20ms)
+[Cache] 命中: students:detail:stu-xiaoli (47ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli 200 in 145ms (compile: 77ms, proxy.ts: 13ms, render: 54ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 145ms (compile: 124ms, proxy.ts: 14ms, render: 7ms)
+[Cache] 命中: students:detail:stu-xiaoli (5ms)
+ GET /api/students/stu-xiaoli 200 in 30ms (compile: 10ms, proxy.ts: 9ms, render: 11ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (3ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 32ms (compile: 15ms, proxy.ts: 9ms, render: 8ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-xiaoli/timeline 200 in 62ms (compile: 41ms, proxy.ts: 4ms, render: 16ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 67ms (compile: 50ms, proxy.ts: 10ms, render: 6ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 17ms (compile: 5ms, proxy.ts: 6ms, render: 5ms)
+ GET /students/stu-xiaoli/profile 200 in 65ms (compile: 42ms, proxy.ts: 5ms, render: 18ms)
+[Redis] 连接成功
+[Redis] 准备就绪
+[WARN] Redis server does not require a password, but a password was supplied.
+[Cache] 命中: students:detail:stu-xiaoli (46ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli 200 in 115ms (compile: 51ms, proxy.ts: 12ms, render: 53ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 116ms (compile: 97ms, proxy.ts: 12ms, render: 7ms)
+[Cache] 命中: students:detail:stu-xiaoli (7ms)
+[Cache] 命中: students:timeline:stu-xiaoli:50 (1ms)
+ GET /api/students/stu-xiaoli 200 in 53ms (compile: 25ms, proxy.ts: 11ms, render: 17ms)
+ GET /api/students/stu-xiaoli/timeline 200 in 53ms (compile: 33ms, proxy.ts: 11ms, render: 9ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /interventions 200 in 1584ms (compile: 1551ms, proxy.ts: 4ms, render: 29ms)
+ GET /interventions 200 in 30ms (compile: 4ms, proxy.ts: 6ms, render: 19ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 未命中: interventions:list:all，从数据库获取
+prisma:query SELECT "public"."intervention_records"."id", "public"."intervention_records"."student_id", "public"."intervention_records"."date", "public"."intervention_records"."type"::text, "public"."intervention_records"."counselor", "public"."intervention_records"."duration", "public"."intervention_records"."result", "public"."intervention_records"."status", "public"."intervention_records"."created_at", "public"."intervention_records"."updated_at" FROM "public"."intervention_records" WHERE 1=1 ORDER BY "public"."intervention_records"."date" DESC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."class_name" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) OFFSET $21
+[Cache] 已写入: interventions:list:all (总耗时 27ms)
+ POST /interventions 200 in 89ms (compile: 5ms, proxy.ts: 7ms, render: 77ms)
+[Cache] 命中: interventions:list:all (0ms)
+ POST /interventions 200 in 16ms (compile: 3ms, proxy.ts: 5ms, render: 8ms)
+ GET /interventions 200 in 50ms (compile: 6ms, proxy.ts: 11ms, render: 32ms)
+ GET /interventions 200 in 36ms (compile: 6ms, proxy.ts: 7ms, render: 23ms)
+ GET /interventions 200 in 40ms (compile: 7ms, proxy.ts: 10ms, render: 24ms)
+ GET /interventions 200 in 41ms (compile: 5ms, proxy.ts: 8ms, render: 28ms)
+ GET /interventions 200 in 37ms (compile: 11ms, proxy.ts: 8ms, render: 17ms)
+ GET /interventions 200 in 37ms (compile: 5ms, proxy.ts: 14ms, render: 18ms)
+ GET /interventions 200 in 116ms (compile: 20ms, proxy.ts: 45ms, render: 50ms)
+ GET /interventions 200 in 35ms (compile: 5ms, proxy.ts: 8ms, render: 21ms)
+ GET /interventions 200 in 36ms (compile: 4ms, proxy.ts: 7ms, render: 25ms)
+ GET /interventions 200 in 41ms (compile: 8ms, proxy.ts: 8ms, render: 24ms)
+ GET /interventions 200 in 74ms (compile: 7ms, proxy.ts: 12ms, render: 55ms)
+ GET /interventions 200 in 38ms (compile: 9ms, proxy.ts: 10ms, render: 19ms)
+ GET /interventions 200 in 64ms (compile: 5ms, proxy.ts: 40ms, render: 19ms)
+ GET /interventions 200 in 27ms (compile: 5ms, proxy.ts: 6ms, render: 16ms)
+ GET /interventions 200 in 30ms (compile: 4ms, proxy.ts: 7ms, render: 19ms)
+ GET /interventions 200 in 40ms (compile: 6ms, proxy.ts: 8ms, render: 26ms)
+ GET /interventions 200 in 30ms (compile: 4ms, proxy.ts: 6ms, render: 20ms)
+ GET /interventions 200 in 28ms (compile: 4ms, proxy.ts: 6ms, render: 19ms)
+ GET /interventions 200 in 30ms (compile: 5ms, proxy.ts: 5ms, render: 20ms)
+ GET /interventions 200 in 80ms (compile: 52ms, proxy.ts: 11ms, render: 17ms)
+ GET /interventions 200 in 39ms (compile: 4ms, proxy.ts: 8ms, render: 28ms)
+ GET /interventions 200 in 30ms (compile: 5ms, proxy.ts: 8ms, render: 16ms)
+ GET /interventions 200 in 25ms (compile: 4ms, proxy.ts: 6ms, render: 15ms)
+ GET /interventions 200 in 54ms (compile: 8ms, proxy.ts: 17ms, render: 29ms)
+ GET /interventions 200 in 65ms (compile: 8ms, proxy.ts: 40ms, render: 18ms)
+ GET /interventions 200 in 191ms (compile: 5ms, proxy.ts: 9ms, render: 177ms)
+[Cache] 未命中: interventions:list:all，从数据库获取
+prisma:query SELECT "public"."intervention_records"."id", "public"."intervention_records"."student_id", "public"."intervention_records"."date", "public"."intervention_records"."type"::text, "public"."intervention_records"."counselor", "public"."intervention_records"."duration", "public"."intervention_records"."result", "public"."intervention_records"."status", "public"."intervention_records"."created_at", "public"."intervention_records"."updated_at" FROM "public"."intervention_records" WHERE 1=1 ORDER BY "public"."intervention_records"."date" DESC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."class_name" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) OFFSET $21
+[Cache] 已写入: interventions:list:all (总耗时 38ms)
+ POST /interventions 200 in 59ms (compile: 6ms, proxy.ts: 6ms, render: 46ms)
+ GET /students 200 in 25ms (compile: 9ms, proxy.ts: 4ms, render: 12ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 未命中: students:list:1:12:_:_:_:_，从数据库获取
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."gender", "public"."students"."birth_date", "public"."students"."mbti", "public"."students"."risk_level"::text, "public"."students"."phone", "public"."students"."password_hash", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."role", "public"."students"."status"::text, "public"."students"."badges", "public"."students"."stats", "public"."students"."settings", "public"."students"."last_login_at", "public"."students"."created_at", "public"."students"."updated_at" FROM "public"."students" WHERE 1=1 ORDER BY "public"."students"."created_at" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."faculties"."id", "public"."faculties"."name" FROM "public"."faculties" WHERE "public"."faculties"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+prisma:query SELECT "public"."psych_profiles"."id", "public"."psych_profiles"."overall_score", "public"."psych_profiles"."student_id" FROM "public"."psych_profiles" WHERE "public"."psych_profiles"."student_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) OFFSET $13
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."students"."id" FROM "public"."students" WHERE 1=1 OFFSET $1) AS "sub"
+[Cache] 已写入: students:list:1:12:_:_:_:_ (总耗时 25ms)
+ GET /api/students?page=1&limit=12 200 in 80ms (compile: 45ms, proxy.ts: 5ms, render: 31ms)
+[Cache] 命中: students:list:1:12:_:_:_:_ (0ms)
+ GET /api/students?page=1&limit=12 200 in 10ms (compile: 1898µs, proxy.ts: 4ms, render: 4ms)
+ GET /students/stu-yangbo 200 in 61ms (compile: 38ms, proxy.ts: 4ms, render: 18ms)
+[Cache] 未命中: students:detail:stu-yangbo，从数据库获取
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."gender", "public"."students"."birth_date", "public"."students"."mbti", "public"."students"."risk_level"::text, "public"."students"."phone", "public"."students"."password_hash", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."role", "public"."students"."status"::text, "public"."students"."badges", "public"."students"."stats", "public"."students"."settings", "public"."students"."last_login_at", "public"."students"."created_at", "public"."students"."updated_at", COALESCE("aggr_selection_0_Alert"."_aggr_count_alerts", 0) AS "_aggr_count_alerts", COALESCE("aggr_selection_1_InterventionRecord"."_aggr_count_interventionRecords", 0) AS "_aggr_count_interventionRecords", COALESCE("aggr_selection_2_VRSession"."_aggr_count_vrSessions", 0) AS "_aggr_count_vrSessions" FROM "public"."students" LEFT JOIN (SELECT "public"."alerts"."student_id", COUNT(*) AS "_aggr_count_alerts" FROM "public"."alerts" WHERE 1=1 GROUP BY "public"."alerts"."student_id") AS "aggr_selection_0_Alert" ON ("public"."students"."id" = "aggr_selection_0_Alert"."student_id") LEFT JOIN (SELECT "public"."intervention_records"."student_id", COUNT(*) AS "_aggr_count_interventionRecords" FROM "public"."intervention_records" WHERE 1=1 GROUP BY "public"."intervention_records"."student_id") AS "aggr_selection_1_InterventionRecord" ON ("public"."students"."id" = "aggr_selection_1_InterventionRecord"."student_id") LEFT JOIN (SELECT "public"."vr_sessions"."student_id", COUNT(*) AS "_aggr_count_vrSessions" FROM "public"."vr_sessions" WHERE 1=1 GROUP BY "public"."vr_sessions"."student_id") AS "aggr_selection_2_VRSession" ON ("public"."students"."id" = "aggr_selection_2_VRSession"."student_id") WHERE ("public"."students"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."faculties"."id", "public"."faculties"."name" FROM "public"."faculties" WHERE "public"."faculties"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."psych_profiles"."id", "public"."psych_profiles"."student_id", "public"."psych_profiles"."adversity_quotient", "public"."psych_profiles"."emotional_stability", "public"."psych_profiles"."social_tendency", "public"."psych_profiles"."stress_resistance", "public"."psych_profiles"."self_awareness", "public"."psych_profiles"."empathy", "public"."psych_profiles"."willpower", "public"."psych_profiles"."adaptability", "public"."psych_profiles"."overall_score", "public"."psych_profiles"."created_at", "public"."psych_profiles"."updated_at" FROM "public"."psych_profiles" WHERE "public"."psych_profiles"."student_id" IN ($1) OFFSET $2
+[Cache] 已写入: students:detail:stu-yangbo (总耗时 13ms)
+ GET /api/students/stu-yangbo 200 in 61ms (compile: 37ms, proxy.ts: 6ms, render: 18ms)
+[Cache] 命中: students:detail:stu-yangbo (0ms)
+ GET /api/students/stu-yangbo 200 in 16ms (compile: 6ms, proxy.ts: 5ms, render: 4ms)
+ GET /students/stu-yangbo/profile 200 in 69ms (compile: 46ms, proxy.ts: 5ms, render: 18ms)
+ GET /students/stu-yangbo/profile 200 in 26ms (compile: 7ms, proxy.ts: 6ms, render: 13ms)
+[Cache] 命中: students:detail:stu-yangbo (51ms)
+[Cache] 未命中: students:timeline:stu-yangbo:50，从数据库获取
+ GET /api/students/stu-yangbo 200 in 72ms (compile: 7ms, proxy.ts: 8ms, render: 57ms)
+prisma:query SELECT "public"."timeline_events"."id", "public"."timeline_events"."student_id", "public"."timeline_events"."date", "public"."timeline_events"."title", "public"."timeline_events"."description", "public"."timeline_events"."status", "public"."timeline_events"."created_at", "public"."timeline_events"."updated_at" FROM "public"."timeline_events" WHERE "public"."timeline_events"."student_id" = $1 ORDER BY "public"."timeline_events"."date" DESC LIMIT $2 OFFSET $3
+[Cache] 已写入: students:timeline:stu-yangbo:50 (总耗时 9ms)
+ GET /api/students/stu-yangbo/timeline 200 in 81ms (compile: 58ms, proxy.ts: 8ms, render: 15ms)
+[Cache] 命中: students:detail:stu-yangbo (4ms)
+ GET /api/students/stu-yangbo 200 in 25ms (compile: 9ms, proxy.ts: 7ms, render: 9ms)
+[Cache] 命中: students:timeline:stu-yangbo:50 (2ms)
+ GET /api/students/stu-yangbo/timeline 200 in 27ms (compile: 13ms, proxy.ts: 7ms, render: 6ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-yangbo/timeline 200 in 55ms (compile: 38ms, proxy.ts: 4ms, render: 13ms)
+[Cache] 命中: students:timeline:stu-yangbo:50 (0ms)
+ GET /api/students/stu-yangbo/timeline 200 in 48ms (compile: 37ms, proxy.ts: 6ms, render: 4ms)
+[Cache] 命中: students:timeline:stu-yangbo:50 (3ms)
+ GET /api/students/stu-yangbo/timeline 200 in 17ms (compile: 4ms, proxy.ts: 4ms, render: 9ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /students/stu-yangbo/profile 200 in 48ms (compile: 32ms, proxy.ts: 4ms, render: 12ms)
+[Cache] 命中: students:detail:stu-yangbo (1ms)
+ GET /api/students/stu-yangbo 200 in 62ms (compile: 46ms, proxy.ts: 9ms, render: 6ms)
+[Cache] 命中: students:timeline:stu-yangbo:50 (1ms)
+ GET /api/students/stu-yangbo/timeline 200 in 102ms (compile: 83ms, proxy.ts: 11ms, render: 8ms)
+[Cache] 命中: students:detail:stu-yangbo (0ms)
+ GET /api/students/stu-yangbo 200 in 20ms (compile: 9ms, proxy.ts: 7ms, render: 4ms)
+[Cache] 命中: students:timeline:stu-yangbo:50 (0ms)
+ GET /api/students/stu-yangbo/timeline 200 in 25ms (compile: 11ms, proxy.ts: 9ms, render: 5ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+ GET /interventions 200 in 18ms (compile: 3ms, proxy.ts: 4ms, render: 11ms)
+[Cache] 命中: interventions:list:all (0ms)
+ POST /interventions 200 in 16ms (compile: 3ms, proxy.ts: 7ms, render: 6ms)
+[Cache] 命中: interventions:list:all (0ms)
+ POST /interventions 200 in 14ms (compile: 3ms, proxy.ts: 5ms, render: 6ms)
+[Cache] 未命中: interventions:detail:ir-16，从数据库获取
+prisma:query SELECT "public"."intervention_records"."id", "public"."intervention_records"."student_id", "public"."intervention_records"."date", "public"."intervention_records"."type"::text, "public"."intervention_records"."counselor", "public"."intervention_records"."duration", "public"."intervention_records"."result", "public"."intervention_records"."status", "public"."intervention_records"."created_at", "public"."intervention_records"."updated_at" FROM "public"."intervention_records" WHERE ("public"."intervention_records"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."class_name" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."intervention_details"."id", "public"."intervention_details"."record_id", "public"."intervention_details"."pre_mood", "public"."intervention_details"."pre_anxiety_level", "public"."intervention_details"."pre_depression_level", "public"."intervention_details"."pre_stress_level", "public"."intervention_details"."main_issues", "public"."intervention_details"."risk_level", "public"."intervention_details"."risk_assessment", "public"."intervention_details"."session_content", "public"."intervention_details"."techniques_used", "public"."intervention_details"."student_engagement", "public"."intervention_details"."key_points", "public"."intervention_details"."emotional_changes", "public"."intervention_details"."post_mood", "public"."intervention_details"."post_anxiety_level", "public"."intervention_details"."post_depression_level", "public"."intervention_details"."post_stress_level", "public"."intervention_details"."improvement_score", "public"."intervention_details"."breakthrough_points", "public"."intervention_details"."unfinished_issues", "public"."intervention_details"."follow_up_actions", "public"."intervention_details"."next_appointment", "public"."intervention_details"."referrals", "public"."intervention_details"."recommendations", "public"."intervention_details"."private_notes", "public"."intervention_details"."attachments", "public"."intervention_details"."created_at", "public"."intervention_details"."updated_at" FROM "public"."intervention_details" WHERE "public"."intervention_details"."record_id" IN ($1) OFFSET $2
+[Cache] 已写入: interventions:detail:ir-16 (总耗时 7ms)
+ POST /interventions 200 in 20ms (compile: 3ms, proxy.ts: 4ms, render: 13ms)
+[Cache] 未命中: interventions:detail:ir-13，从数据库获取
+prisma:query SELECT "public"."intervention_records"."id", "public"."intervention_records"."student_id", "public"."intervention_records"."date", "public"."intervention_records"."type"::text, "public"."intervention_records"."counselor", "public"."intervention_records"."duration", "public"."intervention_records"."result", "public"."intervention_records"."status", "public"."intervention_records"."created_at", "public"."intervention_records"."updated_at" FROM "public"."intervention_records" WHERE ("public"."intervention_records"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."class_name" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."intervention_details"."id", "public"."intervention_details"."record_id", "public"."intervention_details"."pre_mood", "public"."intervention_details"."pre_anxiety_level", "public"."intervention_details"."pre_depression_level", "public"."intervention_details"."pre_stress_level", "public"."intervention_details"."main_issues", "public"."intervention_details"."risk_level", "public"."intervention_details"."risk_assessment", "public"."intervention_details"."session_content", "public"."intervention_details"."techniques_used", "public"."intervention_details"."student_engagement", "public"."intervention_details"."key_points", "public"."intervention_details"."emotional_changes", "public"."intervention_details"."post_mood", "public"."intervention_details"."post_anxiety_level", "public"."intervention_details"."post_depression_level", "public"."intervention_details"."post_stress_level", "public"."intervention_details"."improvement_score", "public"."intervention_details"."breakthrough_points", "public"."intervention_details"."unfinished_issues", "public"."intervention_details"."follow_up_actions", "public"."intervention_details"."next_appointment", "public"."intervention_details"."referrals", "public"."intervention_details"."recommendations", "public"."intervention_details"."private_notes", "public"."intervention_details"."attachments", "public"."intervention_details"."created_at", "public"."intervention_details"."updated_at" FROM "public"."intervention_details" WHERE "public"."intervention_details"."record_id" IN ($1) OFFSET $2
+[Cache] 已写入: interventions:detail:ir-13 (总耗时 6ms)
+ POST /interventions 200 in 25ms (compile: 4ms, proxy.ts: 9ms, render: 12ms)
+ GET /system-settings?tab=basic 200 in 40ms (compile: 23ms, proxy.ts: 4ms, render: 14ms)
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 55ms (compile: 4ms, proxy.ts: 6ms, render: 45ms)
+prisma:query SELECT 1
+ POST /system-settings?tab=basic 200 in 16ms (compile: 3ms, proxy.ts: 5ms, render: 8ms)
+ GET /system-settings?tab=users 200 in 21ms (compile: 3ms, proxy.ts: 4ms, render: 14ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."teachers"."id" FROM "public"."teachers" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."teacher_id", "public"."teachers"."name", "public"."teachers"."phone", "public"."teachers"."department", "public"."teachers"."title", "public"."teachers"."role"::text, "public"."teachers"."status"::text, "public"."teachers"."qualifications", "public"."teachers"."avatar", "public"."teachers"."last_login_at", "public"."teachers"."created_at", COALESCE("aggr_selection_0_Appointment"."_aggr_count_appointments", 0) AS "_aggr_count_appointments", COALESCE("aggr_selection_1_Warning"."_aggr_count_warnings", 0) AS "_aggr_count_warnings" FROM "public"."teachers" LEFT JOIN (SELECT "public"."appointments"."teacher_id", COUNT(*) AS "_aggr_count_appointments" FROM "public"."appointments" WHERE 1=1 GROUP BY "public"."appointments"."teacher_id") AS "aggr_selection_0_Appointment" ON ("public"."teachers"."id" = "aggr_selection_0_Appointment"."teacher_id") LEFT JOIN (SELECT "public"."warnings"."assigned_to", COUNT(*) AS "_aggr_count_warnings" FROM "public"."warnings" WHERE 1=1 GROUP BY "public"."warnings"."assigned_to") AS "aggr_selection_1_Warning" ON ("public"."teachers"."id" = "aggr_selection_1_Warning"."assigned_to") WHERE 1=1 ORDER BY "public"."teachers"."created_at" DESC LIMIT $1 OFFSET $2
+ GET /api/teachers 200 in 1194ms (compile: 1167ms, proxy.ts: 5ms, render: 21ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."teachers"."id" FROM "public"."teachers" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."teacher_id", "public"."teachers"."name", "public"."teachers"."phone", "public"."teachers"."department", "public"."teachers"."title", "public"."teachers"."role"::text, "public"."teachers"."status"::text, "public"."teachers"."qualifications", "public"."teachers"."avatar", "public"."teachers"."last_login_at", "public"."teachers"."created_at", COALESCE("aggr_selection_0_Appointment"."_aggr_count_appointments", 0) AS "_aggr_count_appointments", COALESCE("aggr_selection_1_Warning"."_aggr_count_warnings", 0) AS "_aggr_count_warnings" FROM "public"."teachers" LEFT JOIN (SELECT "public"."appointments"."teacher_id", COUNT(*) AS "_aggr_count_appointments" FROM "public"."appointments" WHERE 1=1 GROUP BY "public"."appointments"."teacher_id") AS "aggr_selection_0_Appointment" ON ("public"."teachers"."id" = "aggr_selection_0_Appointment"."teacher_id") LEFT JOIN (SELECT "public"."warnings"."assigned_to", COUNT(*) AS "_aggr_count_warnings" FROM "public"."warnings" WHERE 1=1 GROUP BY "public"."warnings"."assigned_to") AS "aggr_selection_1_Warning" ON ("public"."teachers"."id" = "aggr_selection_1_Warning"."assigned_to") WHERE 1=1 ORDER BY "public"."teachers"."created_at" DESC LIMIT $1 OFFSET $2
+ GET /api/teachers 200 in 89ms (compile: 5ms, proxy.ts: 8ms, render: 76ms)
+ GET /system-settings?tab=users 200 in 93ms (compile: 54ms, proxy.ts: 8ms, render: 31ms)
+ GET /risk-trace 200 in 1185ms (compile: 1152ms, proxy.ts: 4ms, render: 30ms)
+ GET /risk-trace 200 in 31ms (compile: 3ms, proxy.ts: 7ms, render: 21ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 未命中: risk:workorders:pending，从数据库获取
+prisma:query SELECT "public"."work_orders"."id", "public"."work_orders"."student_id", "public"."work_orders"."class_name", "public"."work_orders"."trigger", "public"."work_orders"."risk_level"::text, "public"."work_orders"."method", "public"."work_orders"."counselor", "public"."work_orders"."status"::text, "public"."work_orders"."date", "public"."work_orders"."detail", "public"."work_orders"."summary", "public"."work_orders"."created_at", "public"."work_orders"."updated_at" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel"),CAST($3::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($4::text AS "public"."WorkOrderStatus")) ORDER BY "public"."work_orders"."date" DESC OFFSET $5
+prisma:query SELECT "public"."students"."id", "public"."students"."name" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) OFFSET $11
+[Cache] 已写入: risk:workorders:pending (总耗时 19ms)
+ POST /risk-trace 200 in 100ms (compile: 6ms, proxy.ts: 12ms, render: 83ms)
+[Cache] 命中: risk:workorders:pending (0ms)
+ POST /risk-trace 200 in 13ms (compile: 3ms, proxy.ts: 4ms, render: 6ms)
+ GET /vr-dashboard 200 in 1194ms (compile: 1157ms, proxy.ts: 4ms, render: 34ms)
+ GET /vr-dashboard 200 in 31ms (compile: 4ms, proxy.ts: 5ms, render: 21ms)
+[Redis] 连接成功
+[WARN] Redis server does not require a password, but a password was supplied.
+[Redis] 准备就绪
+[Cache] 未命中: vr:dashboard:records，从数据库获取
+prisma:query SELECT "public"."vr_sessions"."id", "public"."vr_sessions"."student_id", "public"."vr_sessions"."scene_id", "public"."vr_sessions"."duration", "public"."vr_sessions"."emotion_before", "public"."vr_sessions"."emotion_after", "public"."vr_sessions"."result"::text, "public"."vr_sessions"."session_at", "public"."vr_sessions"."created_at", "public"."vr_sessions"."updated_at" FROM "public"."vr_sessions" WHERE 1=1 ORDER BY "public"."vr_sessions"."session_at" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."class_name" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) OFFSET $11
+prisma:query SELECT "public"."vr_scenes"."id", "public"."vr_scenes"."name" FROM "public"."vr_scenes" WHERE "public"."vr_scenes"."id" IN ($1,$2,$3,$4) OFFSET $5
+[Cache] 已写入: vr:dashboard:records (总耗时 14ms)
+ POST /vr-dashboard 200 in 64ms (compile: 3ms, proxy.ts: 6ms, render: 55ms)
+[Cache] 命中: vr:dashboard:records (1ms)
+ POST /vr-dashboard 200 in 14ms (compile: 3ms, proxy.ts: 4ms, render: 7ms)
+ GET /dashboard 200 in 825ms (compile: 800ms, proxy.ts: 4ms, render: 22ms)
+ GET /dashboard 200 in 25ms (compile: 4ms, proxy.ts: 5ms, render: 17ms)
+ GET /consultation-room 200 in 1173ms (compile: 1147ms, proxy.ts: 5ms, render: 22ms)
+ GET /consultation-room 200 in 39ms (compile: 4ms, proxy.ts: 6ms, render: 30ms)
+prisma:query SELECT 1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2) OFFSET $3
+ GET /api/appointments 200 in 1392ms (compile: 1364ms, proxy.ts: 7ms, render: 21ms)
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) OFFSET $11
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 1402ms (compile: 1365ms, proxy.ts: 7ms, render: 31ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2) OFFSET $3
+ GET /api/appointments 200 in 59ms (compile: 4ms, proxy.ts: 10ms, render: 45ms)
+ GET /consultation-room 200 in 72ms (compile: 33ms, proxy.ts: 10ms, render: 29ms)
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) OFFSET $11
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 61ms (compile: 2ms, proxy.ts: 51ms, render: 7ms)
+ GET /consultation-room 200 in 207ms (compile: 147ms, proxy.ts: 26ms, render: 33ms)
+ GET /consultation-room 200 in 158ms (compile: 23ms, proxy.ts: 10ms, render: 125ms)
+ GET /consultation-room 200 in 27ms (compile: 4ms, proxy.ts: 7ms, render: 17ms)
+ GET /consultation-room 200 in 24ms (compile: 3ms, proxy.ts: 6ms, render: 15ms)
+ GET /consultation-room 200 in 45ms (compile: 5ms, proxy.ts: 9ms, render: 30ms)
+ GET /consultation-room 200 in 115ms (compile: 75ms, proxy.ts: 11ms, render: 29ms)
+ GET /consultation-room 200 in 84ms (compile: 50ms, proxy.ts: 10ms, render: 24ms)
+ GET /consultation-room 200 in 26ms (compile: 5ms, proxy.ts: 6ms, render: 15ms)
+ GET /consultation-room 200 in 62ms (compile: 7ms, proxy.ts: 12ms, render: 43ms)
+ GET /consultation-room 200 in 48ms (compile: 11ms, proxy.ts: 18ms, render: 19ms)
+ GET /consultation-room 200 in 80ms (compile: 43ms, proxy.ts: 14ms, render: 22ms)
+ GET /consultation-room 200 in 182ms (compile: 133ms, proxy.ts: 16ms, render: 34ms)
+ GET /consultation-room 200 in 33ms (compile: 5ms, proxy.ts: 7ms, render: 21ms)
+ GET /consultation-room 200 in 38ms (compile: 6ms, proxy.ts: 9ms, render: 23ms)
+ GET /consultation-room 200 in 26ms (compile: 4ms, proxy.ts: 7ms, render: 15ms)
+ GET /consultation-room 200 in 167ms (compile: 10ms, proxy.ts: 129ms, render: 28ms)
+ GET /consultation-room 200 in 198ms (compile: 133ms, proxy.ts: 27ms, render: 38ms)
+ GET /consultation-room 200 in 71ms (compile: 7ms, proxy.ts: 12ms, render: 52ms)
+ GET /consultation-room 200 in 154ms (compile: 7ms, proxy.ts: 123ms, render: 24ms)
+ GET /consultation-room 200 in 174ms (compile: 95ms, proxy.ts: 22ms, render: 56ms)
+ GET /consultation-room 200 in 25ms (compile: 4ms, proxy.ts: 6ms, render: 16ms)
+ GET /consultation-room 200 in 23ms (compile: 4ms, proxy.ts: 5ms, render: 15ms)
+⨯ ./middleware.ts
+Module parse failed: Identifier 'publicRoutes' has already been declared (10:6)
+|     "/api/pocket"
+| ];
+> const publicRoutes = [
+|     "/login",
+|     "/api/auth/login",
+ GET /consultation-room 500 in 63ms (compile: 8ms, proxy.ts: 11ms, render: 44ms)
+ GET /consultation-room 500 in 16ms (compile: 4ms, proxy.ts: 4ms, render: 7ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /consultation-room 200 in 255ms (compile: 7ms, proxy.ts: 86ms, render: 163ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3) OFFSET $4
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) OFFSET $16
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2,$3,$4) OFFSET $5
+ GET /api/appointments 200 in 1324ms (compile: 1270ms, proxy.ts: 11ms, render: 44ms)
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 1326ms (compile: 1270ms, proxy.ts: 10ms, render: 45ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 OFFSET $2) AS "sub"
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 ORDER BY "public"."appointments"."created_at" DESC LIMIT $2 OFFSET $3
+ GET /api/pocket/appointments 200 in 572ms (compile: 552ms, proxy.ts: 6ms, render: 14ms)
+Error: Route "/api/pocket/appointments/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at GET (app\api\pocket\appointments\[id]\route.ts:17:13)
+  15 |   try {
+  16 |     const userId = await getCurrentUserId(request)
+> 17 |     const { id } = params
+     |             ^
+  18 |     
+  19 |     // 查询预约
+  20 |     const appointment = await prisma.appointment.findFirst({
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 LIMIT $2 OFFSET $3
+ GET /api/pocket/appointments/apt_001 200 in 914ms (compile: 839ms, proxy.ts: 4ms, render: 70ms)
+prisma:query INSERT INTO "public"."appointments" ("id","student_id","teacher_id","room_id","type","date","time_slot","status","reason","cancel_reason","meeting_link","feedback_score","feedback_content","created_at","updated_at") VALUES ($1,$2,$3,$4,CAST($5::text AS "public"."AppointmentType"),$6,$7,CAST($8::text AS "public"."AppointmentStatus"),$9,$10,$11,$12,$13,$14,$15) RETURNING "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at"
+ POST /api/pocket/appointments 201 in 18ms (compile: 3ms, proxy.ts: 5ms, render: 10ms)
+Error: Route "/api/pocket/appointments/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at PATCH (app\api\pocket\appointments\[id]\route.ts:48:13)
+  46 |   try {
+  47 |     const userId = await getCurrentUserId(request)
+> 48 |     const { id } = params
+     |             ^
+  49 |     
+  50 |     // 检查预约是否存在且属于当前用户
+  51 |     const existingAppointment = await prisma.appointment.findFirst({
+prisma:query SELECT 1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 LIMIT $2 OFFSET $3
+prisma:error 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    status: "CONFIRMED"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+更新预约失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    status: "CONFIRMED"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+    at async PATCH (app\api\pocket\appointments\[id]\route.ts:96:25)
+  94 |     
+  95 |     // 更新预约
+> 96 |     const appointment = await prisma.appointment.update({
+     |                         ^
+  97 |       where: { id },
+  98 |       data: updateData,
+  99 |     }) {
+  clientVersion: '6.19.2'
+}
+ PATCH /api/pocket/appointments/apt_001 500 in 237ms (compile: 33ms, proxy.ts: 9ms, render: 194ms)
+Error: Route "/api/pocket/appointments/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at PATCH (app\api\pocket\appointments\[id]\route.ts:48:13)
+  46 |   try {
+  47 |     const userId = await getCurrentUserId(request)
+> 48 |     const { id } = params
+     |             ^
+  49 |     
+  50 |     // 检查预约是否存在且属于当前用户
+  51 |     const existingAppointment = await prisma.appointment.findFirst({
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 LIMIT $2 OFFSET $3
+prisma:error 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    status: "CONFIRMED"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+更新预约失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    status: "CONFIRMED"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+    at async PATCH (app\api\pocket\appointments\[id]\route.ts:96:25)
+  94 |     
+  95 |     // 更新预约
+> 96 |     const appointment = await prisma.appointment.update({
+     |                         ^
+  97 |       where: { id },
+  98 |       data: updateData,
+  99 |     }) {
+  clientVersion: '6.19.2'
+}
+ PATCH /api/pocket/appointments/a4002a8c-c626-47c1-a1b5-fab0a1fe9528 500 in 179ms (compile: 30ms, proxy.ts: 5ms, render: 144ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 OFFSET $2) AS "sub"
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 ORDER BY "public"."appointments"."created_at" DESC LIMIT $2 OFFSET $3
+ GET /api/pocket/appointments?page=1&limit=10 200 in 15ms (compile: 1688µs, proxy.ts: 5ms, render: 9ms)
+Error: Route "/api/pocket/appointments/[id]" used `params.id`. `params` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at PATCH (app\api\pocket\appointments\[id]\route.ts:48:13)
+  46 |   try {
+  47 |     const userId = await getCurrentUserId(request)
+> 48 |     const { id } = params
+     |             ^
+  49 |     
+  50 |     // 检查预约是否存在且属于当前用户
+  51 |     const existingAppointment = await prisma.appointment.findFirst({
+prisma:query SELECT 1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE "public"."appointments"."student_id" = $1 LIMIT $2 OFFSET $3
+prisma:error 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    feedbackScore: 5,
+    feedbackContent: "��������"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+更新预约失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.appointment.update()` invocation:
+
+{
+  where: {
+    id: undefined,
+?   AND?: AppointmentWhereInput | AppointmentWhereInput[],
+?   OR?: AppointmentWhereInput[],
+?   NOT?: AppointmentWhereInput | AppointmentWhereInput[],
+?   studentId?: StringFilter | String,
+?   teacherId?: StringNullableFilter | String | Null,
+?   roomId?: StringNullableFilter | String | Null,
+?   type?: EnumAppointmentTypeFilter | AppointmentType,
+?   date?: DateTimeFilter | DateTime,
+?   timeSlot?: StringFilter | String,
+?   status?: EnumAppointmentStatusFilter | AppointmentStatus,
+?   reason?: StringNullableFilter | String | Null,
+?   cancelReason?: StringNullableFilter | String | Null,
+?   meetingLink?: StringNullableFilter | String | Null,
+?   feedbackScore?: IntNullableFilter | Int | Null,
+?   feedbackContent?: StringNullableFilter | String | Null,
+?   createdAt?: DateTimeFilter | DateTime,
+?   updatedAt?: DateTimeFilter | DateTime,
+?   student?: StudentScalarRelationFilter | StudentWhereInput,
+?   teacher?: TeacherNullableScalarRelationFilter | TeacherWhereInput | Null
+  },
+  data: {
+    feedbackScore: 5,
+    feedbackContent: "��������"
+  }
+}
+
+Argument `where` of type AppointmentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+    at async PATCH (app\api\pocket\appointments\[id]\route.ts:96:25)
+  94 |     
+  95 |     // 更新预约
+> 96 |     const appointment = await prisma.appointment.update({
+     |                         ^
+  97 |       where: { id },
+  98 |       data: updateData,
+  99 |     }) {
+  clientVersion: '6.19.2'
+}
+ PATCH /api/pocket/appointments/a4002a8c-c626-47c1-a1b5-fab0a1fe9528 500 in 157ms (compile: 30ms, proxy.ts: 4ms, render: 123ms)
+ GET /consultation-room 200 in 192ms (compile: 44ms, proxy.ts: 5ms, render: 143ms)
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) OFFSET $16
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 61ms (compile: 11ms, proxy.ts: 8ms, render: 42ms)
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3) OFFSET $4
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2,$3,$4) OFFSET $5
+ GET /api/appointments 200 in 68ms (compile: 33ms, proxy.ts: 9ms, render: 27ms)
+ POST /api/pocket/login/postPasswordLogin 404 in 1919ms (compile: 1814ms, proxy.ts: 4ms, render: 100ms)
+ GET /consultation-room 200 in 58ms (compile: 18ms, proxy.ts: 15ms, render: 24ms)
+ POST /api/pocket/auth/login/password 404 in 33ms (compile: 5ms, proxy.ts: 5ms, render: 23ms)
+ GET /consultation-room 200 in 90ms (compile: 49ms, proxy.ts: 11ms, render: 29ms)
+ GET /consultation-room 200 in 129ms (compile: 7ms, proxy.ts: 102ms, render: 20ms)
+ GET /consultation-room 200 in 146ms (compile: 83ms, proxy.ts: 27ms, render: 36ms)
+ GET /consultation-room 200 in 189ms (compile: 11ms, proxy.ts: 143ms, render: 35ms)
+ GET /consultation-room 200 in 93ms (compile: 47ms, proxy.ts: 16ms, render: 30ms)
+ GET /consultation-room 200 in 184ms (compile: 10ms, proxy.ts: 146ms, render: 28ms)
+ GET /consultation-room 200 in 110ms (compile: 52ms, proxy.ts: 24ms, render: 35ms)
+ GET /consultation-room 200 in 194ms (compile: 9ms, proxy.ts: 156ms, render: 29ms)
+ GET /consultation-room 200 in 116ms (compile: 55ms, proxy.ts: 22ms, render: 39ms)
+ GET /consultation-room 200 in 128ms (compile: 89ms, proxy.ts: 13ms, render: 26ms)
+ GET /consultation-room 200 in 183ms (compile: 10ms, proxy.ts: 146ms, render: 28ms)
+ GET /consultation-room 200 in 123ms (compile: 55ms, proxy.ts: 19ms, render: 49ms)
+ GET /consultation-room 200 in 173ms (compile: 11ms, proxy.ts: 130ms, render: 32ms)
+ GET /consultation-room 200 in 70ms (compile: 5ms, proxy.ts: 8ms, render: 56ms)
+ GET /consultation-room 200 in 27ms (compile: 4ms, proxy.ts: 8ms, render: 15ms)
+ GET /consultation-room 200 in 163ms (compile: 9ms, proxy.ts: 129ms, render: 26ms)
+ GET /consultation-room 200 in 173ms (compile: 59ms, proxy.ts: 85ms, render: 29ms)
+ GET /consultation-room 200 in 27ms (compile: 4ms, proxy.ts: 5ms, render: 17ms)
+ GET /consultation-room 200 in 210ms (compile: 10ms, proxy.ts: 164ms, render: 35ms)
+ GET /consultation-room 200 in 174ms (compile: 84ms, proxy.ts: 31ms, render: 59ms)
+ GET /consultation-room 200 in 78ms (compile: 8ms, proxy.ts: 12ms, render: 58ms)
+ GET /consultation-room 200 in 202ms (compile: 13ms, proxy.ts: 160ms, render: 30ms)
+ GET /consultation-room 200 in 168ms (compile: 89ms, proxy.ts: 35ms, render: 44ms)
+ GET /consultation-room 200 in 78ms (compile: 46ms, proxy.ts: 8ms, render: 24ms)
+ GET /consultation-room 200 in 120ms (compile: 50ms, proxy.ts: 11ms, render: 59ms)
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."risk_level"::text, "public"."students"."status"::text FROM "public"."students" WHERE ("public"."students"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/pocket/auth/me 200 in 691ms (compile: 666ms, proxy.ts: 4ms, render: 21ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."posts"."id" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") OFFSET $2) AS "sub"
+prisma:query SELECT "public"."posts"."id", "public"."posts"."author_id", "public"."posts"."content", "public"."posts"."images", "public"."posts"."location", "public"."posts"."is_anonymous", "public"."posts"."tags", "public"."posts"."like_count", "public"."posts"."comment_count", "public"."posts"."risk_score", "public"."posts"."view_count", "public"."posts"."status"::text, "public"."posts"."created_at", "public"."posts"."updated_at" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") ORDER BY "public"."posts"."created_at" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."avatar", "public"."students"."nickname" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:57:23)
+  55 |     
+  56 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 57 |       prisma.postLike.findMany({
+     |                       ^
+  58 |         where: {
+  59 |           postId: { in: postIds },
+  60 |           studentId: userId,
+ GET /api/pocket/posts 500 in 652ms (compile: 581ms, proxy.ts: 4ms, render: 68ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."teachers"."id" FROM "public"."teachers" WHERE ("public"."teachers"."status" = CAST($1::text AS "public"."TeacherStatus") AND "public"."teachers"."role" IN (CAST($2::text AS "public"."UserRole"),CAST($3::text AS "public"."UserRole"))) OFFSET $4) AS "sub"
+prisma:error 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+获取咨询师列表失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+    at async GET (app\api\pocket\teachers\route.ts:34:22)
+  32 |     
+  33 |     // 查询教师列表
+> 34 |     const teachers = await prisma.teacher.findMany({
+     |                      ^
+  35 |       where,
+  36 |       orderBy: { createdAt: "desc" },
+  37 |       skip: (page - 1) * limit, {
+  clientVersion: '6.19.2'
+}
+ GET /api/pocket/teachers 500 in 501ms (compile: 412ms, proxy.ts: 4ms, render: 85ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."chat_sessions"."id" FROM "public"."chat_sessions" WHERE "public"."chat_sessions"."student_id" = $1 OFFSET $2) AS "sub"
+prisma:query SELECT "public"."chat_sessions"."id", "public"."chat_sessions"."type"::text, "public"."chat_sessions"."title", "public"."chat_sessions"."target_id", "public"."chat_sessions"."target_name", "public"."chat_sessions"."target_avatar", "public"."chat_sessions"."last_message", "public"."chat_sessions"."last_message_at", "public"."chat_sessions"."unread_count", "public"."chat_sessions"."status"::text, "public"."chat_sessions"."created_at" FROM "public"."chat_sessions" WHERE "public"."chat_sessions"."student_id" = $1 ORDER BY "public"."chat_sessions"."last_message_at" DESC LIMIT $2 OFFSET $3
+ GET /api/pocket/chat/sessions 200 in 405ms (compile: 390ms, proxy.ts: 4ms, render: 11ms)
+获取通知失败: TypeError: Cannot read properties of undefined (reading 'count')
+    at GET (app\api\pocket\notifications\route.ts:28:52)
+  26 |     
+  27 |     // 查询总数
+> 28 |     const total = await prisma.studentNotification.count({ where })
+     |                                                    ^
+  29 |     
+  30 |     // 查询通知列表
+  31 |     const notifications = await prisma.studentNotification.findMany({
+ GET /api/pocket/notifications 500 in 422ms (compile: 383ms, proxy.ts: 4ms, render: 35ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."posts"."id" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") OFFSET $2) AS "sub"
+prisma:query SELECT "public"."posts"."id", "public"."posts"."author_id", "public"."posts"."content", "public"."posts"."images", "public"."posts"."location", "public"."posts"."is_anonymous", "public"."posts"."tags", "public"."posts"."like_count", "public"."posts"."comment_count", "public"."posts"."risk_score", "public"."posts"."view_count", "public"."posts"."status"::text, "public"."posts"."created_at", "public"."posts"."updated_at" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") ORDER BY "public"."posts"."created_at" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."avatar", "public"."students"."nickname" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:57:23)
+  55 |     
+  56 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 57 |       prisma.postLike.findMany({
+     |                       ^
+  58 |         where: {
+  59 |           postId: { in: postIds },
+  60 |           studentId: userId,
+ GET /api/pocket/posts 500 in 86ms (compile: 4ms, proxy.ts: 4ms, render: 77ms)
+prisma:query SELECT 1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."risk_level"::text, "public"."students"."status"::text FROM "public"."students" WHERE ("public"."students"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/pocket/auth/me 200 in 17ms (compile: 6ms, proxy.ts: 4ms, render: 7ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."posts"."id" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") OFFSET $2) AS "sub"
+prisma:query SELECT "public"."posts"."id", "public"."posts"."author_id", "public"."posts"."content", "public"."posts"."images", "public"."posts"."location", "public"."posts"."is_anonymous", "public"."posts"."tags", "public"."posts"."like_count", "public"."posts"."comment_count", "public"."posts"."risk_score", "public"."posts"."view_count", "public"."posts"."status"::text, "public"."posts"."created_at", "public"."posts"."updated_at" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") ORDER BY "public"."posts"."created_at" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."avatar", "public"."students"."nickname" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:57:23)
+  55 |     
+  56 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 57 |       prisma.postLike.findMany({
+     |                       ^
+  58 |         where: {
+  59 |           postId: { in: postIds },
+  60 |           studentId: userId,
+ GET /api/pocket/posts 500 in 83ms (compile: 3ms, proxy.ts: 4ms, render: 76ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."teachers"."id" FROM "public"."teachers" WHERE ("public"."teachers"."status" = CAST($1::text AS "public"."TeacherStatus") AND "public"."teachers"."role" IN (CAST($2::text AS "public"."UserRole"),CAST($3::text AS "public"."UserRole"))) OFFSET $4) AS "sub"
+prisma:error 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+获取咨询师列表失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+    at async GET (app\api\pocket\teachers\route.ts:34:22)
+  32 |     
+  33 |     // 查询教师列表
+> 34 |     const teachers = await prisma.teacher.findMany({
+     |                      ^
+  35 |       where,
+  36 |       orderBy: { createdAt: "desc" },
+  37 |       skip: (page - 1) * limit, {
+  clientVersion: '6.19.2'
+}
+ GET /api/pocket/teachers 500 in 89ms (compile: 3ms, proxy.ts: 4ms, render: 81ms)
+获取通知失败: TypeError: Cannot read properties of undefined (reading 'count')
+    at GET (app\api\pocket\notifications\route.ts:28:52)
+  26 |     
+  27 |     // 查询总数
+> 28 |     const total = await prisma.studentNotification.count({ where })
+     |                                                    ^
+  29 |     
+  30 |     // 查询通知列表
+  31 |     const notifications = await prisma.studentNotification.findMany({
+ GET /api/pocket/notifications 500 in 36ms (compile: 1597µs, proxy.ts: 4ms, render: 30ms)
+⨯ ./app/api/pocket/posts/route.ts
+Error:   x Expression expected
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\app\api\pocket\posts\route.ts:114:1]
+ 111 |     console.error("获取动态流失败:", error)
+ 112 |     return Response.json(errorResponse("获取动态流失败"), { status: 500 })
+ 113 |   }
+ 114 | }
+     : ^
+ 115 | 
+ 116 | /**
+ 117 |  * POST /api/pocket/posts
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/pocket/posts/route.ts
+ GET /consultation-room 500 in 112ms (compile: 9ms, proxy.ts: 10ms, render: 93ms)
+ GET /consultation-room 500 in 20ms (compile: 5ms, proxy.ts: 6ms, render: 9ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⨯ ./app/api/pocket/posts/route.ts
+Error:   x Expression expected
+     ,-[D:\AllProjects\AI-Projects\PsyTwin-Sentinel\app\api\pocket\posts\route.ts:117:1]
+ 114 |  * POST /api/pocket/posts
+ 115 |  * 发布新帖子
+ 116 |  */
+ 117 |   } catch (error: any) {
+     :   ^
+ 118 |     console.error("获取动态流失败:", error)
+ 119 |     return Response.json(errorResponse(`获取动态流失败: ${error?.message || '未知错误'}`), { status: 500 })
+ 120 |   }
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/pocket/posts/route.ts
+ GET /consultation-room 500 in 340ms (proxy.ts: 113ms)
+ GET /consultation-room 500 in 13ms (compile: 3ms, proxy.ts: 4ms, render: 7ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /consultation-room 500 in 225ms (proxy.ts: 115ms)
+ GET /consultation-room 200 in 984ms (compile: 643ms, proxy.ts: 96ms, render: 245ms)
+prisma:query SELECT 1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3) OFFSET $4
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+ GET /api/appointments 200 in 2.1s (compile: 2.1s, proxy.ts: 9ms, render: 34ms)
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) OFFSET $16
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 2.2s (compile: 2.1s, proxy.ts: 9ms, render: 45ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."posts"."id" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") OFFSET $2) AS "sub"
+prisma:query SELECT "public"."posts"."id", "public"."posts"."author_id", "public"."posts"."content", "public"."posts"."images", "public"."posts"."location", "public"."posts"."is_anonymous", "public"."posts"."tags", "public"."posts"."like_count", "public"."posts"."comment_count", "public"."posts"."risk_score", "public"."posts"."view_count", "public"."posts"."status"::text, "public"."posts"."created_at", "public"."posts"."updated_at" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") ORDER BY "public"."posts"."created_at" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."avatar", "public"."students"."nickname" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:55:23)
+  53 |     
+  54 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 55 |       prisma.postLike.findMany({
+     |                       ^
+  56 |         where: {
+  57 |           postId: { in: postIds },
+  58 |           studentId: userId,
+ GET /api/pocket/posts 500 in 894ms (compile: 826ms, proxy.ts: 4ms, render: 64ms)
+ GET /consultation-room 200 in 133ms (compile: 41ms, proxy.ts: 54ms, render: 39ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."teachers"."id" FROM "public"."teachers" WHERE ("public"."teachers"."status" = CAST($1::text AS "public"."TeacherStatus") AND "public"."teachers"."role" IN (CAST($2::text AS "public"."UserRole"),CAST($3::text AS "public"."UserRole"))) OFFSET $4) AS "sub"
+prisma:error 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+获取咨询师列表失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+    at async GET (app\api\pocket\teachers\route.ts:34:22)
+  32 |     
+  33 |     // 查询教师列表
+> 34 |     const teachers = await prisma.teacher.findMany({
+     |                      ^
+  35 |       where,
+  36 |       orderBy: { createdAt: "desc" },
+  37 |       skip: (page - 1) * limit, {
+  clientVersion: '6.19.2'
+}
+ GET /api/pocket/teachers 500 in 663ms (compile: 522ms, proxy.ts: 3ms, render: 137ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."posts"."id" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") OFFSET $2) AS "sub"
+prisma:query SELECT "public"."posts"."id", "public"."posts"."author_id", "public"."posts"."content", "public"."posts"."images", "public"."posts"."location", "public"."posts"."is_anonymous", "public"."posts"."tags", "public"."posts"."like_count", "public"."posts"."comment_count", "public"."posts"."risk_score", "public"."posts"."view_count", "public"."posts"."status"::text, "public"."posts"."created_at", "public"."posts"."updated_at" FROM "public"."posts" WHERE "public"."posts"."status" = CAST($1::text AS "public"."PostStatus") ORDER BY "public"."posts"."created_at" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."avatar", "public"."students"."nickname" FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:55:23)
+  53 |     
+  54 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 55 |       prisma.postLike.findMany({
+     |                       ^
+  56 |         where: {
+  57 |           postId: { in: postIds },
+  58 |           studentId: userId,
+ GET /api/pocket/posts 500 in 74ms (compile: 4ms, proxy.ts: 4ms, render: 66ms)
+⨯ ./app/api/pocket/posts/route.ts
+Module parse failed: Identifier 'successResponse' has already been declared (7:9)
+| // 创建本地 Prisma 实例（避免 Edge Runtime 兼容性问题）
+| const prisma = new PrismaClient();
+> import { successResponse, errorResponse, validationError } from "@/lib/api-response";
+| import { getCurrentUserId } from "@/lib/pocket-auth";
+| import { PostStatus } from "@prisma/client";
+
+Import trace for requested module:
+./app/api/pocket/posts/route.ts
+ GET /consultation-room 500 in 25ms (compile: 6ms, proxy.ts: 5ms, render: 14ms)
+ GET /consultation-room 500 in 19ms (compile: 5ms, proxy.ts: 5ms, render: 9ms)
+ GET /consultation-room 500 in 24ms (compile: 8ms, proxy.ts: 6ms, render: 10ms)
+ GET /consultation-room 500 in 19ms (compile: 5ms, proxy.ts: 5ms, render: 9ms)
+ GET /consultation-room 500 in 66ms (compile: 10ms, proxy.ts: 12ms, render: 43ms)
+ GET /consultation-room 500 in 16ms (compile: 4ms, proxy.ts: 4ms, render: 7ms)
+ GET /consultation-room 500 in 26ms (compile: 6ms, proxy.ts: 6ms, render: 13ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /consultation-room 500 in 354ms (proxy.ts: 170ms)
+ GET /consultation-room 200 in 1417ms (compile: 1064ms, proxy.ts: 160ms, render: 194ms)
+prisma:query SELECT 1
+prisma:query SELECT "public"."appointments"."id", "public"."appointments"."student_id", "public"."appointments"."teacher_id", "public"."appointments"."room_id", "public"."appointments"."type"::text, "public"."appointments"."date", "public"."appointments"."time_slot", "public"."appointments"."status"::text, "public"."appointments"."reason", "public"."appointments"."cancel_reason", "public"."appointments"."meeting_link", "public"."appointments"."feedback_score", "public"."appointments"."feedback_content", "public"."appointments"."created_at", "public"."appointments"."updated_at" FROM "public"."appointments" WHERE 1=1 ORDER BY "public"."appointments"."date" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."class_name", "public"."students"."risk_level"::text FROM "public"."students" WHERE "public"."students"."id" IN ($1,$2,$3) OFFSET $4
+prisma:query SELECT "public"."teachers"."id", "public"."teachers"."name", "public"."teachers"."title", "public"."teachers"."department" FROM "public"."teachers" WHERE "public"."teachers"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."appointments"."id" FROM "public"."appointments" WHERE 1=1 OFFSET $1) AS "sub"
+ GET /api/appointments 200 in 1672ms (compile: 1618ms, proxy.ts: 20ms, render: 33ms)
+prisma:query SELECT "public"."consultation_rooms"."id", "public"."consultation_rooms"."name", "public"."consultation_rooms"."location", "public"."consultation_rooms"."status"::text, "public"."consultation_rooms"."capacity", "public"."consultation_rooms"."current_student_id", "public"."consultation_rooms"."created_at", "public"."consultation_rooms"."updated_at" FROM "public"."consultation_rooms" WHERE 1=1 ORDER BY "public"."consultation_rooms"."name" ASC OFFSET $1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no" FROM "public"."students" WHERE "public"."students"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."room_devices"."id", "public"."room_devices"."room_id", "public"."room_devices"."device_id", "public"."room_devices"."created_at", "public"."room_devices"."updated_at" FROM "public"."room_devices" WHERE "public"."room_devices"."room_id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) OFFSET $16
+prisma:query SELECT "public"."devices"."id", "public"."devices"."name", "public"."devices"."type"::text, "public"."devices"."status"::text, "public"."devices"."battery" FROM "public"."devices" WHERE "public"."devices"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26) OFFSET $27
+ GET /api/rooms 200 in 1680ms (compile: 1619ms, proxy.ts: 20ms, render: 41ms)
+ GET /consultation-room 200 in 175ms (compile: 109ms, proxy.ts: 21ms, render: 45ms)
+ GET /consultation-room 200 in 128ms (compile: 25ms, proxy.ts: 20ms, render: 83ms)
+ GET /consultation-room 200 in 79ms (compile: 12ms, proxy.ts: 24ms, render: 43ms)
+ GET /consultation-room 200 in 64ms (compile: 12ms, proxy.ts: 16ms, render: 37ms)
+ GET /consultation-room 200 in 40ms (compile: 8ms, proxy.ts: 9ms, render: 22ms)
+ GET /consultation-room 200 in 177ms (compile: 117ms, proxy.ts: 27ms, render: 34ms)
+ GET /consultation-room 200 in 41ms (compile: 7ms, proxy.ts: 9ms, render: 25ms)
+ GET /consultation-room 200 in 375ms (compile: 278ms, proxy.ts: 58ms, render: 40ms)
+ GET /consultation-room 200 in 247ms (compile: 179ms, proxy.ts: 23ms, render: 45ms)
+ GET /consultation-room 200 in 31ms (compile: 4ms, proxy.ts: 8ms, render: 19ms)
+ GET /consultation-room 200 in 528ms (compile: 432ms, proxy.ts: 35ms, render: 61ms)
+ GET /consultation-room 200 in 238ms (compile: 176ms, proxy.ts: 19ms, render: 43ms)
+ GET /consultation-room 200 in 35ms (compile: 6ms, proxy.ts: 10ms, render: 19ms)
+ GET /consultation-room 200 in 144ms (compile: 24ms, proxy.ts: 17ms, render: 103ms)
+prisma:query SELECT 1
+prisma:query SELECT "public"."students"."id", "public"."students"."name", "public"."students"."student_no", "public"."students"."avatar", "public"."students"."nickname", "public"."students"."class_name", "public"."students"."faculty_id", "public"."students"."risk_level"::text, "public"."students"."status"::text FROM "public"."students" WHERE ("public"."students"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/pocket/auth/me 200 in 672ms (compile: 646ms, proxy.ts: 4ms, render: 22ms)
+ GET /consultation-room 200 in 110ms (compile: 48ms, proxy.ts: 11ms, render: 52ms)
+ GET /consultation-room 200 in 66ms (compile: 37ms, proxy.ts: 5ms, render: 24ms)
+获取动态流失败: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at GET (app\api\pocket\posts\route.ts:58:23)
+  56 |     
+  57 |     const [likedPosts, collectedPosts] = await Promise.all([
+> 58 |       prisma.postLike.findMany({
+     |                       ^
+  59 |         where: {
+  60 |           postId: { in: postIds },
+  61 |           studentId: userId,
+ GET /api/pocket/posts 500 in 825ms (compile: 675ms, proxy.ts: 10ms, render: 140ms)
+获取咨询师列表失败: Error [PrismaClientValidationError]: 
+Invalid `prisma.teacher.findMany()` invocation:
+
+{
+  where: {
+    status: "ACTIVE",
+    role: {
+      in: [
+        "COUNSELOR",
+        "TEACHER"
+      ]
+    }
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  skip: 0,
+  take: 20,
+  select: {
+    id: true,
+    teacherId: true,
+    name: true,
+    nickname: true,
+    ~~~~~~~~
+    avatar: true,
+    department: true,
+    title: true,
+    qualifications: true,
+    workStats: true,
+    badges: true,
+    role: true,
+?   phone?: true,
+?   passwordHash?: true,
+?   status?: true,
+?   lastLoginAt?: true,
+?   createdAt?: true,
+?   updatedAt?: true,
+?   appointments?: true,
+?   warnings?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `nickname` for select statement on model `Teacher`. Available options are marked with ?.
+    at async GET (app\api\pocket\teachers\route.ts:37:22)
+  35 |     
+  36 |     // 查询教师列表
+> 37 |     const teachers = await prisma.teacher.findMany({
+     |                      ^
+  38 |       where,
+  39 |       orderBy: { createdAt: "desc" },
+  40 |       skip: (page - 1) * limit, {
+  clientVersion: '6.19.2'
+}
+ GET /api/pocket/teachers 500 in 651ms (compile: 472ms, proxy.ts: 4ms, render: 175ms)
+ GET /consultation-room 200 in 160ms (compile: 27ms, proxy.ts: 7ms, render: 125ms)
+获取通知失败: TypeError: Cannot read properties of undefined (reading 'count')
+    at GET (app\api\pocket\notifications\route.ts:31:52)
+  29 |     
+  30 |     // 查询总数
+> 31 |     const total = await prisma.studentNotification.count({ where })
+     |                                                    ^
+  32 |     
+  33 |     // 查询通知列表
+  34 |     const notifications = await prisma.studentNotification.findMany({
+ GET /api/pocket/notifications 500 in 566ms (compile: 515ms, proxy.ts: 6ms, render: 45ms)
+ GET /consultation-room 200 in 55ms (compile: 30ms, proxy.ts: 4ms, render: 21ms)
+[?25h

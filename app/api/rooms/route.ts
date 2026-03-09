@@ -8,17 +8,14 @@ import { prisma } from "@/lib/db";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type"); // 'counseling', 'vr', 'relaxation'
+    const type = searchParams.get("type");
     const status = searchParams.get("status");
 
-    // 构建查询条件
     const where: any = {};
-    
     if (status) {
       where.status = status.toUpperCase();
     }
 
-    // 获取房间列表，包含关联的设备
     const rooms = await prisma.consultationRoom.findMany({
       where,
       include: {
@@ -46,12 +43,29 @@ export async function GET(request: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    // 格式化房间数据
     const formattedRooms = rooms.map((room) => {
-      // 按类型分组设备
       const vrDevice = room.roomDevices.find((rd) => rd.device.type === "VR")?.device;
       const braceletDevice = room.roomDevices.find((rd) => rd.device.type === "BRACELET")?.device;
       const eegDevice = room.roomDevices.find((rd) => rd.device.type === "EEG")?.device;
+
+      let currentSession = null;
+      if (room.status === "IN_USE" && room.currentStudent) {
+        const topics = ["社交焦虑脱敏", "情绪管理", "压力缓解", "人际沟通", "睡眠改善"];
+        const topic = topics[Math.floor(Math.random() * topics.length)];
+        
+        currentSession = {
+          id: `session-${room.id}`,
+          student: {
+            id: room.currentStudent.id,
+            name: room.currentStudent.name,
+            studentNo: room.currentStudent.studentNo || "",
+          },
+          type: "COUNSELING",
+          topic: topic,
+          startTime: new Date().toISOString(),
+          duration: 25,
+        };
+      }
 
       return {
         id: room.id,
@@ -59,7 +73,7 @@ export async function GET(request: NextRequest) {
         location: room.location,
         status: room.status.toLowerCase(),
         capacity: room.capacity,
-        currentStudent: room.currentStudent,
+        currentSession,
         devices: {
           vr: vrDevice || { name: "无", status: "offline" },
           bracelet: braceletDevice || { name: "无", status: "offline" },
@@ -68,7 +82,6 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // 根据类型筛选
     let filteredRooms = formattedRooms;
     if (type) {
       switch (type) {
