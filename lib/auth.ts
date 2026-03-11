@@ -113,12 +113,20 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
- * 验证密码
+ * 验证密码（支持 PBKDF2 和 bcrypt 两种格式）
  */
 export async function verifyPassword(
   password: string,
   hashedPassword: string
 ): Promise<boolean> {
+  // 如果是 bcrypt 格式（以 $2b$、$2a$ 开头）
+  if (hashedPassword.startsWith('$2')) {
+    // 使用 bcryptjs 验证
+    const bcrypt = await import('bcryptjs');
+    return bcrypt.compare(password, hashedPassword);
+  }
+  
+  // 否则使用 PBKDF2 验证（旧的自定义格式 salt:hash）
   if (!crypto) {
     throw new Error("Crypto module not available");
   }
