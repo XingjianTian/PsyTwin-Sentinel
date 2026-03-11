@@ -8,6 +8,7 @@
 
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/db"
+import { verifyToken } from "@/lib/auth"
 
 const DEFAULT_DEMO_USER_ID = "stu001"
 
@@ -17,7 +18,11 @@ export async function getCurrentUserId(request: NextRequest): Promise<string> {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7)
     if (token && token.length > 0 && token !== "null" && token !== "undefined") {
-      return token
+      // 验证并解码 Token，提取 userId
+      const decoded = verifyToken(token)
+      if (decoded && decoded.userId) {
+        return decoded.userId
+      }
     }
   }
   

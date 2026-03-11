@@ -3,9 +3,7 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 import { successResponse, errorResponse, validationError } from "@/lib/api-response"
 import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+import { generateToken } from "@/lib/auth"
 
 /**
  * POST /api/pocket/auth/login
@@ -72,15 +70,12 @@ export async function POST(request: NextRequest) {
     })
 
     // 生成 JWT Token
-    const token = jwt.sign(
-      {
-        userId: student.id,
-        role: "student",
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7天过期
-      },
-      JWT_SECRET
-    )
+    const token = generateToken({
+      userId: student.id,
+      email: student.phone || "",
+      role: "student",
+      name: student.name,
+    })
 
     // 返回用户信息（不包含密码）
     const { passwordHash, ...userInfo } = student

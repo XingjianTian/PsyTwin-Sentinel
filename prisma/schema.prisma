@@ -8,9 +8,6 @@ datasource db {
 }
 
 // pgvector 扩展用于向量存储
-generator db {
-  provider = "prisma-client-js"
-}
 
 
 enum RiskLevel {
@@ -218,7 +215,7 @@ model Alert {
   id          String    @id @default(uuid())
   studentId   String    @map("student_id")
   type        AlertType
-  level       String
+  level       RiskLevel
   alertTime   DateTime  @map("alert_time")
   source      String
   description String
