@@ -1,0 +1,43 @@
+# Mac 开发环境配置（无 pgadmin）
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: psytwin-postgres-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: psytwin
+      POSTGRES_PASSWORD: Pt5xK9mR2wQ7vN3j
+      POSTGRES_DB: psytwin_sentinel
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psytwin -d psytwin_sentinel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: psytwin-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass Redis2026Secure!
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redis-data:
