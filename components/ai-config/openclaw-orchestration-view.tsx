@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { useOpenClawWorkflowStream } from "@/lib/openclaw/use-workflow-stream"
+import { openClawEventBus, OPENCLAW_EVENTS } from "@/lib/openclaw/event-bus"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AgentGridOffice } from "./agent-grid-office"
 import { LivePanel } from "./live-panel"
@@ -21,24 +22,46 @@ import DatabaseDashboard from "./database-dashboard"
 import { TeamDashboard } from "./team-dashboard"
 import type { AgentGridItem } from "./agent-grid-label"
 
+// 加载 agents 的函数
+async function loadAgents(setAgents: (agents: AgentGridItem[]) => void) {
+  try {
+    const res = await fetch("/api/openclaw/config")
+    const data = await res.json()
+    if (data.agents) {
+      setAgents(data.agents)
+    }
+  } catch {
+    // 忽略错误
+  }
+}
+
 export function OpenClawOrchestrationView() {
   const { requests, activities } = useOpenClawWorkflowStream()
   const [agents, setAgents] = useState<AgentGridItem[]>([])
   const [activeTab, setActiveTab] = useState("office")
 
+  // 初始加载
   useEffect(() => {
-    fetch("/api/openclaw/config")
-      .then((r) => r.json())
-      .then((data) => { if (data.agents) setAgents(data.agents) })
-      .catch(() => {})
+    loadAgents(setAgents)
+  }, [])
+
+  // 监听 agents 更新事件（当 WebSocket 检测到新的 agents 列表时）
+  useEffect(() => {
+    const handleAgentsUpdate = () => {
+      console.log("[OpenClaw] Agents list updated, refreshing...")
+      loadAgents(setAgents)
+    }
+
+    openClawEventBus.on(OPENCLAW_EVENTS.AGENTS_UPDATE, handleAgentsUpdate)
+    
+    return () => {
+      openClawEventBus.off(OPENCLAW_EVENTS.AGENTS_UPDATE, handleAgentsUpdate)
+    }
   }, [])
 
   const activeRequests = requests.filter((r) => r.state !== "completed" && r.state !== "failed")
   const todayTokenApprox = activities.length * 1200
   const costApprox = (todayTokenApprox / 1000) * 0.08
-
-  const isOfficeTab = activeTab === "office"
-
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-2">
       {/* Header */}

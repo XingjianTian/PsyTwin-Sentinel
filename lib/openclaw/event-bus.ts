@@ -16,4 +16,5 @@ export const OPENCLAW_EVENTS = {
   REQUEST_UPDATE: "openclaw:request-update",
   TASK_UPDATE: "openclaw:task-update",
   CONNECTION_UPDATE: "openclaw:connection-update",
+  AGENTS_UPDATE: "openclaw:agents-update",
 } as const

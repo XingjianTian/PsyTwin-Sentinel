@@ -137,60 +137,88 @@ async function upsertAgent(agentId: string) {
 
 async function upsertAgentsFromList(rawAgents: unknown) {
   const list = Array.isArray(rawAgents) ? rawAgents : []
-  for (const item of list) {
+  
+  // 提取新的 agent IDs 和详细信息
+  const newAgents = list.map((item: any) => {
     if (typeof item === "string") {
-      await db.openClawAgent.upsert({
-        where: { id: item },
-        update: {
-          isOnline: true,
-          lastSeenAt: new Date(),
-          name: item,
-        },
-        create: {
-          id: item,
-          name: item,
-          role: "Agent",
+      return { id: item, name: item, role: "Agent", emoji: null, color: null }
+    }
+    if (typeof item === "object" && item && "id" in item) {
+      const identity = item.identity || {}
+      return {
+        id: item.id,
+        name: identity.name || item.name || item.id,
+        role: identity.role || item.role || "Agent",
+        emoji: identity.emoji || item.emoji || null,
+        color: identity.color || item.color || null,
+        metadata: item,
+      }
+    }
+    return null
+  }).filter(Boolean)
+
+  if (newAgents.length === 0) return
+
+  // 获取当前数据库中的 agents
+  const existingAgents = await db.openClawAgent.findMany({
+    select: { id: true, name: true },
+  })
+
+  // 检查是否需要更新（比较 ID 列表是否一致）
+  const existingIds = existingAgents.map((a: any) => a.id).sort()
+  const newIds = newAgents.map((a: any) => a.id).sort()
+  
+  const hasChanged = JSON.stringify(existingIds) !== JSON.stringify(newIds)
+  
+  if (hasChanged) {
+    logToFile("AGENTS", "Detected agent list change, replacing all agents", {
+      oldCount: existingAgents.length,
+      newCount: newAgents.length,
+      oldIds: existingIds,
+      newIds: newIds,
+    })
+    
+    // 如果 agents 列表变化了，删除所有旧的，插入新的
+    await db.openClawAgent.deleteMany({})
+    
+    for (const agent of newAgents) {
+      await db.openClawAgent.create({
+        data: {
+          id: agent.id,
+          name: agent.name,
+          role: agent.role,
+          emoji: agent.emoji,
+          color: agent.color,
+          metadata: agent.metadata || {},
           isOnline: true,
           lastSeenAt: new Date(),
         },
       })
-      continue
     }
-
-    if (typeof item === "object" && item && "id" in item) {
-      const agent = item as {
-        id: string
-        name?: string
-        role?: string
-        emoji?: string
-        color?: string
-        identity?: { name?: string; role?: string; emoji?: string; color?: string }
-      }
-
-      const identity = agent.identity || {}
-      const name = identity.name || agent.name || agent.id
-      const role = identity.role || agent.role || "Agent"
-      const emoji = identity.emoji || agent.emoji || null
-      const color = identity.color || agent.color || null
-
+    
+    // 触发 agents 更新事件，通知前端刷新
+    openClawEventBus.emit(OPENCLAW_EVENTS.AGENTS_UPDATE, { agents: newAgents })
+  } else {
+    // 如果 agents 列表没变，只更新在线状态
+    for (const agent of newAgents) {
       await db.openClawAgent.upsert({
         where: { id: agent.id },
         update: {
-          name,
-          role,
-          emoji,
-          color,
-          metadata: agent,
+          name: agent.name,
+          role: agent.role,
+          emoji: agent.emoji,
+          color: agent.color,
+          metadata: agent.metadata || {},
           isOnline: true,
           lastSeenAt: new Date(),
         },
         create: {
           id: agent.id,
-          name,
-          role,
-          emoji,
-          color,
-          metadata: agent,
+          name: agent.name,
+          role: agent.role,
+          emoji: agent.emoji,
+          color: agent.color,
+          metadata: agent.metadata || {},
           isOnline: true,
           lastSeenAt: new Date(),
         },
