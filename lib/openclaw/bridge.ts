@@ -258,14 +258,18 @@ async function getOrCreateRequest(runId: string, agentId: string, fallbackConten
 }
 
 async function emitRequestUpdate(requestId: string) {
+  logToFile("EMIT", `Request update triggered`, { requestId })
   const request = await db.openClawRequest.findUnique({
     where: { id: requestId },
     include: { assignedAgent: true, task: true },
   })
 
-  if (!request) return
+  if (!request) {
+    logToFile("EMIT", `Request not found`, { requestId })
+    return
+  }
 
-  openClawEventBus.emit(OPENCLAW_EVENTS.REQUEST_UPDATE, {
+  const payload = {
     id: request.id,
     runId: request.runId,
     content: request.content,
@@ -276,7 +280,10 @@ async function emitRequestUpdate(requestId: string) {
     createdAt: request.createdAt.getTime(),
     completedAt: request.completedAt?.getTime() ?? null,
     result: request.result,
-  })
+  }
+
+  logToFile("EMIT", `Emitting REQUEST_UPDATE`, { requestId, state: payload.state })
+  openClawEventBus.emit(OPENCLAW_EVENTS.REQUEST_UPDATE, payload)
 }
 
 async function emitTaskUpdate(taskId: string) {
