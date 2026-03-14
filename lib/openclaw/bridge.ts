@@ -404,6 +404,20 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
     return
   }
 
+  if (stream === "lifecycle" && payload.data?.phase === "end") {
+    const updated = await updateRequestStateByRun(runId, "COMPLETED")
+    await createWorkflowEvent({
+      requestId: updated.id,
+      agentId,
+      type: "lifecycle.end",
+      state: "COMPLETED",
+      message: `✅ ${agentId} 完成请求分析`,
+      payload: payload.data,
+    })
+    await emitRequestUpdate(updated.id)
+    return
+  }
+
   if (stream === "tool" && payload.data?.phase === "start") {
     const toolName = payload.data?.toolName || payload.data?.tool || "tool"
     const updated = await updateRequestStateByRun(runId, "TASK_CREATED")
