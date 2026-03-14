@@ -116,6 +116,10 @@ export function ActivityLog() {
                 <div
                   key={item.id}
                   className={cn(
+                    "rounded border border-border/60 bg-muted/30 px-2 py-1 transition-all duration-300 ease-out hover:bg-muted/50",
+                    index === 0 && "animate-in fade-in slide-in-from-top-2 duration-500"
+                  )}
+                  className={cn(
                     "rounded border border-border/60 bg-muted/30 px-2 py-1",
                     index === 0 && "border-primary/40 bg-primary/5"
                   )}
