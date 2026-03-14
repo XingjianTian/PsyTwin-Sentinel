@@ -2,6 +2,7 @@
 
 import { motion, useAnimation } from "framer-motion"
 import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
 import {
   getRandomSpawnPoint,
   getNextTargetPoint,
@@ -22,6 +23,59 @@ const POINT_MAP: Record<number, { x: number; y: number }> = {
   0: { x: 25, y: 75 }, 1: { x: 50, y: 75 }, 2: { x: 75, y: 75 },
   3: { x: 25, y: 50 }, 4: { x: 50, y: 50 }, 5: { x: 75, y: 50 },
   6: { x: 25, y: 25 }, 7: { x: 50, y: 25 }, 8: { x: 75, y: 25 },
+}
+
+// Agent ID 到头像图片的映射
+const AGENT_AVATAR_MAP: Record<string, string> = {
+  "analyst": "/agents-icons/Analyst.png",
+  "collector": "/agents-icons/Collector.png",
+  "dba": "/agents-icons/DBA.png",
+  "relayer": "/agents-icons/Relayer.png",
+  "therapist": "/agents-icons/Therapist.png",
+  "main": "/agents-icons/main.png",
+}
+
+// 根据 agent ID 获取头像路径
+function getAgentAvatar(agentId: string): string | null {
+  // 尝试直接匹配
+  const directMatch = AGENT_AVATAR_MAP[agentId.toLowerCase()]
+  if (directMatch) return directMatch
+  
+  // 尝试模糊匹配（比如 id 包含关键字）
+  for (const [key, path] of Object.entries(AGENT_AVATAR_MAP)) {
+    if (agentId.toLowerCase().includes(key)) {
+      return path
+    }
+  }
+  
+  return null
+}
+
+// Agent 头像组件
+function AgentAvatar({ agent }: { agent: AgentGridItem }) {
+  const [imgError, setImgError] = useState(false)
+  const avatarPath = getAgentAvatar(agent.id)
+  
+  // 如果有图片路径且没有加载错误，显示图片
+  if (avatarPath && !imgError) {
+    return (
+      <Image
+        src={avatarPath}
+        alt={agent.name}
+        width={36}
+        height={36}
+        className="rounded-md object-cover"
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+  
+  // 否则显示 emoji 或首字
+  return (
+    <span className="relative z-10 select-none text-lg">
+      {agent.emoji || agent.name?.[0] || agent.id[0]}
+    </span>
+  )
 }
 
 export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
@@ -112,7 +166,7 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
           transition={{ duration: 0.6, repeat: isMoving ? Infinity : 0, ease: "easeInOut" }}
         >
           <div
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-base sm:h-10 sm:w-10"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-base sm:h-10 sm:w-10 overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${agentColor}33, ${agentColor}0d)`,
               border: `2px solid ${agentColor}`,
@@ -121,9 +175,7 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
                 : `0 0 10px ${agentColor}33, 0 2px 8px rgba(0,0,0,0.15)`,
             }}
           >
-            <span className="relative z-10 select-none">
-              {agent.emoji || agent.name?.[0] || agent.id[0]}
-            </span>
+            <AgentAvatar agent={agent} />
 
             {/* 移动时的光扫效果（轻柔，非赛博风） */}
             {isMoving && (
