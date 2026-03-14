@@ -6,6 +6,7 @@ import Image from "next/image"
 import {
   getRandomSpawnPoint,
   getNextTargetPoint,
+  GRID_POINTS,
   type GridPoint,
 } from "@/lib/openclaw/grid-paths"
 
@@ -17,14 +18,6 @@ export type AgentGridItem = {
   color?: string
   isOnline?: boolean
 }
-
-// 格点坐标映射（百分比）
-const POINT_MAP: Record<number, { x: number; y: number }> = {
-  0: { x: 25, y: 75 }, 1: { x: 50, y: 75 }, 2: { x: 75, y: 75 },
-  3: { x: 25, y: 50 }, 4: { x: 50, y: 50 }, 5: { x: 75, y: 50 },
-  6: { x: 25, y: 25 }, 7: { x: 50, y: 25 }, 8: { x: 75, y: 25 },
-}
-
 // Agent ID 到头像图片的映射
 const AGENT_AVATAR_MAP: Record<string, string> = {
   "analyst": "/agents-icons/Analyst.png",
@@ -37,11 +30,9 @@ const AGENT_AVATAR_MAP: Record<string, string> = {
 
 // 根据 agent ID 获取头像路径
 function getAgentAvatar(agentId: string): string | null {
-  // 尝试直接匹配
   const directMatch = AGENT_AVATAR_MAP[agentId.toLowerCase()]
   if (directMatch) return directMatch
   
-  // 尝试模糊匹配（比如 id 包含关键字）
   for (const [key, path] of Object.entries(AGENT_AVATAR_MAP)) {
     if (agentId.toLowerCase().includes(key)) {
       return path
@@ -56,7 +47,6 @@ function AgentAvatar({ agent }: { agent: AgentGridItem }) {
   const [imgError, setImgError] = useState(false)
   const avatarPath = getAgentAvatar(agent.id)
   
-  // 如果有图片路径且没有加载错误，显示图片
   if (avatarPath && !imgError) {
     return (
       <Image
@@ -70,7 +60,6 @@ function AgentAvatar({ agent }: { agent: AgentGridItem }) {
     )
   }
   
-  // 否则显示 emoji 或首字
   return (
     <span className="relative z-10 select-none text-lg">
       {agent.emoji || agent.name?.[0] || agent.id[0]}
@@ -79,17 +68,17 @@ function AgentAvatar({ agent }: { agent: AgentGridItem }) {
 }
 
 export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
-  const controls = useAnimation()
+  // const controls = useAnimation()
   const [currentPoint, setCurrentPoint] = useState<GridPoint | null>(null)
   const [targetPointId, setTargetPointId] = useState<number | null>(null)
   const [isMoving, setIsMoving] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // 挂载后初始化（避免 SSR 不一致）
   useEffect(() => {
     setMounted(true)
     setCurrentPoint(getRandomSpawnPoint())
   }, [agent.id])
+  const [moveDuration, setMoveDuration] = useState(3)
 
   const moveToNext = useCallback(async () => {
     if (isMoving || !currentPoint) return
@@ -97,19 +86,21 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
 
     const next = getNextTargetPoint(currentPoint.id)
     setTargetPointId(next.id)
-
-    await controls.start({
-      left: `${next.x}%`,
-      top: `${next.y}%`,
-      transition: { duration: 3, ease: "easeInOut" },
-    })
-
+    
+    // 计算移动方向决定动画时长
+    const currentPos = GRID_POINTS[currentPoint.id]
+    const nextPos = GRID_POINTS[next.id]
+    const isHorizontal = currentPos.y === nextPos.y
+    const duration = isHorizontal ? 5 : 3 // 横向5秒，纵向3秒
+    setMoveDuration(duration)
+    
+    // 等待动画完成
+    await new Promise(r => setTimeout(r, duration * 1000))
     setCurrentPoint(next)
     setTargetPointId(null)
     setIsMoving(false)
-  }, [currentPoint, isMoving, controls])
+  }, [currentPoint, isMoving])
 
-  // 自动移动循环
   useEffect(() => {
     if (!currentPoint) return
     let active = true
@@ -131,102 +122,98 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
 
   if (!mounted || !currentPoint) return null
 
-  const pos = POINT_MAP[currentPoint.id]
+  const pos = GRID_POINTS[currentPoint.id]
   const agentColor = agent.color || "#64748b"
 
   return (
-    <motion.div
-      className="absolute cursor-pointer"
+    // 外层 div 负责居中定位
+    <div
+      className="absolute"
       style={{
         left: `${pos.x}%`,
         top: `${pos.y}%`,
         transform: "translate(-50%, -50%)",
       }}
-      animate={controls}
-      initial={{ opacity: 0, scale: 0.5 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      transition={{ opacity: { duration: 0.4 }, scale: { duration: 0.4 } }}
-      whileHover={{ scale: 1.1 }}
     >
-      <div className="relative">
-        {/* 在线状态指示点 */}
-        <motion.div
-          className="absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full border border-background"
-          style={{
-            background: isMoving ? "#f59e0b" : "#22c55e",
-            boxShadow: `0 0 6px ${isMoving ? "#f59e0b" : "#22c55e"}`,
-          }}
-          animate={isMoving ? { scale: [1, 1.4, 1] } : { scale: 1 }}
-          transition={{ duration: 0.5, repeat: isMoving ? Infinity : 0 }}
-        />
-
-        {/* Agent 卡片主体 */}
-        <motion.div
-          animate={isMoving ? { y: [0, -4, 0] } : { y: 0 }}
-          transition={{ duration: 0.6, repeat: isMoving ? Infinity : 0, ease: "easeInOut" }}
-        >
-          <div
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-base sm:h-10 sm:w-10 overflow-hidden"
+      {/* 内层 motion.div 负责动画 */}
+      <motion.div
+        className="cursor-pointer"
+        layout
+        initial={{ opacity: 0, scale: 0.5 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        transition={{ 
+          opacity: { duration: 0.4 }, 
+          scale: { duration: 0.4 },
+          layout: { duration: moveDuration, ease: "easeInOut" }
+        }}
+        whileHover={{ scale: 1.1 }}
+      >
+        <div className="relative">
+          {/* 在线状态指示点 - 左上角 */}
+          <motion.div
+            className="absolute -top-1 -left-1 z-10 h-2.5 w-2.5 rounded-full border border-background"
             style={{
-              background: `linear-gradient(135deg, ${agentColor}33, ${agentColor}0d)`,
-              border: `2px solid ${agentColor}`,
-              boxShadow: isMoving
-                ? `0 0 20px ${agentColor}55, 0 4px 12px rgba(0,0,0,0.2)`
-                : `0 0 10px ${agentColor}33, 0 2px 8px rgba(0,0,0,0.15)`,
+              background: isMoving ? "#f59e0b" : "#22c55e",
+              boxShadow: `0 0 6px ${isMoving ? "#f59e0b" : "#22c55e"}`,
             }}
-          >
-            <AgentAvatar agent={agent} />
-
-            {/* 移动时的光扫效果（轻柔，非赛博风） */}
-            {isMoving && (
-              <motion.div
-                className="absolute inset-0 rounded-xl pointer-events-none"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${agentColor}22, transparent)`,
-                }}
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-              />
-            )}
-          </div>
-
-          {/* 站立平台 */}
-          <div
-            className="mx-auto -mt-0.5 h-1.5 w-9 rounded-sm sm:w-10"
-            style={{
-              background: `linear-gradient(180deg, ${agentColor}22, transparent)`,
-              border: `1px solid ${agentColor}22`,
-            }}
+            animate={isMoving ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+            transition={{ duration: 0.5, repeat: isMoving ? Infinity : 0 }}
           />
-        </motion.div>
 
-        {/* 名称标签 */}
-        <div className="mt-1 text-center">
-          <div
-            className="inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold whitespace-nowrap"
-            style={{
-              background: `${agentColor}18`,
-              border: `1px solid ${agentColor}`,
-              color: agentColor,
-            }}
+          {/* 名称和状态标签 - 紧贴头像下方 */}
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-20">
+            <div className="rounded px-1 py-0.5 bg-white border border-black/20 shadow-sm">
+              <div className="text-[9px] font-semibold text-black leading-tight">
+                {agent.name}
+              </div>
+              <div className="text-[8px] text-gray-500 leading-tight">
+                {isMoving ? "移动中..." : (agent.role || "Agent")}
+              </div>
+            </div>
+          </div>
+
+          {/* Agent 卡片主体 */}
+          <motion.div
+            animate={isMoving ? { y: [0, -4, 0] } : { y: 0 }}
+            transition={{ duration: 0.6, repeat: isMoving ? Infinity : 0, ease: "easeInOut" }}
           >
-            {agent.name}
-          </div>
-          <div className="mt-0.5 text-[8px] opacity-60" style={{ color: agentColor }}>
-            {isMoving ? "移动中..." : (agent.role || "Agent")}
-          </div>
-        </div>
+            <div
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-base sm:h-10 sm:w-10 overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, ${agentColor}33, ${agentColor}0d)`,
+                border: `2px solid ${agentColor}`,
+                boxShadow: isMoving
+                  ? `0 0 20px ${agentColor}55, 0 4px 12px rgba(0,0,0,0.2)`
+                  : `0 0 10px ${agentColor}33, 0 2px 8px rgba(0,0,0,0.15)`,
+              }}
+            >
+              <AgentAvatar agent={agent} />
 
-        {/* 位置 ID（调试信息，低调显示） */}
-        <div
-          className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] opacity-30"
-          style={{ color: agentColor }}
-        >
-          {isMoving && targetPointId !== null
-            ? `${currentPoint.id}→${targetPointId}`
-            : `P${currentPoint.id}`}
+              {/* 移动时的光扫效果 */}
+              {isMoving && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  style={{
+                    background: `linear-gradient(90deg, transparent, ${agentColor}22, transparent)`,
+                  }}
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                />
+              )}
+            </div>
+          </motion.div>
+
+          {/* 位置 ID（调试信息） */}
+          <div
+            className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[8px] opacity-30"
+            style={{ color: agentColor }}
+          >
+            {isMoving && targetPointId !== null
+              ? `${currentPoint.id}→${targetPointId}`
+              : `P${currentPoint.id}`}
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }

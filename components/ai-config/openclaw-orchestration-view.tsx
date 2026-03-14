@@ -160,7 +160,10 @@ export function OpenClawOrchestrationView() {
         <div className={isOfficeTab ? "grid grid-cols-1 gap-3 xl:grid-cols-3 h-[calc(100%-2.5rem)]" : "h-[calc(100%-2.5rem)] overflow-auto"}>
           {/* Main Content */}
           <div className={isOfficeTab ? "xl:col-span-2 flex flex-col" : "w-full"}>
-            <TabsContent value="office" className="mt-0 flex-1 min-h-0">
+            <TabsContent value="office" className="mt-0 flex-1 min-h-0 flex flex-col">
+              <div className="text-center text-[10px] text-muted-foreground mb-1">
+                🤖 {agents.length} 个智能体节点 · 实时活动可视化
+              </div>
               <AgentGridOffice agents={agents} />
             </TabsContent>
 

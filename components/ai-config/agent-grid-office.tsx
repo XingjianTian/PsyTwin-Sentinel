@@ -17,6 +17,29 @@ export function AgentGridOffice({ agents }: AgentGridOfficeProps) {
       className="relative w-full h-full overflow-hidden rounded-xl border border-border bg-muted/20"
       style={{ height: "100%", minHeight: "300px" }}
     >
+      {/* 地图背景 */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ 
+          backgroundImage: 'url(/map.jpg)',
+          zIndex: 0 
+        }}
+      />
+      <div 
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ 
+          backgroundImage: 'url(/map.jpg)',
+          zIndex: 0 
+        }}
+      />
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-30"
+        style={{ 
+          backgroundImage: 'url(/map.jpg)',
+          zIndex: 0 
+        }}
+      />
+
       {/* 田字格网格线 SVG */}
       {showGrid && (
         <svg
@@ -84,14 +107,7 @@ export function AgentGridOffice({ agents }: AgentGridOfficeProps) {
         </button>
       </div>
 
-      {/* 底部状态栏 */}
-      <div className="absolute bottom-3 left-3 right-3 z-20">
-        <div className="rounded border border-border/50 bg-background/70 px-3 py-1.5 backdrop-blur-sm">
-          <p className="text-center text-[9px] text-muted-foreground">
-            🤖 {agents.length} 个智能体节点 · 田字格 3×3 网格 · 实时活动可视化
-          </p>
-        </div>
-      </div>
+
 
       {/* 空状态 */}
       {agents.length === 0 && (
