@@ -107,7 +107,7 @@ function ActivityRow({ item, isFirst }: { item: OpenClawActivityItem; isFirst: b
 
 export function LivePanel() {
   const { requests, activities } = useOpenClawWorkflowStream()
-  const [activeView, setActiveView] = useState<"pipeline" | "log">("pipeline")
+  const [activeView, setActiveView] = useState<"pipeline" | "log">("log")
 
   const activeRequests = useMemo(
     () => requests.filter((r) => r.state !== "completed" && r.state !== "failed").slice(0, 5),
@@ -123,6 +123,22 @@ export function LivePanel() {
       <CardHeader className="shrink-0 border-b border-border px-3 py-2">
         {/* Tab 切换 */}
         <div className="flex items-center gap-1">
+          {/* 活动日志 - 现在默认显示，放在前面 */}
+          <button
+            onClick={() => setActiveView("log")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              activeView === "log"
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Activity className="h-3 w-3" />
+            活动日志
+            <span className="text-[9px] text-green-500">● LIVE</span>
+          </button>
+
+          {/* 请求流转 - 现在放在后面 */}
           <button
             onClick={() => setActiveView("pipeline")}
             className={cn(
@@ -141,25 +157,11 @@ export function LivePanel() {
             )}
           </button>
 
-          <button
-            onClick={() => setActiveView("log")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              activeView === "log"
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Activity className="h-3 w-3" />
-            活动日志
-            <span className="text-[9px] text-green-500">● LIVE</span>
-          </button>
-
           {/* 右侧计数 */}
           <span className="ml-auto text-[10px] text-muted-foreground">
-            {activeView === "pipeline"
-              ? `${activeRequests.length} 活跃`
-              : `${recentActivities.length} 条`}
+            {activeView === "log"
+              ? `${recentActivities.length} 条`
+              : `${activeRequests.length} 活跃`}
           </span>
         </div>
       </CardHeader>
