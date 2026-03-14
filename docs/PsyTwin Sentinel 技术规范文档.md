@@ -303,49 +303,47 @@ redis:
 
 ### 3.6 VR 端数据 (VR Dashboard)
 
-### 3.5 VR 端数据 (VR Dashboard)
-
 **定位**：展示 VR 设备采集的多模态数据。
 
-#### F5.1 设备状态监控
+#### F6.1 设备状态监控
 
 - 在线/离线设备列表
 - 连接状态实时更新
 
-#### F5.2 会话数据流
+#### F6.2 会话数据流
 
 - 实时展示当前 VR 会话数据
 - 心率、微表情、语音等指标
 
 ---
 
-### 3.6 干预记录 (Intervention Records)
+### 3.7 干预记录 (Intervention Records)
 
 **定位**：心理咨询师的工作记录区。
 
-#### F6.1 咨询记录管理
+#### F7.1 咨询记录管理
 
 - 创建/编辑/删除干预记录
 - 关联学生档案
 - 记录干预方案与效果评估
 
-#### F6.2 统计报表
+#### F7.2 统计报表
 
 - 咨询量统计
 - 干预效果分析
 
 ---
 
-### 3.7 系统设置 (System Settings)
+### 3.8 系统设置 (System Settings)
 
 **定位**：系统管理员的配置区。
 
-#### F7.1 用户管理
+#### F8.1 用户管理
 
 - 添加/编辑/删除用户
 - 角色权限配置（管理员/咨询师/辅导员）
 
-#### F7.2 系统参数配置
+#### F8.2 系统参数配置
 
 - 风险阈值设置
 - 预警规则配置
@@ -356,6 +354,7 @@ redis:
 ## 4. API 接口规范
 
 ### 4.1 学生档案接口
+
 
 #### A1. 获取学生列表
 
@@ -590,6 +589,181 @@ Response: Intervention
 
 ---
 
+### 4.5 OpenClaw 编排接口
+
+#### A12. 获取 OpenClaw 智能体配置
+
+```
+GET /api/openclaw/config
+
+Response:
+{
+  "agents": [
+    {
+      "id": string,
+      "name": string,
+      "role": string,
+      "color": string,
+      "position": { "x": number, "y": number },
+      "status": "online" | "busy" | "idle"
+    }
+  ],
+  "gridSize": { "cols": number, "rows": number }
+}
+```
+
+#### A13. 获取 OpenClaw 统计数据
+
+```
+GET /api/openclaw/stats
+
+Response:
+{
+  "overview": {
+    "totalRequests": number,
+    "activeAgents": number,
+    "avgResponseTime": number,
+    "tokenUsage": {
+      "input": number,
+      "output": number,
+      "total": number
+    }
+  },
+  "costAnalysis": {
+    "aiCost": number,
+    "humanCost": number,
+    "savings": number,
+    "savingsPercent": number
+  },
+  "timeRange": "24h" | "7d" | "30d"
+}
+```
+
+#### A14. 获取智能体效率排行
+
+```
+GET /api/openclaw/stats/agents
+
+Query Parameters:
+- sortBy?: "savings" | "requests" | "efficiency" (默认: "savings")
+- limit?: number (默认: 10)
+
+Response:
+{
+  "ranking": [
+    {
+      "agentId": string,
+      "agentName": string,
+      "requestsHandled": number,
+      "tokensConsumed": number,
+      "costSaved": number,
+      "efficiency": number
+    }
+  ],
+  "totalAgents": number
+}
+```
+
+#### A15. 浏览 OpenClaw 数据库
+
+```
+GET /api/openclaw/database
+
+Query Parameters:
+- table?: string (表名，默认返回表列表)
+- page?: number (默认: 1)
+- limit?: number (默认: 10)
+
+Response (表列表):
+{
+  "tables": [
+    {
+      "name": string,
+      "description": string,
+      "recordCount": number
+    }
+  ]
+}
+
+Response (表数据):
+{
+  "table": string,
+  "columns": [
+    {
+      "name": string,
+      "type": string,
+      "nullable": boolean,
+      "default": any
+    }
+  ],
+  "data": any[],
+  "pagination": {
+    "page": number,
+    "limit": number,
+    "total": number,
+    "totalPages": number
+  }
+}
+```
+
+#### A16. 获取工作流实时数据流 (SSE)
+
+```
+GET /api/openclaw/workflow
+
+EventSource Stream:
+event: workflow-update
+data: {
+  "type": "request" | "agent" | "stats",
+  "payload": {
+    // 根据 type 不同而变化
+    // request: { id, status, progress, agentId, timestamp }
+    // agent: { id, status, position, currentTask }
+    // stats: { tokenUsage, requestCount, avgResponseTime }
+  },
+  "timestamp": string
+}
+
+Connection: keep-alive
+Content-Type: text/event-stream
+```
+
+#### A17. 获取系统安全状态
+
+```
+GET /api/openclaw/status
+
+Response:
+{
+  "health": {
+    "score": number,           // 0-100
+    "status": "healthy" | "warning" | "critical",
+    "checks": [
+      {
+        "name": string,
+        "status": "pass" | "fail" | "warn",
+        "message": string
+      }
+    ]
+  },
+  "ports": [
+    {
+      "port": number,
+      "service": string,
+      "status": "open" | "closed" | "filtered"
+    }
+  ],
+  "lastScan": string
+}
+```
+
+---
+
+## 5. 数据库模型 (Prisma Schema)
+```
+
+---
+
 ## 5. 数据库模型 (Prisma Schema)
 
 ### 5.1 核心模型
@@ -784,6 +958,78 @@ model User {
   lastLoginAt  DateTime?
 }
 
+// OpenClaw 智能体
+model OpenClawAgent {
+  id            String               @id @default(uuid())
+  name          String               @unique
+  role          String
+  description   String?
+  color         String               // 主题色 (hex)
+  avatar        String?              // 头像 URL
+  status        OpenClawAgentStatus  @default(IDLE)
+  capabilities  String[]             // 能力标签
+  config        Json?                // 配置参数
+  positionX     Int                  @default(0)
+  positionY     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  
+  requests      OpenClawRequest[]
+  costLogs      OpenClawCost[]
+}
+
+// OpenClaw 请求记录
+model OpenClawRequest {
+  id            String                   @id @default(uuid())
+  agentId       String
+  type          String                   // 请求类型
+  status        OpenClawRequestStatus    @default(PENDING)
+  progress      Int                      @default(0)  // 0-100
+  input         String?                  // 输入内容
+  output        String?                  // 输出内容
+  inputTokens   Int                      @default(0)
+  outputTokens  Int                      @default(0)
+  duration      Int?                     // 处理时长 (ms)
+  metadata      Json?                    // 附加数据
+  error         String?                  // 错误信息
+  createdAt     DateTime                 @default(now())
+  completedAt   DateTime?
+  
+  agent         OpenClawAgent            @relation(fields: [agentId], references: [id])
+}
+
+// OpenClaw 成本记录
+model OpenClawCost {
+  id            String   @id @default(uuid())
+  agentId       String
+  date          DateTime @default(now())
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  totalTokens   Int      @default(0)
+  cost          Float    @default(0)   // 成本 (元)
+  savings       Float    @default(0)   // 节省金额 (元)
+  
+  agent         OpenClawAgent @relation(fields: [agentId], references: [id])
+  
+  @@index([date])
+  @@index([agentId])
+}
+
+// OpenClaw 安全日志
+model OpenClawSecurityLog {
+  id          String   @id @default(uuid())
+  type        String   // 事件类型: scan, access, error
+  severity    String   // 严重程度: info, warning, critical
+  message     String
+  source      String?  // 来源 IP/服务
+  metadata    Json?    // 附加数据
+  createdAt   DateTime @default(now())
+  
+  @@index([createdAt])
+}
+
+// 枚举定义
+
 // 枚举定义
 enum RiskLevel {
   HIGH
@@ -843,6 +1089,29 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
+}
+
+enum OpenClawAgentStatus {
+  ONLINE
+  BUSY
+  IDLE
+  OFFLINE
+}
+
+enum OpenClawRequestStatus {
+  PENDING
+  ANALYZING
+  ROUTING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum OpenClawSecuritySeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
 }
 ```
 
