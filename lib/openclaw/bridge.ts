@@ -774,6 +774,58 @@ async function connectOpenClawBridge() {
         await ensureFallbackAgents()
       }
     }, 3000)
+
+    // 启动自动完成检测（每30秒检查一次卡住的请求）
+    const autoCompleteInterval = setInterval(async () => {
+      if (!state.connected) {
+        clearInterval(autoCompleteInterval)
+        return
+      }
+      
+      try {
+        // 查找卡在 ANALYZING 或 IN_PROGRESS 超过60秒的请求
+        const stuckRequests = await db.openClawRequest.findMany({
+          where: {
+            state: { in: ["ANALYZING", "IN_PROGRESS", "TASK_CREATED"] },
+            createdAt: { lt: new Date(Date.now() - 60000) },
+            completedAt: null,
+          },
+          take: 10,
+        })
+        
+        for (const request of stuckRequests) {
+          console.log(`[openclaw] Auto-completing stuck request: ${request.id} (${request.state})`)
+          
+          await db.openClawRequest.update({
+            where: { id: request.id },
+            data: {
+              state: "COMPLETED",
+              completedAt: new Date(),
+              result: request.result || "Auto-completed after timeout",
+            },
+          })
+          
+          // 同时更新关联的任务
+          await db.openClawTask.updateMany({
+            where: { requestId: request.id },
+            data: {
+              status: "COMPLETED",
+              completedAt: new Date(),
+            },
+          })
+          
+          await emitRequestUpdate(request.id)
+        }
+      } catch (error) {
+        console.error("[openclaw] Auto-complete error:", error)
+      }
+    }, 30000)
+
+    // 清理函数
+    ws.on("close", () => {
+      clearInterval(autoCompleteInterval)
+    })
+
   } catch (error) {
     state.connecting = false
     state.connected = false
