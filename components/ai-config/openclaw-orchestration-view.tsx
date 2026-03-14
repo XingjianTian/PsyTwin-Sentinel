@@ -62,6 +62,7 @@ export function OpenClawOrchestrationView() {
   const activeRequests = requests.filter((r) => r.state !== "completed" && r.state !== "failed")
   const todayTokenApprox = activities.length * 1200
   const costApprox = (todayTokenApprox / 1000) * 0.08
+  const isOfficeTab = activeTab === "office"
   return (
     <div className="flex h-[calc(100vh-10rem)] flex-col gap-2">
       {/* Header */}
