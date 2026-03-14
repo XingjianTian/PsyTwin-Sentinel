@@ -109,6 +109,25 @@ enum DocStatus {
   PROCESSING
   FAILED
 }
+
+enum OpenClawRequestState {
+  RECEIVED
+  ANALYZING
+  TASK_CREATED
+  ASSIGNED
+  IN_PROGRESS
+  REVIEWING
+  COMPLETED
+  FAILED
+}
+
+enum OpenClawTaskStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
 model Student {
   id                  String               @id @default(uuid())
   name                String
@@ -488,6 +507,107 @@ model AIPromptPreset {
 
   @@index([isActive])
   @@map("ai_prompt_presets")
+}
+
+model OpenClawAgent {
+  id             String            @id
+  name           String?
+  role           String?
+  emoji          String?
+  color          String?
+  metadata       Json?
+  isOnline       Boolean           @default(false) @map("is_online")
+  lastSeenAt     DateTime?         @map("last_seen_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  assignedReqs   OpenClawRequest[]
+  assignedTasks  OpenClawTask[]
+  events         OpenClawEvent[]
+
+  @@index([isOnline])
+  @@index([lastSeenAt])
+  @@map("openclaw_agents")
+}
+
+model OpenClawRequest {
+  id               String               @id @default(cuid())
+  runId            String?              @unique @map("run_id")
+  source           String?
+  content          String
+  state            OpenClawRequestState @default(RECEIVED)
+  assignedAgentId  String?              @map("assigned_agent_id")
+  startedAt        DateTime?            @map("started_at")
+  completedAt      DateTime?            @map("completed_at")
+  result           String?
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  assignedAgent    OpenClawAgent?       @relation(fields: [assignedAgentId], references: [id])
+  task             OpenClawTask?
+  events           OpenClawEvent[]
+
+  @@index([runId])
+  @@index([state])
+  @@index([assignedAgentId])
+  @@index([createdAt])
+  @@map("openclaw_requests")
+}
+
+model OpenClawTask {
+  id               String           @id @default(cuid())
+  requestId        String           @unique @map("request_id")
+  title            String?
+  detail           String?
+  status           OpenClawTaskStatus @default(PENDING)
+  assignedAgentId  String?          @map("assigned_agent_id")
+  startedAt        DateTime?        @map("started_at")
+  completedAt      DateTime?        @map("completed_at")
+  result           String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  request          OpenClawRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  assignedAgent    OpenClawAgent?   @relation(fields: [assignedAgentId], references: [id])
+  events           OpenClawEvent[]
+
+  @@index([status])
+  @@index([assignedAgentId])
+  @@index([createdAt])
+  @@map("openclaw_tasks")
+}
+
+model OpenClawEvent {
+  id          String          @id @default(cuid())
+  requestId   String?         @map("request_id")
+  taskId      String?         @map("task_id")
+  agentId     String?         @map("agent_id")
+  type        String
+  state       String?
+  message     String
+  payload     Json?
+  eventTime   DateTime        @default(now()) @map("event_time")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  request     OpenClawRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  task        OpenClawTask?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  agent       OpenClawAgent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@index([requestId])
+  @@index([taskId])
+  @@index([agentId])
+  @@index([eventTime])
+  @@index([type])
+  @@map("openclaw_events")
+}
+
+model OpenClawConnection {
+  id                String   @id @default("default")
+  gatewayUrl        String?  @map("gateway_url")
+  connected         Boolean  @default(false)
+  lastConnectedAt   DateTime? @map("last_connected_at")
+  lastDisconnectedAt DateTime? @map("last_disconnected_at")
+  lastError         String?  @map("last_error")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("openclaw_connections")
 }
 
 // ============================================
