@@ -162,6 +162,8 @@ model Student {
   vitalSigns          VitalSign[]
   voiceAnalyses       VoiceAnalysis[]
   expressionData      ExpressionData[]
+  behaviorData        BehaviorData[]
+  eegData             EEGData[]
   currentInRooms      ConsultationRoom[]   @relation("CurrentRoomStudent")
   // 小程序关系
   posts               Post[]
@@ -479,6 +481,46 @@ model ExpressionData {
   @@index([timestamp])
   @@index([studentId, timestamp])
   @@map("expression_data")
+}
+
+model BehaviorData {
+  id              String   @id @default(uuid())
+  studentId       String   @map("student_id")
+  sessionId       String?  @map("session_id")
+  timestamp       DateTime
+  interactionFreq Float    @map("interaction_freq")
+  handTremor      Float    @map("hand_tremor")
+  responseDelay   Float    @map("response_delay")
+  avoidanceCount  Int      @map("avoidance_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([timestamp])
+  @@index([studentId, timestamp])
+  @@map("behavior_data")
+}
+
+model EEGData {
+  id        String   @id @default(uuid())
+  studentId String   @map("student_id")
+  sessionId String?  @map("session_id")
+  timestamp DateTime
+  alpha     Float
+  beta      Float
+  theta     Float
+  gamma     Float?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([timestamp])
+  @@index([studentId, timestamp])
+  @@map("eeg_data")
 }
 
 model AIDocument {
