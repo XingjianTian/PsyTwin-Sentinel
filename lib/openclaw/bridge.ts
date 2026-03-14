@@ -378,6 +378,25 @@ async function updateRequestStateByRun(runId: string, state: "ANALYZING" | "TASK
 }
 
 async function handleAgentEvent(payload: GatewayAgentPayload) {
+  // 添加调试日志，查看实际收到的网关事件
+  console.log("[openclaw] Gateway event received:", {
+    runId: payload.runId,
+    stream: payload.stream,
+    sessionKey: payload.sessionKey,
+    phase: payload.data?.phase,
+    dataKeys: payload.data ? Object.keys(payload.data) : [],
+    fullData: JSON.stringify(payload.data).slice(0, 500),
+  })
+
+  console.log("[openclaw] Gateway event received:", {
+    runId: payload.runId,
+    stream: payload.stream,
+    sessionKey: payload.sessionKey,
+    phase: payload.data?.phase,
+    dataKeys: payload.data ? Object.keys(payload.data) : [],
+    fullData: JSON.stringify(payload.data).slice(0, 500),
+  })
+
   const runId = payload.runId
   if (!runId) return
 
@@ -460,11 +479,23 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
 }
 
 async function handleChatEvent(payload: { state?: string; runId?: string; result?: string }) {
+  // 添加调试日志
+  console.log("[openclaw] Chat event received:", {
+    runId: payload.runId,
+    state: payload.state,
+    hasResult: !!payload.result,
+    resultPreview: payload.result?.slice(0, 100),
+  })
+
   const runId = payload.runId
   if (!runId) return
 
-  if (payload.state !== "delivered" && payload.state !== "idle") return
-
+  // 扩展处理的状态类型
+  const terminalStates = ["delivered", "idle", "completed", "done", "success"]
+  if (!terminalStates.includes(payload.state?.toLowerCase() || "")) {
+    console.log("[openclaw] Chat event ignored - not a terminal state:", payload.state)
+    return
+  }
   const request = await db.openClawRequest.findUnique({ where: { runId } })
   if (!request) return
 
@@ -573,6 +604,17 @@ async function connectOpenClawBridge() {
       try {
         const text = typeof raw === "string" ? raw : raw?.toString?.() || ""
         const msg = JSON.parse(text)
+
+        // 添加调试日志，查看所有收到的消息
+        console.log("[openclaw] WebSocket message received:", {
+          type: msg.type,
+          event: msg.event,
+          id: msg.id,
+          method: msg.method,
+          hasPayload: !!msg.payload,
+          payloadKeys: msg.payload ? Object.keys(msg.payload) : [],
+          rawPreview: text.slice(0, 300),
+        })
 
         if (msg.type === "event" && msg.event === "connect.challenge") {
           ws.send(
