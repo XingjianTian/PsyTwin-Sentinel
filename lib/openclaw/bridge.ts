@@ -389,18 +389,11 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
     fullData: JSON.stringify(payload.data).slice(0, 500),
   })
 
-  console.log("[openclaw] Gateway event received:", {
-    runId: payload.runId,
-    stream: payload.stream,
-    sessionKey: payload.sessionKey,
-    phase: payload.data?.phase,
-    dataKeys: payload.data ? Object.keys(payload.data) : [],
-    fullData: JSON.stringify(payload.data).slice(0, 500),
-  })
-
   const runId = payload.runId
-  if (!runId) return
-
+  if (!runId) {
+    console.log("[openclaw] No runId, skipping")
+    return
+  }
   const agentId = parseAgentIdFromSessionKey(payload.sessionKey)
   await upsertAgent(agentId)
 
@@ -457,6 +450,21 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
     return
   }
 
+  // 添加 tool.end 事件处理
+  if (stream === "tool" && payload.data?.phase === "end") {
+    const updated = await updateRequestStateByRun(runId, "COMPLETED")
+    await createWorkflowEvent({
+      requestId: updated.id,
+      agentId,
+      type: "tool.end",
+      state: "COMPLETED",
+      message: `✅ ${agentId} 完成工具调用`,
+      payload: payload.data,
+    })
+    await emitRequestUpdate(updated.id)
+    return
+  }
+
   if (stream === "assistant" || stream === "user") {
     const updated = await updateRequestStateByRun(runId, "IN_PROGRESS")
     const task = await ensureTask(updated.id, agentId, truncateText(updated.content, 60), truncateText(rawText || updated.content, 200))
@@ -476,7 +484,14 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
     })
     await emitRequestUpdate(updated.id)
     await emitTaskUpdate(task.id)
+    return
   }
+
+  // 如果没有匹配到任何处理逻辑，输出警告
+  console.log("[openclaw] Unhandled event:", { stream, phase: payload.data?.phase, runId })
+
+  // 如果没有匹配到任何处理逻辑，输出警告
+  console.log("[openclaw] Unhandled event:", { stream, phase: payload.data?.phase, runId })
 }
 
 async function handleChatEvent(payload: { state?: string; runId?: string; result?: string }) {
