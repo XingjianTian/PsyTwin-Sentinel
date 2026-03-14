@@ -119,6 +119,8 @@ async function updateConnection(partial: {
 }
 
 async function upsertAgent(agentId: string) {
+  // 只更新在线状态，不覆盖 name
+  // name 应该由 upsertAgentsFromList 从网关获取并设置
   return db.openClawAgent.upsert({
     where: { id: agentId },
     update: {
@@ -127,7 +129,7 @@ async function upsertAgent(agentId: string) {
     },
     create: {
       id: agentId,
-      name: agentId,
+      name: agentId, // 创建时默认使用 agentId
       role: agentId === "main" ? "Orchestrator" : "Agent",
       isOnline: true,
       lastSeenAt: new Date(),
