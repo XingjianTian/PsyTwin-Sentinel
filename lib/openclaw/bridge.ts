@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { getOpenClawGatewayConfig, isOpenClawConfigured } from "@/lib/openclaw/config"
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
 import { addGatewayEventLog } from "@/app/api/openclaw/debug/events/route"
+import { logToFile } from "@/lib/openclaw/logger"
 
 type GatewayAgentPayload = {
   stream?: string
@@ -383,10 +384,10 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
   const { runId, stream, sessionKey, data } = payload
   const phase = data?.phase
   
-  console.log(`[openclaw] AGENT EVENT | runId: ${runId} | stream: ${stream} | phase: ${phase}`)
+  logToFile("AGENT", `EVENT | runId: ${runId} | stream: ${stream} | phase: ${phase}`)
 
   if (!runId) {
-    console.log("[openclaw] No runId, skipping")
+    logToFile("WARN", "No runId, skipping")
     return
   }
   const agentId = parseAgentIdFromSessionKey(sessionKey)
@@ -498,25 +499,18 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
   }
 
   // 如果没有匹配到任何处理逻辑，输出警告
-  console.log("[openclaw] Unhandled event:", { stream, phase: data?.phase, runId })
+  logToFile("UNHANDLED", "Event not processed", { stream, phase: data?.phase, runId })
 }
 
 async function handleChatEvent(payload: { state?: string; runId?: string; result?: string }) {
-  // 添加调试日志
-  console.log("[openclaw] Chat event received:", {
-    runId: payload.runId,
-    state: payload.state,
-    hasResult: !!payload.result,
-    resultPreview: payload.result?.slice(0, 100),
-  })
-
+  logToFile("CHAT", "Event received", { runId: payload.runId, state: payload.state, hasResult: !!payload.result })
   const runId = payload.runId
   if (!runId) return
 
   // 扩展处理的状态类型
   const terminalStates = ["delivered", "idle", "completed", "done", "success"]
   if (!terminalStates.includes(payload.state?.toLowerCase() || "")) {
-    console.log("[openclaw] Chat event ignored - not a terminal state:", payload.state)
+  logToFile("CHAT", "Event ignored - not terminal state", { state: payload.state })
     return
   }
   const request = await db.openClawRequest.findUnique({ where: { runId } })
@@ -629,15 +623,7 @@ async function connectOpenClawBridge() {
         const msg = JSON.parse(text)
 
         // 添加调试日志，查看所有收到的消息
-        console.log("[openclaw] WebSocket message received:", {
-          type: msg.type,
-          event: msg.event,
-          id: msg.id,
-          method: msg.method,
-          hasPayload: !!msg.payload,
-          payloadKeys: msg.payload ? Object.keys(msg.payload) : [],
-          rawPreview: text.slice(0, 300),
-        })
+        logToFile("WS", "WebSocket message received", { type: msg.type, event: msg.event, id: msg.id, method: msg.method, hasPayload: !!msg.payload })
 
 
         if (msg.type === "event" && msg.event === "connect.challenge") {
