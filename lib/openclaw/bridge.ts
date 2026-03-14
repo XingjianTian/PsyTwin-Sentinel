@@ -4,6 +4,7 @@ process.env.WS_NO_UTF_8_VALIDATE = "1"
 import { prisma } from "@/lib/prisma"
 import { getOpenClawGatewayConfig, isOpenClawConfigured } from "@/lib/openclaw/config"
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
+import { addGatewayEventLog } from "@/app/api/openclaw/debug/events/route"
 
 type GatewayAgentPayload = {
   stream?: string
@@ -606,6 +607,18 @@ async function connectOpenClawBridge() {
         const msg = JSON.parse(text)
 
         // 添加调试日志，查看所有收到的消息
+        console.log("[openclaw] WebSocket message received:", {
+          type: msg.type,
+          event: msg.event,
+          id: msg.id,
+          method: msg.method,
+          hasPayload: !!msg.payload,
+          payloadKeys: msg.payload ? Object.keys(msg.payload) : [],
+          rawPreview: text.slice(0, 300),
+        })
+
+        // 记录到调试端点
+        addGatewayEventLog(msg.type, msg.event || msg.method || 'unknown', msg.payload || msg)
         console.log("[openclaw] WebSocket message received:", {
           type: msg.type,
           event: msg.event,
