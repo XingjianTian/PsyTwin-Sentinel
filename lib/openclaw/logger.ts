@@ -2,7 +2,8 @@
 import * as fs from "fs"
 import * as path from "path"
 
-const LOG_FILE = path.join(process.cwd(), "logs", "openclaw-bridge.log")
+// 使用 /tmp 目录，避免触发 Next.js 文件监控
+const LOG_FILE = path.join("/tmp", "openclaw-bridge.log")
 
 // 确保日志目录存在
 try {

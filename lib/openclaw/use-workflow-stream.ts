@@ -157,9 +157,30 @@ export function useOpenClawWorkflowStream() {
 
     subscribe(id, (type, data) => {
       if (type === "snapshot") {
-        setRequests((data.requests as OpenClawRequestItem[]) || [])
-        setTasks((data.tasks as OpenClawTaskItem[]) || [])
-        setActivities((data.events as OpenClawActivityItem[]) || [])
+        // Snapshot 只用于初始化，避免频繁的全量替换导致闪烁
+        // 只在首次加载或数据为空时应用
+        setRequests((prev) => {
+          if (prev.length === 0) {
+            return (data.requests as OpenClawRequestItem[]) || []
+          }
+          // 已有数据时，忽略 snapshot，只通过单个事件更新
+          return prev
+        })
+        
+        setActivities((prev) => {
+          if (prev.length === 0) {
+            return (data.events as OpenClawActivityItem[]) || []
+          }
+          return prev
+        })
+        
+        setTasks((prev) => {
+          if (prev.length === 0) {
+            return (data.tasks as OpenClawTaskItem[]) || []
+          }
+          return prev
+        })
+        
         setConnection((data.connection as OpenClawConnection) || { connected: false })
         return
       }
