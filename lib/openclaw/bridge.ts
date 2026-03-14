@@ -487,8 +487,21 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
     return
   }
 
-  // 如果没有匹配到任何处理逻辑，输出警告
-  console.log("[openclaw] Unhandled event:", { stream, phase: payload.data?.phase, runId })
+  // 处理 result/output 流（可能是最终结果）
+  if (stream === "result" || stream === "output") {
+    console.log(`[openclaw] ${stream} stream received, marking as completed`)
+    const updated = await updateRequestStateByRun(runId, "COMPLETED")
+    await createWorkflowEvent({
+      requestId: updated.id,
+      agentId,
+      type: `stream.${stream}`,
+      state: "COMPLETED",
+      message: truncateText(rawText || `✅ ${agentId} 输出结果`, 200),
+      payload: payload.data,
+    })
+    await emitRequestUpdate(updated.id)
+    return
+  }
 
   // 如果没有匹配到任何处理逻辑，输出警告
   console.log("[openclaw] Unhandled event:", { stream, phase: payload.data?.phase, runId })
@@ -699,6 +712,47 @@ async function connectOpenClawBridge() {
 
         if (msg.type === "event" && msg.event === "chat") {
           await handleChatEvent(msg.payload as { state?: string; runId?: string; result?: string })
+          return
+        }
+
+        // 处理 delegate 事件（任务委派）
+        if (msg.type === "event" && msg.event === "delegate") {
+          console.log("[openclaw] Delegate event received:", msg.payload)
+          // delegate 事件通常意味着任务转移，可能需要更新请求状态
+          return
+        }
+
+        // 处理 taskcomplete 事件（任务完成）
+        if (msg.type === "event" && msg.event === "taskcomplete") {
+          console.log("[openclaw] Task complete event received:", msg.payload)
+          const payload = msg.payload as { runId?: string; result?: string; agentId?: string }
+          if (payload.runId) {
+            await handleChatEvent({
+              runId: payload.runId,
+              state: "completed",
+              result: payload.result,
+            })
+          }
+          return
+        }
+
+        // 处理完成事件（通用完成信号）
+        if (msg.type === "event" && (msg.event === "completed" || msg.event === "done" || msg.event === "finish")) {
+          console.log("[openclaw] Completion event received:", msg.payload)
+          const payload = msg.payload as { runId?: string; result?: string }
+          if (payload.runId) {
+            await handleChatEvent({
+              runId: payload.runId,
+              state: "completed",
+              result: payload.result,
+            })
+          }
+          return
+        }
+
+        // 记录未知事件类型
+        if (msg.type === "event") {
+          console.log("[openclaw] Unknown event type:", msg.event, "payload:", JSON.stringify(msg.payload).slice(0, 200))
         }
       } catch (error) {
         console.error("[openclaw] Failed to parse gateway message", error)
