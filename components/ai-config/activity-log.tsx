@@ -116,21 +116,58 @@ export function ActivityLog() {
                 <div
                   key={item.id}
                   className={cn(
-                    "rounded border border-border/60 bg-muted/30 px-2 py-1 transition-all duration-300 ease-out hover:bg-muted/50",
-                    index === 0 && "animate-in fade-in slide-in-from-top-2 duration-500"
-                  )}
-                  className={cn(
-                    "rounded border border-border/60 bg-muted/30 px-2 py-1",
-                    index === 0 && "border-primary/40 bg-primary/5"
+                    "rounded border border-border/60 bg-muted/30 px-2 py-1.5 transition-all duration-300 ease-out hover:bg-muted/50",
+                    index === 0 && "animate-in fade-in slide-in-from-top-2 duration-500 border-primary/40 bg-primary/5"
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  {/* 第一行：时间 + 状态 */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-[9px] text-muted-foreground">{formatTime(item.timestamp, item.time)}</span>
-                    <span className="text-[10px] font-medium text-primary">
+                    {item.state && (
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded-full",
+                        item.state === "completed" && "bg-green-500/15 text-green-600",
+                        item.state === "in_progress" && "bg-blue-500/15 text-blue-600",
+                        item.state === "analyzing" && "bg-amber-500/15 text-amber-600",
+                        item.state === "failed" && "bg-red-500/15 text-red-600",
+                        !["completed", "in_progress", "analyzing", "failed"].includes(item.state) && "bg-gray-500/15 text-gray-600"
+                      )}>
+                        {item.state === "completed" && "✓"}
+                        {item.state === "in_progress" && "◐"}
+                        {item.state === "analyzing" && "🔍"}
+                        {item.state === "failed" && "✗"}
+                        {!item.state && "●"}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* 第二行：彩色Name标签 + 状态描述 */}
+                  <div className="flex items-start gap-2">
+                    {/* Agent Name 彩色卡片 */}
+                    <span
+                      className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md border"
+                      style={{
+                        backgroundColor: `${item.agentColor || "#64748b"}15`,
+                        borderColor: `${item.agentColor || "#64748b"}40`,
+                        color: item.agentColor || "#64748b",
+                      }}
+                    >
                       {item.agentName || item.agentId || "系统"}
                     </span>
+                    
+                    {/* 状态描述（从 message 提取，去掉 agentId 前缀） */}
+                    <span className="text-[11px] text-foreground leading-tight pt-0.5">
+                      {item.message?.replace?.(/^\S+\s*/, "") || item.message}
+                    </span>
                   </div>
-                  <p className="text-[11px] text-foreground leading-tight truncate">{item.message}</p>
+                  
+                  {/* 第三行：消息内容预览（如果有） */}
+                  {(item.payload?.text || item.payload?.content || item.payload?.data?.text) && (
+                    <p className="mt-1.5 text-[10px] text-muted-foreground leading-tight pl-0.5 truncate">
+                      "{(item.payload?.text || item.payload?.content || item.payload?.data?.text)?.toString?.()?.slice?.(0, 12)?.replace?.(/\n/g, " ")}"
+                      {((item.payload?.text || item.payload?.content || item.payload?.data?.text)?.toString?.()?.length || 0) > 12 && "..."}
+                    </p>
+                  )}
                 </div>
               ))
             )}

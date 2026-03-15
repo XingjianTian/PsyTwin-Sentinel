@@ -6,6 +6,14 @@ import { getOpenClawGatewayConfig, isOpenClawConfigured } from "@/lib/openclaw/c
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
 import { addGatewayEventLog } from "@/app/api/openclaw/debug/events/route"
 import { logToFile } from "@/lib/openclaw/logger"
+import { AGENTS, AgentId } from "@/lib/openclaw/agents.config"
+
+function getAgentMeta(agentId: string) {
+  const normalizedId = Object.keys(AGENTS).find(
+    (key) => key.toLowerCase() === agentId.toLowerCase()
+  ) as AgentId | undefined
+  return normalizedId ? AGENTS[normalizedId] : undefined
+}
 
 type GatewayAgentPayload = {
   stream?: string
@@ -15,6 +23,8 @@ type GatewayAgentPayload = {
     phase?: string
     text?: string
     content?: string
+    delta?: string
+    output?: string
     toolName?: string
     tool?: string
     args?: Record<string, unknown>
@@ -34,6 +44,7 @@ type BridgeState = {
 const globalBridgeState = globalThis as unknown as {
   __psytwinOpenClawBridgeState?: BridgeState
   __psytwinOpenClawBridgeStarted?: boolean
+  __psytwinRunAgentMap?: Map<string, string>
 }
 
 if (!globalBridgeState.__psytwinOpenClawBridgeState) {
@@ -46,13 +57,48 @@ if (!globalBridgeState.__psytwinOpenClawBridgeState) {
   }
 }
 
+// 全局 runId -> agent 名称映射（支持并发子 agent）
+if (!globalBridgeState.__psytwinRunAgentMap) {
+  globalBridgeState.__psytwinRunAgentMap = new Map<string, string>()
+}
+
+if (!(globalThis as any).__psytwinResponseTextMap) {
+  (globalThis as any).__psytwinResponseTextMap = new Map<string, string>()
+}
+
 function nowTime() {
   return new Date().toLocaleTimeString("zh-CN", { hour12: false })
 }
 
 function parseAgentIdFromSessionKey(sessionKey?: string) {
-  const match = sessionKey?.match(/agent:([^:]+)/)
+  if (!sessionKey) return "main"
+  const match = sessionKey.match(/^agent:([^:]+)/)
   return match?.[1] || "main"
+}
+
+function parseAgentIdFromRunId(runId?: string): string | null {
+  if (!runId) return null
+  const parts = runId.split(":")
+  if (parts.length >= 6 && parts[2] === "agent" && parts[4] === "subagent") {
+    return parts[3] || null
+  }
+  return null
+}
+
+function detectAgentIdFromText(text?: string): string | null {
+  if (!text) return null
+  const agentEntries = Object.entries(AGENTS)
+  for (const [id, meta] of agentEntries) {
+    const chineseName = meta.name
+    const emoji = meta.emoji
+    if (text.includes(`[${chineseName}]`) || text.includes(`**[${chineseName}]**`)) {
+      return id
+    }
+    if (emoji && (text.includes(`[${emoji}]`) || text.includes(emoji))) {
+      return id
+    }
+  }
+  return null
 }
 
 function truncateText(text: string, max = 120) {
@@ -139,9 +185,18 @@ async function upsertAgent(agentId: string) {
 
 async function upsertAgentsFromList(rawAgents: unknown) {
   const list = Array.isArray(rawAgents) ? rawAgents : []
+  type ParsedAgent = {
+    id: string
+    name: string
+    role: string
+    emoji: string | null
+    color: string | null
+    metadata?: unknown
+  }
   
   // 提取新的 agent IDs 和详细信息
-  const newAgents = list.map((item: any) => {
+  const newAgents: ParsedAgent[] = list
+    .map((item: any): ParsedAgent | null => {
     if (typeof item === "string") {
       return { id: item, name: item, role: "Agent", emoji: null, color: null }
     }
@@ -157,7 +212,8 @@ async function upsertAgentsFromList(rawAgents: unknown) {
       }
     }
     return null
-  }).filter(Boolean)
+  })
+    .filter((item): item is ParsedAgent => item !== null)
 
   if (newAgents.length === 0) return
 
@@ -230,15 +286,13 @@ async function upsertAgentsFromList(rawAgents: unknown) {
 }
 
 async function ensureFallbackAgents() {
-  const fallbackAgents = [
-    { id: "main", name: "司礼监", role: "总调度", emoji: "🧭", color: "#3b82f6" },
-    { id: "bingbu", name: "兵部", role: "研发执行", emoji: "🛠️", color: "#10b981" },
-    { id: "gongbu", name: "工部", role: "运维部署", emoji: "⚙️", color: "#f59e0b" },
-    { id: "hubu", name: "户部", role: "资源与成本", emoji: "💰", color: "#14b8a6" },
-    { id: "libu", name: "礼部", role: "内容与呈现", emoji: "🪶", color: "#a855f7" },
-    { id: "libu2", name: "礼部二号", role: "文档协同", emoji: "📘", color: "#8b5cf6" },
-    { id: "xingbu", name: "刑部", role: "安全与合规", emoji: "🛡️", color: "#ef4444" },
-  ]
+  const fallbackAgents = Object.entries(AGENTS).map(([id, meta]) => ({
+    id,
+    name: meta.name,
+    role: meta.role,
+    emoji: meta.emoji,
+    color: meta.color,
+  }))
 
   for (const agent of fallbackAgents) {
     await db.openClawAgent.upsert({
@@ -376,8 +430,8 @@ async function createWorkflowEvent(data: {
     time: nowTime(),
     timestamp: event.eventTime.getTime(),
     type: event.type,
+    payload: event.payload,
   })
-
   return event
 }
 
@@ -422,15 +476,30 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
   const phase = data?.phase
   
   logToFile("AGENT", `EVENT | runId: ${runId} | stream: ${stream} | phase: ${phase}`)
-
+  
+  // 调试：打印完整的 payload 结构
+  console.log(`[openclaw-debug] stream=${stream}, sessionKey=${sessionKey}, data=`, JSON.stringify(data, null, 2).slice(0, 500))
   if (!runId) {
     logToFile("WARN", "No runId, skipping")
     return
   }
-  const agentId = parseAgentIdFromSessionKey(sessionKey)
+  
+  const runAgentMap = globalBridgeState.__psytwinRunAgentMap!
+  
+  // 优先从 runAgentMap 获取已记录的 agent
+  let agentId = runAgentMap.get(runId)
+  
+  if (!agentId) {
+    agentId = parseAgentIdFromRunId(runId) || parseAgentIdFromSessionKey(sessionKey)
+    runAgentMap.set(runId, agentId)
+  }
+
+  const agentMeta = getAgentMeta(agentId)
+  const agentLabel = `${agentMeta?.emoji ? `${agentMeta.emoji} ` : ""}${agentMeta?.name || agentId}`
+  
   await upsertAgent(agentId)
 
-  const rawText = (data?.text || data?.content || "").trim()
+  const rawText = (data?.text || data?.content || data?.delta || data?.output || "").trim()
   const fallbackContent = rawText || "OpenClaw 网关事件处理中"
 
   const request = await getOrCreateRequest(runId, agentId, fallbackContent)
@@ -442,8 +511,8 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
       agentId,
       type: "lifecycle.start",
       state: "ANALYZING",
-      message: `🔍 ${agentId} 开始分析请求`,
-      payload: data,
+      message: "开始分析请求",
+      payload: { ...data, sessionKey, runId, stream },
     })
     await emitRequestUpdate(updated.id)
     return
@@ -451,53 +520,46 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
 
   if (stream === "lifecycle" && data?.phase === "end") {
     const updated = await updateRequestStateByRun(runId, "COMPLETED")
+    const responseTextMap = (globalThis as any).__psytwinResponseTextMap as Map<string, string>
+    const accumulatedText = responseTextMap.get(runId) || updated.content || rawText || "请求已处理完成"
+    
+    const isWebUiSubagent = sessionKey === "agent:main:main" && runId?.includes(":subagent:")
+    if (isWebUiSubagent) {
+      const detectedFromText = detectAgentIdFromText(accumulatedText)
+      if (detectedFromText) {
+        agentId = detectedFromText
+        runAgentMap.set(runId, agentId)
+      }
+    }
+    
+    const contentSummary = truncateText(accumulatedText, 60)
     await createWorkflowEvent({
       requestId: updated.id,
       agentId,
       type: "lifecycle.end",
       state: "COMPLETED",
-      message: `✅ ${agentId} 完成请求分析`,
-      payload: data,
+      message: contentSummary,
+      payload: { ...data, sessionKey, runId, stream },
     })
     await emitRequestUpdate(updated.id)
-    return
-  }
-
-  if (stream === "tool" && data?.phase === "start") {
-    const toolName = data?.toolName || data?.tool || "tool"
-    const updated = await updateRequestStateByRun(runId, "TASK_CREATED")
-    const task = await ensureTask(updated.id, agentId, truncateText(`工具调用：${toolName}`, 60), truncateText(rawText || "工具调用中", 200))
-
-    await createWorkflowEvent({
-      requestId: updated.id,
-      taskId: task.id,
-      agentId,
-      type: "tool.start",
-      state: "TASK_CREATED",
-      message: `🛠️ ${agentId} 调用了 ${toolName}`,
-      payload: data,
-    })
-    await emitRequestUpdate(updated.id)
-    await emitTaskUpdate(task.id)
-    return
-  }
-
-  // 添加 tool.end 事件处理
-  if (stream === "tool" && data?.phase === "end") {
-    const updated = await updateRequestStateByRun(runId, "COMPLETED")
-    await createWorkflowEvent({
-      requestId: updated.id,
-      agentId,
-      type: "tool.end",
-      state: "COMPLETED",
-      message: `✅ ${agentId} 完成工具调用`,
-      payload: data,
-    })
-    await emitRequestUpdate(updated.id)
+    runAgentMap.delete(runId)
+    responseTextMap.delete(runId)
     return
   }
 
   if (stream === "assistant" || stream === "user") {
+    const detectedAgentId = detectAgentIdFromText(rawText)
+    if (detectedAgentId && detectedAgentId !== agentId) {
+      agentId = detectedAgentId
+      runAgentMap.set(runId, agentId)
+    }
+
+    if (rawText) {
+      const responseTextMap = (globalThis as any).__psytwinResponseTextMap as Map<string, string>
+      const existing = responseTextMap.get(runId) || ""
+      responseTextMap.set(runId, existing + rawText)
+    }
+
     const updated = await updateRequestStateByRun(runId, "IN_PROGRESS")
     const task = await ensureTask(updated.id, agentId, truncateText(updated.content, 60), truncateText(rawText || updated.content, 200))
     await db.openClawTask.update({
@@ -505,15 +567,18 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
       data: { status: "IN_PROGRESS", startedAt: task.startedAt || new Date() },
     })
 
-    await createWorkflowEvent({
-      requestId: updated.id,
-      taskId: task.id,
-      agentId,
-      type: `stream.${stream}`,
-      state: "IN_PROGRESS",
-      message: truncateText(rawText || `✍️ ${agentId} 正在处理响应`, 200),
-      payload: data,
-    })
+    const isWebUiSubagent = sessionKey === "agent:main:main" && runId?.includes(":subagent:")
+    if (!isWebUiSubagent) {
+      await createWorkflowEvent({
+        requestId: updated.id,
+        taskId: task.id,
+        agentId,
+        type: `stream.${stream}`,
+        state: "IN_PROGRESS",
+        message: truncateText(rawText || "正在处理响应", 200),
+        payload: { ...data, sessionKey, runId, stream },
+      })
+    }
     await emitRequestUpdate(updated.id)
     await emitTaskUpdate(task.id)
     return
@@ -528,8 +593,8 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
       agentId,
       type: `stream.${stream}`,
       state: "COMPLETED",
-      message: truncateText(rawText || `✅ ${agentId} 输出结果`, 200),
-      payload: data,
+      message: truncateText(rawText || "输出结果", 200),
+      payload: { ...data, sessionKey, runId, stream },
     })
     await emitRequestUpdate(updated.id)
     return
@@ -582,7 +647,7 @@ async function handleChatEvent(payload: { state?: string; runId?: string; result
     agentId,
     type: "chat.completed",
     state: "COMPLETED",
-    message: `✅ ${agentId} 已完成该请求`,
+    message: "请求已完成",
     payload,
   })
 
@@ -672,15 +737,13 @@ async function connectOpenClawBridge() {
               params: {
                 minProtocol: 3,
                 maxProtocol: 3,
-                client: { id: "openclaw-control-ui", version: "1.0.0", platform: "nodejs", mode: "ui" },
-                role: "operator",
-                scopes: ["operator.read"],
-                caps: [],
-                commands: [],
-                permissions: {},
+                client: { id: 'openclaw-control-ui', version: '1.0.0', platform: 'nodejs', mode: 'ui' },
+                role: 'operator',
+                scopes: ['operator.read'],
+                caps: [], commands: [], permissions: {},
                 auth: { token },
-                locale: "en-US",
-                userAgent: "openclaw-office-cli/0.1.0",
+                locale: 'en-US',
+                userAgent: 'openclaw-office/0.1.0',
               },
             }),
           )
@@ -688,26 +751,15 @@ async function connectOpenClawBridge() {
         }
 
         if (msg.id === "connect-1" || (msg.type === "res" && msg.method === "connect")) {
+          console.log("[openclaw-debug] connect-1 response:", { ok: msg.ok, result: msg.result, error: msg.error, hasPayload: msg.hasPayload })
           const success = msg.ok || msg.result || (!msg.error)
+          console.log("[openclaw-debug] connect success:", success)
           if (!success) {
             await onWsClosed(state, msg.error?.message || "OpenClaw 网关鉴权失败")
             return
           }
 
-          ws.send(
-            JSON.stringify({
-              type: "req",
-              id: "agents-1",
-              method: "agents.list",
-              params: {},
-            }),
-          )
-          return
-        }
-
-        if (msg.id === "agents-1" || (msg.type === "res" && msg.method === "agents.list")) {
-          const rawAgents = msg.payload?.agents || msg.result || msg.agents || []
-          await upsertAgentsFromList(rawAgents)
+          console.log("[openclaw-debug] Connected, waiting for agent events...")
           return
         }
 

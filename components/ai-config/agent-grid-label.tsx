@@ -52,8 +52,8 @@ function AgentAvatar({ agent }: { agent: AgentGridItem }) {
       <Image
         src={avatarPath}
         alt={agent.name}
-        width={36}
-        height={36}
+        width={54}
+        height={54}
         className="rounded-md object-cover"
         onError={() => setImgError(true)}
       />
@@ -61,13 +61,19 @@ function AgentAvatar({ agent }: { agent: AgentGridItem }) {
   }
   
   return (
-    <span className="relative z-10 select-none text-lg">
+    <span className="relative z-10 select-none text-2xl">
       {agent.emoji || agent.name?.[0] || agent.id[0]}
     </span>
   )
 }
 
-export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
+interface AgentGridLabelProps {
+  agent: AgentGridItem
+  onClick?: () => void
+  isSelected?: boolean
+}
+
+export function AgentGridLabel({ agent, onClick, isSelected }: AgentGridLabelProps) {
   // const controls = useAnimation()
   const [currentPoint, setCurrentPoint] = useState<GridPoint | null>(null)
   const [targetPointId, setTargetPointId] = useState<number | null>(null)
@@ -147,26 +153,27 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
           layout: { duration: moveDuration, ease: "easeInOut" }
         }}
         whileHover={{ scale: 1.1 }}
+        onClick={onClick}
       >
         <div className="relative">
           {/* 在线状态指示点 - 左上角 */}
           <motion.div
-            className="absolute -top-1 -left-1 z-10 h-2.5 w-2.5 rounded-full border border-background"
+            className="absolute -top-1.5 -left-1.5 z-10 h-4 w-4 rounded-full border-2 border-background"
             style={{
               background: isMoving ? "#f59e0b" : "#22c55e",
-              boxShadow: `0 0 6px ${isMoving ? "#f59e0b" : "#22c55e"}`,
+              boxShadow: `0 0 8px ${isMoving ? "#f59e0b" : "#22c55e"}`,
             }}
             animate={isMoving ? { scale: [1, 1.4, 1] } : { scale: 1 }}
             transition={{ duration: 0.5, repeat: isMoving ? Infinity : 0 }}
           />
 
           {/* 名称和状态标签 - 紧贴头像下方 */}
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-20">
-            <div className="rounded px-1 py-0.5 bg-white border border-black/20 shadow-sm">
-              <div className="text-[9px] font-semibold text-black leading-tight">
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-center whitespace-nowrap z-20">
+            <div className="rounded px-2 py-1 bg-white border border-black/20 shadow-sm">
+              <div className="text-xs font-semibold text-black leading-tight">
                 {agent.name}
               </div>
-              <div className="text-[8px] text-gray-500 leading-tight">
+              <div className="text-[10px] text-gray-500 leading-tight">
                 {isMoving ? "移动中..." : (agent.role || "Agent")}
               </div>
             </div>
@@ -174,17 +181,17 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
 
           {/* Agent 卡片主体 */}
           <motion.div
-            animate={isMoving ? { y: [0, -4, 0] } : { y: 0 }}
+            animate={isMoving ? { y: [0, -6, 0] } : { y: 0 }}
             transition={{ duration: 0.6, repeat: isMoving ? Infinity : 0, ease: "easeInOut" }}
           >
             <div
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg text-base sm:h-10 sm:w-10 overflow-hidden"
+              className="relative flex h-14 w-14 items-center justify-center rounded-xl text-2xl overflow-hidden"
               style={{
                 background: `linear-gradient(135deg, ${agentColor}33, ${agentColor}0d)`,
-                border: `2px solid ${agentColor}`,
+                border: `3px solid ${agentColor}`,
                 boxShadow: isMoving
-                  ? `0 0 20px ${agentColor}55, 0 4px 12px rgba(0,0,0,0.2)`
-                  : `0 0 10px ${agentColor}33, 0 2px 8px rgba(0,0,0,0.15)`,
+                  ? `0 0 30px ${agentColor}55, 0 6px 18px rgba(0,0,0,0.2)`
+                  : `0 0 15px ${agentColor}33, 0 3px 12px rgba(0,0,0,0.15)`,
               }}
             >
               <AgentAvatar agent={agent} />
@@ -205,7 +212,7 @@ export function AgentGridLabel({ agent }: { agent: AgentGridItem }) {
 
           {/* 位置 ID（调试信息） */}
           <div
-            className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[8px] opacity-30"
+            className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-[10px] opacity-30"
             style={{ color: agentColor }}
           >
             {isMoving && targetPointId !== null

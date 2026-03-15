@@ -20,15 +20,23 @@ import { CostDashboard } from "./cost-dashboard"
 import SecurityDashboard from "./security-dashboard"
 import DatabaseDashboard from "./database-dashboard"
 import { TeamDashboard } from "./team-dashboard"
+import { AgentChatPanel } from "./agent-chat-panel"
 import type { AgentGridItem } from "./agent-grid-label"
 
 // 加载 agents 的函数
-async function loadAgents(setAgents: (agents: AgentGridItem[]) => void) {
+async function loadAgents(
+  setAgents: (agents: AgentGridItem[]) => void,
+  setSelectedAgent?: (agent: AgentGridItem) => void
+) {
   try {
     const res = await fetch("/api/openclaw/config")
     const data = await res.json()
     if (data.agents) {
       setAgents(data.agents)
+      const mainAgent = data.agents.find((a: AgentGridItem) => a.id === "main")
+      if (mainAgent && setSelectedAgent) {
+        setSelectedAgent(mainAgent)
+      }
     }
   } catch {
     // 忽略错误
@@ -39,10 +47,11 @@ export function OpenClawOrchestrationView() {
   const { requests, activities } = useOpenClawWorkflowStream()
   const [agents, setAgents] = useState<AgentGridItem[]>([])
   const [activeTab, setActiveTab] = useState("office")
+  const [selectedAgent, setSelectedAgent] = useState<AgentGridItem | null>(null)
 
   // 初始加载
   useEffect(() => {
-    loadAgents(setAgents)
+    loadAgents(setAgents, setSelectedAgent)
   }, [])
 
   // 监听 agents 更新事件（当 WebSocket 检测到新的 agents 列表时）
@@ -162,9 +171,9 @@ export function OpenClawOrchestrationView() {
           <div className={isOfficeTab ? "xl:col-span-2 flex flex-col" : "w-full"}>
             <TabsContent value="office" className="mt-0 flex-1 min-h-0 flex flex-col">
               <div className="text-center text-[10px] text-muted-foreground mb-1">
-                🤖 {agents.length} 个智能体节点 · 实时活动可视化
+                🤖 {agents.length} 个智能体节点 · 点击小人进行对话
               </div>
-              <AgentGridOffice agents={agents} />
+              <AgentGridOffice agents={agents} onSelectAgent={setSelectedAgent} />
             </TabsContent>
 
             <TabsContent value="stats" className="mt-0">
@@ -188,10 +197,14 @@ export function OpenClawOrchestrationView() {
             </TabsContent>
           </div>
 
-          {/* Sidebar - 合并面板，只在 office tab 显示 */}
           {isOfficeTab && (
-            <div className="flex flex-col h-full">
-              <LivePanel />
+            <div className="flex flex-col h-full gap-3">
+              <div className="flex-1 min-h-0">
+                <LivePanel />
+              </div>
+              <div className="shrink-0">
+                <AgentChatPanel selectedAgent={selectedAgent} />
+              </div>
             </div>
           )}
         </div>

@@ -135,6 +135,7 @@ export type OpenClawActivityItem = {
   message: string
   time?: string
   timestamp?: number
+  payload?: Record<string, unknown>
 }
 
 export type OpenClawConnection = {

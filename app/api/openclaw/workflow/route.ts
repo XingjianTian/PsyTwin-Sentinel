@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         message: event.message,
         time: event.eventTime.toLocaleTimeString("zh-CN", { hour12: false }),
         timestamp: event.eventTime.getTime(),
+        payload: event.payload,
       })),
     })
   }

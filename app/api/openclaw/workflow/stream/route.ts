@@ -56,6 +56,7 @@ export async function GET() {
           time: event.eventTime.toLocaleTimeString("zh-CN", { hour12: false }),
           timestamp: event.eventTime.getTime(),
           type: event.type,
+          payload: event.payload,
         })),
         requests: requests.map((item: any) => ({
           id: item.id,
