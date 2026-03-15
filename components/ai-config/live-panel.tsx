@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import Image from "next/image"
 import { Activity } from "lucide-react"
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -9,6 +10,16 @@ import {
   type OpenClawActivityItem,
 } from "@/lib/openclaw/use-workflow-stream"
 import { cn } from "@/lib/utils"
+import { AGENTS } from "@/lib/openclaw/agents.config"
+
+const AGENT_AVATAR_MAP: Record<string, string> = {
+  analyst: "/agents-icons/Analyst.png",
+  collector: "/agents-icons/Collector.png",
+  dba: "/agents-icons/DBA.png",
+  relayer: "/agents-icons/Relayer.png",
+  therapist: "/agents-icons/Therapist.png",
+  main: "/agents-icons/main.png",
+}
 
 function formatTime(value?: number, fallback?: string) {
   if (fallback) return fallback
@@ -20,30 +31,29 @@ function formatTime(value?: number, fallback?: string) {
   })
 }
 
-const AGENT_COLORS: Record<string, string> = {
-  "首席数据官": "#3b82f6",
-  "main": "#3b82f6",
-  "分析师": "#8b5cf6",
-  "analyst": "#8b5cf6",
-  "采集员": "#10b981",
-  "collector": "#10b981",
-  "DBA": "#f59e0b",
-  "数据哨兵": "#f59e0b",
-  "dba": "#f59e0b",
-  "中继工程师": "#06b6d4",
-  "relayer": "#06b6d4",
-  "咨询师": "#ec4899",
-  "therapist": "#ec4899",
-  "subagent": "#888888",
+function getAgentMeta(nameOrId: string) {
+  const agentEntry = Object.entries(AGENTS).find(
+    ([key, meta]) =>
+      key.toLowerCase() === nameOrId.toLowerCase() ||
+      meta.name === nameOrId
+  )
+  return agentEntry ? agentEntry[1] : null
 }
 
-function getAgentColor(nameOrId: string): string {
-  return AGENT_COLORS[nameOrId] || "#64748b"
+function getAgentAvatar(agentId: string): string | null {
+  const directMatch = AGENT_AVATAR_MAP[agentId.toLowerCase()]
+  if (directMatch) return directMatch
+  for (const [key, path] of Object.entries(AGENT_AVATAR_MAP)) {
+    if (agentId.toLowerCase().includes(key)) return path
+  }
+  return null
 }
 
 function ActivityRow({ item, isFirst }: { item: OpenClawActivityItem; isFirst: boolean }) {
   const displayName = item.agentName || item.agentId || "系统"
-  const agentColor = getAgentColor(displayName)
+  const agentMeta = getAgentMeta(displayName)
+  const agentColor = agentMeta?.color || "#64748b"
+  const avatarPath = getAgentAvatar(item.agentId || "")
 
   const cleanMessage = item.message
     ?.replace(/^\*?\*?\[[^\]]+\]\*?\*?\s*/, "")
@@ -66,40 +76,49 @@ function ActivityRow({ item, isFirst }: { item: OpenClawActivityItem; isFirst: b
   return (
     <div
       className={cn(
-        "rounded-lg border border-border/60 bg-card p-2 transition-all duration-300 ease-out hover:bg-muted/30",
-        isFirst && "border-primary/40 bg-primary/5"
+        "h-[68px] rounded-lg border border-border/60 bg-primary/3 p-2 transition-colors hover:bg-primary/5"
       )}
     >
-      <div className="flex gap-2">
+      <div className="flex gap-2 h-full">
         <div
-          className="shrink-0 w-16 rounded-md px-2 py-1.5 flex items-center justify-center"
-          style={{
-            backgroundColor: `${agentColor}20`,
-            border: `1px solid ${agentColor}50`,
-          }}
+          className="shrink-0 w-12 h-12 rounded-md overflow-hidden border-2"
+          style={{ borderColor: agentColor }}
         >
-          <span
-            className="text-[10px] font-semibold text-center leading-tight"
-            style={{ color: agentColor }}
-          >
-            {displayName}
-          </span>
+          {avatarPath ? (
+            <Image
+              src={avatarPath}
+              alt={displayName}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted text-lg">
+              {agentMeta?.emoji || "🤖"}
+            </div>
+          )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] text-muted-foreground">
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-0.5">
+            <span 
+              className="text-xs font-semibold truncate"
+              style={{ color: agentColor }}
+            >
+              {displayName}
+            </span>
+            <span className="text-[9px] text-muted-foreground shrink-0 ml-2">
               {formatTime(item.timestamp, item.time)}
             </span>
           </div>
-          <p className="text-[11px] text-foreground leading-relaxed line-clamp-3">
+          <p className="text-[11px] text-foreground leading-snug line-clamp-2">
             {cleanMessage}
             {hasMore && <span className="text-muted-foreground">...</span>}
           </p>
         </div>
 
-        <div className="shrink-0 w-8 flex items-center justify-center">
-          <span className={cn("text-lg", stateColor)}>
+        <div className="shrink-0 w-6 flex items-center justify-center">
+          <span className={cn("text-base", stateColor)}>
             {stateIcon}
           </span>
         </div>

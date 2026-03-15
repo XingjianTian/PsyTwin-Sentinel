@@ -3,12 +3,12 @@ export const AGENTS = {
     name: "首席数据官",
     emoji: "🎯",
     color: "#ff006e",
-    role: "Orchestrator",
+    role: "总览全局",
   },
   Collector: {
     name: "采集员",
     emoji: "📡",
-    color: "#00f5ff",
+    color: "#374151",
     role: "数据采集",
   },
   Therapist: {
@@ -26,13 +26,13 @@ export const AGENTS = {
   DBA: {
     name: "数据哨兵",
     emoji: "🛡️",
-    color: "#39ff14",
+    color: "#1e40af",
     role: "数据管理",
   },
   Analyst: {
     name: "分析师",
     emoji: "📊",
-    color: "#00d9a5",
+    color: "#15803d",
     role: "特征提取",
   },
 } as const

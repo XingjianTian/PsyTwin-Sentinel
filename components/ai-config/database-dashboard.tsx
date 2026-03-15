@@ -70,7 +70,7 @@ function renderCellValue(val: unknown, colName: string) {
 
 function DataTable({ data, loading }: { data: DataPayload | null; loading: boolean }) {
   if (loading) {
-    return <div className="py-12 text-center text-sm text-cyan-400">加载中...</div>
+    return <div className="py-12 text-center text-sm font-semibold text-sky-700">加载中...</div>
   }
 
   if (!data || data.rows.length === 0) {
@@ -83,9 +83,9 @@ function DataTable({ data, loading }: { data: DataPayload | null; loading: boole
         <thead>
           <tr className="border-b border-border/50">
             {data.columns.map((col, idx) => (
-              <th key={`col-${idx}`} className="whitespace-nowrap px-3 py-2 text-left font-mono text-muted-foreground">
+              <th key={`col-${idx}`} className="whitespace-nowrap px-3 py-2 text-left font-mono font-semibold text-slate-700">
                 {col}
-                {data.columnTypes && <span className="ml-1 text-[10px] text-muted-foreground/70">{data.columnTypes[idx]}</span>}
+                {data.columnTypes && <span className="ml-1 text-[10px] text-muted-foreground">{data.columnTypes[idx]}</span>}
               </th>
             ))}
           </tr>
@@ -116,24 +116,6 @@ export default function DatabaseDashboard() {
 
   const openclawTables = useMemo(() => tables.filter((t) => t.name.startsWith("openclaw_")), [tables])
 
-  useEffect(() => {
-    const fetchInit = async () => {
-      try {
-        const [tablesRes, statsRes] = await Promise.all([
-          fetch("/api/openclaw/database?action=tables"),
-          fetch("/api/openclaw/database?action=stats"),
-        ])
-        const tableJson = await tablesRes.json()
-        const statsJson = await statsRes.json()
-        setTables(tableJson.tables || [])
-        setDbStats(statsJson || null)
-      } catch {
-        setTables([])
-      }
-    }
-    void fetchInit()
-  }, [])
-
   const browseTable = useCallback(async (name: string, pageNum = 0) => {
     setSelectedTable(name)
     setPage(pageNum)
@@ -157,14 +139,36 @@ export default function DatabaseDashboard() {
     }
   }, [])
 
+  useEffect(() => {
+    const fetchInit = async () => {
+      try {
+        const [tablesRes, statsRes] = await Promise.all([
+          fetch("/api/openclaw/database?action=tables"),
+          fetch("/api/openclaw/database?action=stats"),
+        ])
+        const tableJson = await tablesRes.json()
+        const statsJson = await statsRes.json()
+        const loadedTables = tableJson.tables || []
+        setTables(loadedTables)
+        setDbStats(statsJson || null)
+        const agentsTable = loadedTables.find((t: DbTable) => t.name === "openclaw_agents")
+        if (agentsTable) {
+          void browseTable(agentsTable.name, 0)
+        }
+      } catch {
+        setTables([])
+      }
+    }
+    void fetchInit()
+  }, [browseTable])
+
   return (
     <div className="space-y-4">
-      {/* 数据库看板 - 表列表 */}
-      <Card className="border-border/50 bg-card/80">
+      <Card className="border-slate-600/30 bg-card/80">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Database className="h-5 w-5 text-cyan-400" />
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-700">
+              <Database className="h-5 w-5 text-sky-600" />
               数据库看板
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -181,13 +185,13 @@ export default function DatabaseDashboard() {
                 onClick={() => void browseTable(table.name, 0)}
                 className={`rounded-xl border p-4 text-left transition ${
                   selectedTable === table.name
-                    ? "border-cyan-500/60 bg-cyan-500/10"
-                    : "border-border/60 bg-muted/15 hover:border-border"
+                    ? "border-sky-600/60 bg-sky-500/10"
+                    : "border-border/60 bg-muted/15 hover:border-slate-600/40"
                 }`}
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-mono text-sm font-semibold text-foreground">{table.name}</span>
-                  <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-400">
+                  <span className="font-mono text-sm font-semibold text-slate-700">{table.name}</span>
+                  <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
                     {table.rowCount.toLocaleString()}
                   </span>
                 </div>
@@ -197,7 +201,7 @@ export default function DatabaseDashboard() {
                       key={`${table.name}-${col.name}`}
                       className={`rounded px-1.5 py-0.5 text-[10px] ${
                         col.pk
-                          ? "border border-amber-500/40 bg-amber-500/10 text-amber-400"
+                          ? "border border-amber-600/40 bg-amber-500/10 font-medium text-amber-700"
                           : "bg-muted/40 text-muted-foreground"
                       }`}
                     >
@@ -216,13 +220,12 @@ export default function DatabaseDashboard() {
         </CardContent>
       </Card>
 
-      {/* 表数据预览 */}
       {(selectedTable || loading) && (
-        <Card className="border-border/50 bg-card/80">
+        <Card className="border-slate-600/30 bg-card/80">
           <CardHeader className="pb-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Table2 className="h-4 w-4 text-cyan-400" />
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <Table2 className="h-4 w-4 text-sky-600" />
                 {selectedTable}
                 {tableData ? <span className="ml-2 text-xs text-muted-foreground">{tableData.total} 行</span> : null}
               </CardTitle>

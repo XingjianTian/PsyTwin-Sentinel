@@ -34,23 +34,23 @@ const mockPorts: PortInfo[] = [
 ]
 
 function getHealthColor(score: number) {
-  if (score >= 80) return "text-emerald-400"
-  if (score >= 60) return "text-amber-400"
-  if (score >= 40) return "text-orange-400"
-  return "text-red-400"
+  if (score >= 80) return "text-emerald-700"
+  if (score >= 60) return "text-amber-700"
+  if (score >= 40) return "text-orange-700"
+  return "text-red-700"
 }
 
 function getHealthStroke(score: number) {
-  if (score >= 80) return "#34d399"
-  if (score >= 60) return "#fbbf24"
-  if (score >= 40) return "#fb923c"
-  return "#f87171"
+  if (score >= 80) return "#15803d"
+  if (score >= 60) return "#b45309"
+  if (score >= 40) return "#c2410c"
+  return "#b91c1c"
 }
 
 function getStatusBadge(status: PortStatus) {
   if (status === "safe") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700">
         <CheckCircle className="h-3.5 w-3.5" /> safe
       </span>
     )
@@ -58,14 +58,14 @@ function getStatusBadge(status: PortStatus) {
 
   if (status === "warning") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
+      <span className="inline-flex items-center gap-1 rounded-full border border-amber-600/40 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700">
         <AlertTriangle className="h-3.5 w-3.5" /> warning
       </span>
     )
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-xs text-red-400">
+    <span className="inline-flex items-center gap-1 rounded-full border border-red-600/40 bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-700">
       <XCircle className="h-3.5 w-3.5" /> danger
     </span>
   )
@@ -116,21 +116,19 @@ export default function SecurityDashboard() {
 
   return (
     <div className="space-y-3">
-      {/* 主布局：端口扫描（左/主）+ 仪表盘（右侧） */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* 端口扫描 - 主区域 */}
-        <Card className="xl:col-span-2 border-border/50 bg-card/80">
+        <Card className="xl:col-span-2 border-slate-600/30 bg-card/80">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Activity className="h-4 w-4 text-cyan-400" />
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <Activity className="h-4 w-4 text-sky-600" />
                 端口扫描
               </CardTitle>
               <button
                 type="button"
                 onClick={runScan}
                 disabled={isScanning}
-                className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-xs text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Scan className={`h-3.5 w-3.5 ${isScanning ? "animate-spin" : ""}`} />
                 {isScanning ? "扫描中..." : "运行扫描"}
@@ -140,7 +138,7 @@ export default function SecurityDashboard() {
           <CardContent className="overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border/50 text-left text-xs text-muted-foreground">
+                <tr className="border-b border-border/50 text-left text-xs font-medium text-muted-foreground">
                   <th className="px-3 py-2">端口</th>
                   <th className="px-3 py-2">服务</th>
                   <th className="px-3 py-2">地址</th>
@@ -150,7 +148,7 @@ export default function SecurityDashboard() {
               <tbody>
                 {ports.map((port) => (
                   <tr key={port.port} className="border-b border-border/30 text-foreground/90 transition hover:bg-muted/20">
-                    <td className="px-3 py-2 font-mono text-cyan-400">{port.port}</td>
+                    <td className="px-3 py-2 font-mono font-semibold text-sky-700">{port.port}</td>
                     <td className="px-3 py-2">{port.service}</td>
                     <td className="px-3 py-2 font-mono text-muted-foreground text-xs">{port.address}</td>
                     <td className="px-3 py-2">{getStatusBadge(port.status)}</td>
@@ -161,10 +159,8 @@ export default function SecurityDashboard() {
           </CardContent>
         </Card>
 
-        {/* 安全仪表盘 - 右侧 */}
         <div className="space-y-3">
-          {/* 健康度环形图 */}
-          <Card className="border-border/50 bg-card/80">
+          <Card className="border-slate-600/30 bg-card/80">
             <CardContent className="flex items-center gap-4 pt-4">
               <div className="relative h-20 w-20 shrink-0">
                 <svg viewBox="0 0 100 100" className="h-20 w-20 -rotate-90">
@@ -182,7 +178,7 @@ export default function SecurityDashboard() {
                     className="transition-all duration-1000 ease-out"
                   />
                 </svg>
-                <span className={`absolute inset-0 flex items-center justify-center text-xl font-semibold ${getHealthColor(healthScore)}`}>
+                <span className={`absolute inset-0 flex items-center justify-center text-xl font-bold ${getHealthColor(healthScore)}`}>
                   {healthScore}
                 </span>
               </div>
@@ -193,23 +189,22 @@ export default function SecurityDashboard() {
             </CardContent>
           </Card>
 
-          {/* 统计卡片 */}
           <div className="grid grid-cols-3 gap-2">
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-sky-600/30 bg-card/80">
               <CardContent className="py-3 text-center">
-                <p className="text-2xl font-semibold text-cyan-400">{scanCount}</p>
+                <p className="text-2xl font-bold text-sky-700">{scanCount}</p>
                 <p className="text-[10px] text-muted-foreground">今日扫描</p>
               </CardContent>
             </Card>
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-amber-600/30 bg-card/80">
               <CardContent className="py-3 text-center">
-                <p className="text-2xl font-semibold text-amber-400">{threatsDetected}</p>
+                <p className="text-2xl font-bold text-amber-700">{threatsDetected}</p>
                 <p className="text-[10px] text-muted-foreground">威胁检测</p>
               </CardContent>
             </Card>
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-red-600/30 bg-card/80">
               <CardContent className="py-3 text-center">
-                <p className="text-2xl font-semibold text-red-400">{blockedCount}</p>
+                <p className="text-2xl font-bold text-red-700">{blockedCount}</p>
                 <p className="text-[10px] text-muted-foreground">已阻止</p>
               </CardContent>
             </Card>

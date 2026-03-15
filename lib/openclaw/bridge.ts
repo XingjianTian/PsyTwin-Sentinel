@@ -15,6 +15,13 @@ function getAgentMeta(agentId: string) {
   return normalizedId ? AGENTS[normalizedId] : undefined
 }
 
+function normalizeAgentId(agentId: string): string {
+  const normalizedId = Object.keys(AGENTS).find(
+    (key) => key.toLowerCase() === agentId.toLowerCase()
+  )
+  return normalizedId || agentId
+}
+
 type GatewayAgentPayload = {
   stream?: string
   runId?: string
@@ -490,8 +497,10 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
   let agentId = runAgentMap.get(runId)
   
   if (!agentId) {
-    agentId = parseAgentIdFromRunId(runId) || parseAgentIdFromSessionKey(sessionKey)
+    agentId = normalizeAgentId(parseAgentIdFromRunId(runId) || parseAgentIdFromSessionKey(sessionKey))
     runAgentMap.set(runId, agentId)
+  } else {
+    agentId = normalizeAgentId(agentId)
   }
 
   const agentMeta = getAgentMeta(agentId)
@@ -556,8 +565,7 @@ async function handleAgentEvent(payload: GatewayAgentPayload) {
 
     if (rawText) {
       const responseTextMap = (globalThis as any).__psytwinResponseTextMap as Map<string, string>
-      const existing = responseTextMap.get(runId) || ""
-      responseTextMap.set(runId, existing + rawText)
+      responseTextMap.set(runId, rawText)
     }
 
     const updated = await updateRequestStateByRun(runId, "IN_PROGRESS")

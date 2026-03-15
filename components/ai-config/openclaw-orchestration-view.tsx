@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import {
   Bot,
   Database,
-  DollarSign,
   ShieldCheck,
   Users,
   BarChart3,
@@ -16,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AgentGridOffice } from "./agent-grid-office"
 import { LivePanel } from "./live-panel"
 import { StatsCards } from "./stats-cards"
-import { CostDashboard } from "./cost-dashboard"
 import SecurityDashboard from "./security-dashboard"
 import DatabaseDashboard from "./database-dashboard"
 import { TeamDashboard } from "./team-dashboard"
@@ -130,13 +128,6 @@ export function OpenClawOrchestrationView() {
             智能体集群
           </TabsTrigger>
           <TabsTrigger
-            value="stats"
-            className="gap-1.5 rounded-xl border border-border bg-card text-xs shadow-sm transition-all hover:bg-muted data-[state=active]:border-primary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-md"
-          >
-            <BarChart3 className="h-3.5 w-3.5" />
-            交互统计
-          </TabsTrigger>
-          <TabsTrigger
             value="team"
             className="gap-1.5 rounded-xl border border-border bg-card text-xs shadow-sm transition-all hover:bg-muted data-[state=active]:border-primary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-md"
           >
@@ -144,11 +135,11 @@ export function OpenClawOrchestrationView() {
             AI 思维
           </TabsTrigger>
           <TabsTrigger
-            value="cost"
+            value="stats"
             className="gap-1.5 rounded-xl border border-border bg-card text-xs shadow-sm transition-all hover:bg-muted data-[state=active]:border-primary/40 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-md"
           >
-            <DollarSign className="h-3.5 w-3.5" />
-            成本分析
+            <BarChart3 className="h-3.5 w-3.5" />
+            交互统计
           </TabsTrigger>
           <TabsTrigger
             value="security"
@@ -176,16 +167,12 @@ export function OpenClawOrchestrationView() {
               <AgentGridOffice agents={agents} onSelectAgent={setSelectedAgent} />
             </TabsContent>
 
-            <TabsContent value="stats" className="mt-0">
-              <StatsCards />
-            </TabsContent>
-
             <TabsContent value="team" className="mt-0">
               <TeamDashboard />
             </TabsContent>
 
-            <TabsContent value="cost" className="mt-0">
-              <CostDashboard />
+            <TabsContent value="stats" className="mt-0">
+              <StatsCards />
             </TabsContent>
 
             <TabsContent value="security" className="mt-0">
