@@ -5,127 +5,151 @@ export const runtime = "nodejs"
 
 export async function GET() {
   try {
-    // 获取正在进行 VR 会话的学生
-    const activeSessions = await prisma.vRSession.findMany({
+    // 获取所有学生（排除测试学生）
+    const students = await prisma.student.findMany({
       where: {
-        sessionAt: {
-          gte: new Date(Date.now() - 60 * 60 * 1000), // 最近1小时内
-        },
+        role: "student",
       },
       include: {
-        student: {
-          include: {
-            faculty: true,
-            psychProfile: true,
-          },
-        },
-        scene: true,
+        faculty: true,
+        psychProfile: true,
       },
-      orderBy: {
-        sessionAt: "desc",
-      },
-      take: 10,
+      orderBy: { name: "asc" },
     })
 
-    // 为每个学生获取最新的多模态数据
     const studentsWithMultimodalData = await Promise.all(
-      activeSessions.map(async (session) => {
-        const studentId = session.student.id
+      students.map(async (student) => {
+        const studentId = student.id
 
-        // 获取最新的生理数据
         const vitalSign = await prisma.vitalSign.findFirst({
           where: { studentId },
           orderBy: { timestamp: "desc" },
         })
 
-        // 获取最新的语音分析数据
+        const vitalSignHistory = await prisma.vitalSign.findMany({
+          where: { studentId },
+          orderBy: { timestamp: "desc" },
+          take: 30,
+          select: {
+            heartRate: true,
+            bloodOxygen: true,
+            hrv: true,
+            timestamp: true,
+          },
+        })
+
         const voiceAnalysis = await prisma.voiceAnalysis.findFirst({
           where: { studentId },
           orderBy: { timestamp: "desc" },
         })
 
-        // 获取最新的表情数据
         const expressionData = await prisma.expressionData.findFirst({
           where: { studentId },
           orderBy: { timestamp: "desc" },
         })
 
-        // 获取最新的行为数据
         const behaviorData = await prisma.behaviorData.findFirst({
           where: { studentId },
           orderBy: { timestamp: "desc" },
         })
 
-        // 获取最新的脑电数据
         const eegData = await prisma.eEGData.findFirst({
           where: { studentId },
           orderBy: { timestamp: "desc" },
         })
 
-        // 计算会话时长（分钟）
-        const duration = session.duration 
-          ? parseInt(session.duration) 
-          : Math.floor((Date.now() - session.sessionAt.getTime()) / 60000)
+        const latestVital = vitalSign
+        const duration = latestVital
+          ? Math.floor((Date.now() - new Date(latestVital.timestamp).getTime()) / 60000)
+          : 0
 
-        // 确定风险等级
         const riskLevel = calculateRiskLevel(vitalSign, expressionData)
 
         return {
           id: studentId,
-          name: session.student.name,
-          studentId: session.student.studentNo,
-          room: `咨询室 ${session.student.faculty?.name || "A01"}`,
-          scenario: session.scene?.name || "心理评估",
-          startTime: session.sessionAt.toLocaleTimeString("zh-CN", { 
-            hour: "2-digit", 
-            minute: "2-digit" 
-          }),
+          name: student.name,
+          studentId: student.studentNo,
+          room: `咨询室 ${student.faculty?.name || "A01"}`,
+          scenario: latestVital ? "心理评估" : "暂无数据",
+          startTime: latestVital
+            ? new Date(latestVital.timestamp).toLocaleTimeString("zh-CN", {
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+            : "--:--",
           duration,
-          emotion: session.emotionAfter || "平静",
+          emotion: "平静",
           riskLevel,
           vitals: vitalSign ? {
             heartRate: vitalSign.heartRate,
             hrv: vitalSign.hrv || 45,
+            bloodOxygen: vitalSign.bloodOxygen ?? 98,
             gsr: vitalSign.gsr || 2.5,
             stress: vitalSign.stressIndex || 30,
-          } : generateMockVitals(),
+          } : {
+            heartRate: 0,
+            hrv: 0,
+            bloodOxygen: 0,
+            gsr: 0,
+            stress: 0,
+          },
+          hrHistory: vitalSignHistory.reverse().map((v) => ({
+            time: new Date(v.timestamp).toLocaleTimeString("zh-CN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            }),
+            心率: v.heartRate,
+            血氧: v.bloodOxygen ?? 98,
+            hrv: v.hrv ?? 50,
+          })),
           voice: voiceAnalysis ? {
             sentiment: voiceAnalysis.sentiment.toLowerCase(),
             tremorIndex: voiceAnalysis.tremorIndex,
             情感标签: voiceAnalysis.emotionLabel,
-          } : generateMockVoice(),
+          } : {
+            sentiment: "neutral",
+            tremorIndex: 0,
+            情感标签: "未知",
+          },
           expression: expressionData ? {
             primary: expressionData.primaryExpression,
             anxiety: expressionData.anxietyLevel,
             sadness: expressionData.sadnessLevel,
             anger: expressionData.angerLevel,
-          } : generateMockExpression(),
+          } : {
+            primary: "未知",
+            anxiety: 0,
+            sadness: 0,
+            anger: 0,
+          },
           behavior: behaviorData ? {
             interactionFreq: behaviorData.interactionFreq,
             handTremor: behaviorData.handTremor,
             responseDelay: behaviorData.responseDelay,
             avoidanceCount: behaviorData.avoidanceCount,
-          } : generateMockBehavior(),
+          } : {
+            interactionFreq: 0,
+            handTremor: 0,
+            responseDelay: 0,
+            avoidanceCount: 0,
+          },
           eeg: eegData ? {
             alpha: eegData.alpha,
             beta: eegData.beta,
             theta: eegData.theta,
-          } : generateMockEEG(),
+          } : {
+            alpha: 0,
+            beta: 0,
+            theta: 0,
+          },
         }
       })
     )
 
-    // 如果没有活跃会话，返回模拟数据
-    if (studentsWithMultimodalData.length === 0) {
-      return NextResponse.json({ 
-        students: generateFallbackMockData(),
-        isMock: true 
-      })
-    }
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       students: studentsWithMultimodalData,
-      isMock: false 
+      isMock: false
     })
   } catch (error) {
     console.error("[API] Error fetching multimodal data:", error)
@@ -160,6 +184,7 @@ function generateMockVitals() {
   return {
     heartRate: Math.floor(70 + Math.random() * 30),
     hrv: Math.floor(35 + Math.random() * 20),
+    bloodOxygen: 96 + Math.floor(Math.random() * 4),
     gsr: parseFloat((2 + Math.random() * 3).toFixed(1)),
     stress: Math.floor(20 + Math.random() * 50),
   }
@@ -203,6 +228,15 @@ function generateMockEEG() {
   }
 }
 
+function generateMockHrHistory() {
+  return Array.from({ length: 30 }, (_, i) => ({
+    time: `${String(14 + Math.floor(i / 60)).padStart(2, "0")}:${String(i % 60).padStart(2, "0")}:00`,
+    心率: Math.floor(70 + Math.sin(i * 0.3) * 15 + Math.random() * 10),
+    血氧: Math.floor(96 + Math.random() * 3),
+    hrv: Math.floor(40 + Math.random() * 20),
+  }))
+}
+
 function generateFallbackMockData() {
   return [
     {
@@ -216,6 +250,7 @@ function generateFallbackMockData() {
       emotion: "平静",
       riskLevel: "low",
       vitals: generateMockVitals(),
+      hrHistory: generateMockHrHistory(),
       voice: generateMockVoice(),
       expression: generateMockExpression(),
       behavior: generateMockBehavior(),
@@ -232,6 +267,7 @@ function generateFallbackMockData() {
       emotion: "紧张",
       riskLevel: "medium",
       vitals: generateMockVitals(),
+      hrHistory: generateMockHrHistory(),
       voice: generateMockVoice(),
       expression: generateMockExpression(),
       behavior: generateMockBehavior(),

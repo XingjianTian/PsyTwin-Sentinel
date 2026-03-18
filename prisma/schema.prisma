@@ -30,6 +30,8 @@ model Student {
   stats               Json?
   status              StudentStatus         @default(ACTIVE)
   joinDate            DateTime?             @map("join_date")
+  introduction        String?               // 个人简介
+  photos              String[]              // 照片墙
   alerts              Alert[]
   appointments        Appointment[]
   behaviorData        BehaviorData[]

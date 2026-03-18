@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, NotificationType } from "@prisma/client"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
 
@@ -62,5 +62,50 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("获取通知失败:", error)
     return Response.json(errorResponse("获取通知失败"), { status: 500 })
+  }
+}
+
+/**
+ * POST /api/pocket/notifications
+ * 发送通知给学生（供 Sentinel 调用）
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { userId, type, title, content, actionUrl } = body
+
+    if (!userId || !type || !title || !content) {
+      return Response.json(
+        errorResponse("缺少必填字段"),
+        { status: 400 }
+      )
+    }
+
+    const typeMap: Record<string, NotificationType> = {
+      system: "SYSTEM",
+      appointment: "APPOINTMENT",
+      chat: "CHAT",
+      warning: "WARNING",
+      post: "POST",
+      comment: "COMMENT",
+    }
+
+    const notification = await prisma.studentNotification.create({
+      data: {
+        studentId: userId,
+        type: typeMap[type.toLowerCase()] || "SYSTEM",
+        title,
+        content,
+        actionUrl: actionUrl || "",
+        isRead: false,
+      },
+    })
+
+    return Response.json(
+      successResponse({ id: notification.id }, "发送成功")
+    )
+  } catch (error: any) {
+    console.error("发送通知失败:", error)
+    return Response.json(errorResponse("发送通知失败"), { status: 500 })
   }
 }

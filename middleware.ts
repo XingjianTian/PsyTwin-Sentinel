@@ -7,7 +7,9 @@ const publicRoutes = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
-  "/api/pocket", // Pocket 小程序 API（演示模式，使用简单 token）
+  "/api/pocket",
+  "/api/openclaw",
+  "/api/multimodal/sensors/stream",
 ];
 
 // 检查是否是公开路由

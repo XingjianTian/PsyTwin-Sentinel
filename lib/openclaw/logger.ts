@@ -13,7 +13,7 @@ try {
 }
 
 export function logToFile(level: string, message: string, data?: any) {
-  const timestamp = new Date().toISOString()
+  const timestamp = new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })
   const logLine = `[${timestamp}] [${level}] ${message}${data ? " " + JSON.stringify(data) : ""}\n`
   
   // 同时输出到控制台和文件

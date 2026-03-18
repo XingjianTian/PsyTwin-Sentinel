@@ -45,9 +45,11 @@ interface StudentData {
   duration: number
   emotion: string
   riskLevel: string
+  hrHistory?: Array<{ time: string; 心率: number; 血氧: number; hrv: number }>
   vitals: {
     heartRate: number
     hrv: number
+    bloodOxygen: number
     gsr: number
     stress: number
   }
@@ -109,7 +111,7 @@ function HrTooltip({ active, payload, label }: HrTooltipProps) {
       <p className="mb-1 font-medium text-foreground">{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }}>
-          {p.name}：{p.value}{p.name === "心率" ? " bpm" : "%"}
+          {p.name}：{p.value}{p.name === "心率" ? " bpm" : p.name === "血氧" ? "%" : " ms"}
         </p>
       ))}
     </div>
@@ -238,32 +240,177 @@ export function MultimodalDataFlowView() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [isMock, setIsMock] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>("student-list")
+  const [hrHistory, setHrHistory] = useState<Array<{ time: string; 心率: number; 血氧: number; hrv: number }>>([])
+  const [chartKey, setChartKey] = useState(0)
 
-  // 获取多模态数据
+  const testStudent: StudentData = {
+    id: "stu-test",
+    name: "测试学生",
+    studentId: "test-001",
+    room: "测试咨询室 A01",
+    scenario: "等待数据...",
+    startTime: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+    duration: 0,
+    emotion: "未知",
+    riskLevel: "low",
+    vitals: {
+      heartRate: 0,
+      hrv: 0,
+      bloodOxygen: 0,
+      gsr: 0,
+      stress: 0,
+    },
+    voice: {
+      sentiment: "unknown",
+      tremorIndex: 0,
+      情感标签: "未知",
+    },
+    expression: {
+      primary: "未知",
+      anxiety: 0,
+      sadness: 0,
+      anger: 0,
+    },
+    behavior: {
+      interactionFreq: 0,
+      handTremor: 0,
+      responseDelay: 0,
+      avoidanceCount: 0,
+    },
+    eeg: {
+      alpha: 0,
+      beta: 0,
+      theta: 0,
+    },
+  }
+
+  const handleTabChange = (value: string) => {
+    if (value === activeTab) return
+    setActiveTab(value)
+    if (value === "realtime-test") {
+      setStudents([testStudent])
+      setSelectedStudent(testStudent)
+      setIsMock(true)
+    } else {
+      fetchData()
+    }
+  }
+
   useEffect(() => {
-    async function fetchData() {
+    if (activeTab === "realtime-test") {
+      setStudents([testStudent])
+      setSelectedStudent(testStudent)
+      setIsMock(true)
+    }
+
+    const eventSource = new EventSource('/api/multimodal/sensors/stream')
+
+    eventSource.addEventListener('connected', (event) => {
+      console.log('[SSE] Connected:', JSON.parse(event.data))
+    })
+
+    eventSource.addEventListener('multimodal_data', (event) => {
       try {
-        const response = await fetch('/api/multimodal/students')
-        if (response.ok) {
-          const data = await response.json()
-          setStudents(data.students)
-          setIsMock(data.isMock)
-          if (data.students.length > 0) {
-            setSelectedStudent(data.students[0])
+        const data = JSON.parse(event.data)
+        console.log('[SSE] Received data:', data)
+
+        const isTestStudent = activeTab === "test" && data.studentId === "stu-test"
+        if ((selectedStudent && data.studentId === selectedStudent.id) || isTestStudent) {
+          const now = new Date()
+          const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
+
+          setSelectedStudent((prev) => {
+            if (!prev) return prev
+            return {
+              ...prev,
+              vitals: data.vitalSign ? {
+                heartRate: data.vitalSign.heartRate || prev.vitals.heartRate,
+                hrv: data.vitalSign.hrv || prev.vitals.hrv,
+                bloodOxygen: data.vitalSign.bloodOxygen ?? prev.vitals.bloodOxygen,
+                gsr: data.vitalSign.gsr || prev.vitals.gsr,
+                stress: data.vitalSign.stressIndex || prev.vitals.stress,
+              } : prev.vitals,
+              voice: data.voiceAnalysis ? {
+                sentiment: data.voiceAnalysis.sentiment?.toLowerCase() || 'neutral',
+                tremorIndex: data.voiceAnalysis.tremorIndex || 0,
+                情感标签: data.voiceAnalysis.emotionLabel || '未知',
+              } : prev.voice,
+              expression: data.expressionData ? {
+                primary: data.expressionData.primaryExpression || prev.expression.primary,
+                anxiety: data.expressionData.anxietyLevel || 0,
+                sadness: data.expressionData.sadnessLevel || 0,
+                anger: data.expressionData.angerLevel || 0,
+              } : prev.expression,
+              behavior: data.behaviorData ? {
+                interactionFreq: data.behaviorData.interactionFreq || 0,
+                handTremor: data.behaviorData.handTremor || 0,
+                responseDelay: data.behaviorData.responseDelay || 0,
+                avoidanceCount: data.behaviorData.avoidanceCount || 0,
+              } : prev.behavior,
+              eeg: data.eegData ? {
+                alpha: data.eegData.alpha || 0,
+                beta: data.eegData.beta || 0,
+                theta: data.eegData.theta || 0,
+              } : prev.eeg,
+            }
+          })
+
+          if (data.vitalSign?.heartRate) {
+            setHrHistory((prev) => {
+              const newData = [...prev, {
+                time: timeStr,
+                心率: data.vitalSign.heartRate,
+                血氧: data.vitalSign.bloodOxygen ?? prev.slice(-1)[0]?.血氧 ?? 0,
+                hrv: data.vitalSign.hrv ?? prev.slice(-1)[0]?.hrv ?? 0,
+              }]
+              return newData.slice(-30)
+            })
           }
         }
       } catch (error) {
-        console.error('Failed to fetch multimodal data:', error)
-      } finally {
-        setLoading(false)
+        console.error('[SSE] Parse error:', error)
       }
+    })
+
+    eventSource.addEventListener('heartbeat', (event) => {
+    })
+
+    eventSource.onerror = (error) => {
+      console.error('[SSE] Error:', error)
     }
 
+    return () => {
+      eventSource.close()
+    }
+  }, [selectedStudent?.id, activeTab])
+
+  async function fetchData() {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/multimodal/students')
+      if (response.ok) {
+        const data = await response.json()
+        setStudents(data.students)
+        setIsMock(data.isMock)
+        if (data.students.length > 0) {
+          const firstStudent = data.students[0]
+          setSelectedStudent(firstStudent)
+          if (firstStudent.hrHistory) {
+            setHrHistory(firstStudent.hrHistory)
+            setChartKey(k => k + 1)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch multimodal data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
-    
-    // 每10秒刷新一次数据
-    const refreshInterval = setInterval(fetchData, 10000)
-    return () => clearInterval(refreshInterval)
   }, [])
 
   // 模拟实时数据更新
@@ -303,24 +450,36 @@ export function MultimodalDataFlowView() {
     <div className="flex h-full gap-4">
       {/* 左侧：学生列表 */}
       <div className="w-80 shrink-0">
-        <Card className="h-full">
-          <CardHeader className="pb-3">
+        <Card className="flex h-full flex-col overflow-hidden">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="h-5 w-5 text-primary" />
               实时数据流
-              {isMock && <span className="text-[10px] text-amber-500">(演示)</span>}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               {students.length} 位学生正在体验中
+              {isMock && <span className="ml-1 text-amber-500">(演示)</span>}
             </CardDescription>
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2 w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="student-list">学生列表</TabsTrigger>
+                <TabsTrigger value="realtime-test">实时测试</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="flex-1 overflow-y-auto p-0">
             <div className="flex flex-col">
               {students.map((student) => (
                 <button
                   key={student.id}
-                  onClick={() => setSelectedStudent(student)}
-                  className={`flex items-start gap-3 border-b p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-900 ${
+                  onClick={() => {
+                    setSelectedStudent(student)
+                    if (student.hrHistory) {
+                      setHrHistory(student.hrHistory)
+                      setChartKey(k => k + 1)
+                    }
+                  }}
+                  className={`flex items-start gap-3 border-b p-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-900 ${
                     currentStudent?.id === student.id ? "bg-primary/5" : ""
                   }`}
                 >
@@ -332,7 +491,7 @@ export function MultimodalDataFlowView() {
                   </Avatar>
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium truncate">{student.name}</p>
+                      <p className="truncate font-medium text-sm">{student.name}</p>
                       <span className={`h-2 w-2 shrink-0 rounded-full ${riskLevelColors[student.riskLevel]}`} />
                     </div>
                     <p className="text-xs text-muted-foreground">{student.room}</p>
@@ -340,7 +499,7 @@ export function MultimodalDataFlowView() {
                       <Badge variant="secondary" className={`text-xs ${emotionColors[student.emotion]}`}>
                         {student.emotion}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{student.scenario}</span>
+                      <span className="truncate text-xs text-muted-foreground">{student.scenario}</span>
                     </div>
                   </div>
                 </button>
@@ -433,15 +592,17 @@ export function MultimodalDataFlowView() {
               </div>
               {/* 实时曲线 */}
               <div className="mt-4 h-[180px] -mx-2">
-                <p className="mb-2 pl-2 text-xs text-muted-foreground">心率实时曲线</p>
+                <p className="mb-2 pl-2 text-xs text-muted-foreground">实时生理曲线</p>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={hrData} margin={{ top: 5, right: 30, bottom: 5, left: 0 }}>
+                  <LineChart key={chartKey} data={hrHistory} margin={{ top: 5, right: 60, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                     <XAxis dataKey="time" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} interval={4} />
-                    <YAxis tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[60, 150]} />
+                    <YAxis yAxisId="left" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[60, 150]} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[90, 100]} />
                     <Tooltip content={<HrTooltip />} />
-                    <Line type="monotone" dataKey="心率" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#ef4444" }} />
-                    <Line type="monotone" dataKey="血氧" stroke="#7C3AED" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#7C3AED" }} />
+                    <Line yAxisId="left" type="monotone" dataKey="心率" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#ef4444" }} isAnimationActive={true} animationDuration={800} />
+                    <Line yAxisId="right" type="monotone" dataKey="血氧" stroke="#7C3AED" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#7C3AED" }} isAnimationActive={true} animationDuration={800} />
+                    <Line yAxisId="left" type="monotone" dataKey="hrv" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#10b981" }} isAnimationActive={true} animationDuration={800} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

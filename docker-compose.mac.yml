@@ -1,7 +1,7 @@
 # Mac 开发环境配置（无 pgadmin）
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: psytwin-postgres-dev
     restart: unless-stopped
     ports:
