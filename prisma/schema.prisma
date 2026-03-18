@@ -7,173 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// pgvector 扩展用于向量存储
-
-
-enum RiskLevel {
-  HIGH
-  MEDIUM
-  LOW
-}
-
-enum AlertType {
-  HEART_RATE_SURGE
-  VOICE_TREMOR
-  SLEEP_ANOMALY
-  EMOTION_SWING
-  SOCIAL_WITHDRAWAL
-  GAIT_ANOMALY
-  EATING_ANOMALY
-}
-
-enum WorkOrderStatus {
-  PENDING      // 待处理（高危列表，未指派咨询师）
-  IN_PROGRESS  // 干预中（干预记录，已指派咨询师）
-  COMPLETED    // 已完成
-}
-
-enum InterventionType {
-  REGULAR_INTERVIEW
-  CBT_THERAPY
-  GROUP_COUNSELING
-  CRISIS_INTERVENTION
-  INITIAL_ASSESSMENT
-}
-
-enum DeviceType {
-  VR
-  BRACELET
-  EEG
-}
-
-enum DeviceStatus {
-  ONLINE
-  OFFLINE
-  IN_USE
-  MAINTENANCE
-}
-
-enum RoomStatus {
-  AVAILABLE
-  IN_USE
-  MAINTENANCE
-}
-
-enum UserRole {
-  ADMIN           // 系统管理员
-  COUNSELOR       // 心理咨询师
-  ASSISTANT       // 咨询助理/辅导员
-  TEACHER         // 普通教师
-}
-
-enum TeacherStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
-enum Sentiment {
-  POSITIVE
-  NEGATIVE
-  NEUTRAL
-}
-
-enum StudentStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
-enum CommentStatus {
-  ACTIVE
-  HIDDEN
-  DELETED
-}
-
-enum MessageStatus {
-  SENDING
-  SENT
-  DELIVERED
-  READ
-  FAILED
-}
-
-enum SessionStatus {
-  ACTIVE
-  CLOSED
-  ARCHIVED
-}
-
-enum DocStatus {
-  VECTORIZED
-  PROCESSING
-  FAILED
-}
-
-enum OpenClawRequestState {
-  RECEIVED
-  ANALYZING
-  TASK_CREATED
-  ASSIGNED
-  IN_PROGRESS
-  REVIEWING
-  COMPLETED
-  FAILED
-}
-
-enum OpenClawTaskStatus {
-  PENDING
-  ASSIGNED
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-}
 model Student {
-  id                  String               @id @default(uuid())
+  id                  String                @id @default(uuid())
   name                String
-  studentNo           String               @unique @map("student_no")
-  className           String               @map("class_name")
-  facultyId           String?              @map("faculty_id")
+  studentNo           String                @unique @map("student_no")
+  className           String                @map("class_name")
+  facultyId           String?               @map("faculty_id")
   gender              String?
-  birthDate           DateTime?            @map("birth_date")
+  birthDate           DateTime?             @map("birth_date")
   mbti                String?
-  riskLevel           RiskLevel            @default(LOW) @map("risk_level")
-  // 小程序扩展字段
-  phone               String?              @unique
-  passwordHash        String?              @map("password_hash")
+  riskLevel           RiskLevel             @default(LOW) @map("risk_level")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
   avatar              String?
-  nickname            String?
-  role                String               @default("student")
-  status              StudentStatus        @default(ACTIVE)
   badges              Json?
-  stats               Json?
+  lastLoginAt         DateTime?             @map("last_login_at")
+  nickname            String?
+  passwordHash        String?               @map("password_hash")
+  phone               String?               @unique
+  role                String                @default("student")
   settings            Json?
-  joinDate            DateTime?          @map("join_date")  // 入学时间
-  lastLoginAt         DateTime?          @map("last_login_at")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  faculty             Faculty?             @relation(fields: [facultyId], references: [id])
-  psychProfile        PsychProfile?
-  timelineEvents      TimelineEvent[]
+  stats               Json?
+  status              StudentStatus         @default(ACTIVE)
+  joinDate            DateTime?             @map("join_date")
   alerts              Alert[]
-  workOrders          WorkOrder[]
+  appointments        Appointment[]
+  behaviorData        BehaviorData[]
+  chatSessions        ChatSession[]
+  comments            Comment[]
+  currentInRooms      ConsultationRoom[]    @relation("CurrentRoomStudent")
+  eegData             EEGData[]
+  expressionData      ExpressionData[]
   interventionRecords InterventionRecord[]
-  vrSessions          VRSession[]
+  postCollections     PostCollection[]
+  postLikes           PostLike[]
+  posts               Post[]
+  psychProfile        PsychProfile?
+  notifications       StudentNotification[]
+  faculty             Faculty?              @relation(fields: [facultyId], references: [id])
+  timelineEvents      TimelineEvent[]
   vitalSigns          VitalSign[]
   voiceAnalyses       VoiceAnalysis[]
-  expressionData      ExpressionData[]
-  behaviorData        BehaviorData[]
-  eegData             EEGData[]
-  currentInRooms      ConsultationRoom[]   @relation("CurrentRoomStudent")
-  // 小程序关系
-  posts               Post[]
-  comments            Comment[]
-  postLikes           PostLike[]
-  postCollections     PostCollection[]
-  notifications       StudentNotification[]
-  chatSessions        ChatSession[]
-  appointments        Appointment[]
+  vrSessions          VRSession[]
   warnings            Warning[]
+  workOrders          WorkOrder[]
 
   @@index([className])
   @@index([facultyId])
@@ -275,18 +152,18 @@ model WorkOrder {
 }
 
 model InterventionRecord {
-  id        String           @id @default(uuid())
-  studentId String           @map("student_id")
+  id        String              @id @default(uuid())
+  studentId String              @map("student_id")
   date      DateTime
   type      InterventionType
   counselor String
   duration  String
   result    String
   status    String
-  createdAt DateTime         @default(now()) @map("created_at")
-  updatedAt DateTime         @updatedAt @map("updated_at")
-  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
   detail    InterventionDetail?
+  student   Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([type])
@@ -295,49 +172,37 @@ model InterventionRecord {
   @@map("intervention_records")
 }
 
-// 干预记录详情表 - 存储完整的干预过程数据
 model InterventionDetail {
-  id                String   @id @default(uuid())
-  recordId          String   @unique @map("record_id")  // 一对一关系
-  
-  // === 干预前评估 ===
-  preMood           String?  @map("pre_mood")           // 干预前情绪状态
-  preAnxietyLevel   Int?     @map("pre_anxiety_level")  // 焦虑程度 1-10
-  preDepressionLevel Int?    @map("pre_depression_level") // 抑郁程度 1-10
-  preStressLevel    Int?     @map("pre_stress_level")   // 压力水平 1-10
-  mainIssues        String?  @map("main_issues")        // 主要问题描述
-  riskLevel         String?  @map("risk_level")         // 风险等级评估
-  riskAssessment    String?  @map("risk_assessment")    // 详细风险评估
-  
-  // === 干预过程 ===
-  sessionContent    String?  @map("session_content")    // 会话内容摘要
-  techniquesUsed    String[] @map("techniques_used")    // 使用的干预技术
-  studentEngagement String?  @map("student_engagement") // 学生参与度/反馈
-  keyPoints         String?  @map("key_points")        // 关键对话要点
-  emotionalChanges  String?  @map("emotional_changes")  // 情绪变化观察
-  
-  // === 干预效果 ===
-  postMood          String?  @map("post_mood")          // 干预后情绪状态
-  postAnxietyLevel  Int?     @map("post_anxiety_level") // 焦虑改善程度
-  postDepressionLevel Int?   @map("post_depression_level") // 抑郁改善程度
-  postStressLevel   Int?     @map("post_stress_level")  // 压力改善程度
-  improvementScore  Int?     @map("improvement_score")  // 整体改善评分 1-10
-  breakthroughPoints String? @map("breakthrough_points") // 关键突破点
-  unfinishedIssues  String?  @map("unfinished_issues")  // 未解决问题
-  
-  // === 后续建议 ===
-  followUpActions   String?  @map("follow_up_actions")  // 后续行动计划
-  nextAppointment   DateTime? @map("next_appointment")  // 建议下次预约时间
-  referrals         String?  @map("referrals")         // 转介建议
-  recommendations   String?  @map("recommendations")    // 给学生的建议
-  
-  // === 其他 ===
-  privateNotes      String?  @map("private_notes")      // 咨询师私人笔记
-  attachments       String[] @map("attachments")       // 附件链接数组
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  record            InterventionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  id                  String             @id @default(uuid())
+  recordId            String             @unique @map("record_id")
+  preMood             String?            @map("pre_mood")
+  preAnxietyLevel     Int?               @map("pre_anxiety_level")
+  preDepressionLevel  Int?               @map("pre_depression_level")
+  preStressLevel      Int?               @map("pre_stress_level")
+  mainIssues          String?            @map("main_issues")
+  riskLevel           String?            @map("risk_level")
+  riskAssessment      String?            @map("risk_assessment")
+  sessionContent      String?            @map("session_content")
+  techniquesUsed      String[]           @map("techniques_used")
+  studentEngagement   String?            @map("student_engagement")
+  keyPoints           String?            @map("key_points")
+  emotionalChanges    String?            @map("emotional_changes")
+  postMood            String?            @map("post_mood")
+  postAnxietyLevel    Int?               @map("post_anxiety_level")
+  postDepressionLevel Int?               @map("post_depression_level")
+  postStressLevel     Int?               @map("post_stress_level")
+  improvementScore    Int?               @map("improvement_score")
+  breakthroughPoints  String?            @map("breakthrough_points")
+  unfinishedIssues    String?            @map("unfinished_issues")
+  followUpActions     String?            @map("follow_up_actions")
+  nextAppointment     DateTime?          @map("next_appointment")
+  referrals           String?            @map("referrals")
+  recommendations     String?            @map("recommendations")
+  privateNotes        String?            @map("private_notes")
+  attachments         String[]           @map("attachments")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  record              InterventionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
   @@index([recordId])
   @@map("intervention_details")
@@ -366,8 +231,8 @@ model VRSession {
   sessionAt     DateTime  @default(now()) @map("session_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
-  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   scene         VRScene   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([sceneId])
@@ -419,8 +284,8 @@ model RoomDevice {
   deviceId  String           @map("device_id")
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
-  room      ConsultationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   device    Device           @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  room      ConsultationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@unique([roomId, deviceId])
   @@index([roomId])
@@ -494,9 +359,8 @@ model BehaviorData {
   avoidanceCount  Int      @map("avoidance_count")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
-  
   student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+
   @@index([studentId])
   @@index([timestamp])
   @@index([studentId, timestamp])
@@ -514,9 +378,8 @@ model EEGData {
   gamma     Float?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+
   @@index([studentId])
   @@index([timestamp])
   @@index([studentId, timestamp])
@@ -552,19 +415,19 @@ model AIPromptPreset {
 }
 
 model OpenClawAgent {
-  id             String            @id
-  name           String?
-  role           String?
-  emoji          String?
-  color          String?
-  metadata       Json?
-  isOnline       Boolean           @default(false) @map("is_online")
-  lastSeenAt     DateTime?         @map("last_seen_at")
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
-  assignedReqs   OpenClawRequest[]
-  assignedTasks  OpenClawTask[]
-  events         OpenClawEvent[]
+  id            String            @id
+  name          String?
+  role          String?
+  emoji         String?
+  color         String?
+  metadata      Json?
+  isOnline      Boolean           @default(false) @map("is_online")
+  lastSeenAt    DateTime?         @map("last_seen_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  events        OpenClawEvent[]
+  assignedReqs  OpenClawRequest[]
+  assignedTasks OpenClawTask[]
 
   @@index([isOnline])
   @@index([lastSeenAt])
@@ -572,20 +435,20 @@ model OpenClawAgent {
 }
 
 model OpenClawRequest {
-  id               String               @id @default(cuid())
-  runId            String?              @unique @map("run_id")
-  source           String?
-  content          String
-  state            OpenClawRequestState @default(RECEIVED)
-  assignedAgentId  String?              @map("assigned_agent_id")
-  startedAt        DateTime?            @map("started_at")
-  completedAt      DateTime?            @map("completed_at")
-  result           String?
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
-  assignedAgent    OpenClawAgent?       @relation(fields: [assignedAgentId], references: [id])
-  task             OpenClawTask?
-  events           OpenClawEvent[]
+  id              String               @id @default(cuid())
+  runId           String?              @unique @map("run_id")
+  source          String?
+  content         String
+  state           OpenClawRequestState @default(RECEIVED)
+  assignedAgentId String?              @map("assigned_agent_id")
+  startedAt       DateTime?            @map("started_at")
+  completedAt     DateTime?            @map("completed_at")
+  result          String?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  events          OpenClawEvent[]
+  assignedAgent   OpenClawAgent?       @relation(fields: [assignedAgentId], references: [id])
+  task            OpenClawTask?
 
   @@index([runId])
   @@index([state])
@@ -595,20 +458,20 @@ model OpenClawRequest {
 }
 
 model OpenClawTask {
-  id               String           @id @default(cuid())
-  requestId        String           @unique @map("request_id")
-  title            String?
-  detail           String?
-  status           OpenClawTaskStatus @default(PENDING)
-  assignedAgentId  String?          @map("assigned_agent_id")
-  startedAt        DateTime?        @map("started_at")
-  completedAt      DateTime?        @map("completed_at")
-  result           String?
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
-  request          OpenClawRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  assignedAgent    OpenClawAgent?   @relation(fields: [assignedAgentId], references: [id])
-  events           OpenClawEvent[]
+  id              String             @id @default(cuid())
+  requestId       String             @unique @map("request_id")
+  title           String?
+  detail          String?
+  status          OpenClawTaskStatus @default(PENDING)
+  assignedAgentId String?            @map("assigned_agent_id")
+  startedAt       DateTime?          @map("started_at")
+  completedAt     DateTime?          @map("completed_at")
+  result          String?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  events          OpenClawEvent[]
+  assignedAgent   OpenClawAgent?     @relation(fields: [assignedAgentId], references: [id])
+  request         OpenClawRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([assignedAgentId])
@@ -617,19 +480,19 @@ model OpenClawTask {
 }
 
 model OpenClawEvent {
-  id          String          @id @default(cuid())
-  requestId   String?         @map("request_id")
-  taskId      String?         @map("task_id")
-  agentId     String?         @map("agent_id")
-  type        String
-  state       String?
-  message     String
-  payload     Json?
-  eventTime   DateTime        @default(now()) @map("event_time")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  request     OpenClawRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  task        OpenClawTask?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  agent       OpenClawAgent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  id        String           @id @default(cuid())
+  requestId String?          @map("request_id")
+  taskId    String?          @map("task_id")
+  agentId   String?          @map("agent_id")
+  type      String
+  state     String?
+  message   String
+  payload   Json?
+  eventTime DateTime         @default(now()) @map("event_time")
+  createdAt DateTime         @default(now()) @map("created_at")
+  agent     OpenClawAgent?   @relation(fields: [agentId], references: [id])
+  request   OpenClawRequest? @relation(fields: [requestId], references: [id])
+  task      OpenClawTask?    @relation(fields: [taskId], references: [id])
 
   @@index([requestId])
   @@index([taskId])
@@ -640,42 +503,38 @@ model OpenClawEvent {
 }
 
 model OpenClawConnection {
-  id                String   @id @default("default")
-  gatewayUrl        String?  @map("gateway_url")
-  connected         Boolean  @default(false)
-  lastConnectedAt   DateTime? @map("last_connected_at")
+  id                 String    @id @default("default")
+  gatewayUrl         String?   @map("gateway_url")
+  connected          Boolean   @default(false)
+  lastConnectedAt    DateTime? @map("last_connected_at")
   lastDisconnectedAt DateTime? @map("last_disconnected_at")
-  lastError         String?  @map("last_error")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  lastError          String?   @map("last_error")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   @@map("openclaw_connections")
 }
 
-// ============================================
-// PsyTwin Pocket 小程序扩展 Schema
-// ============================================
-
 model Teacher {
-  id             String          @id @default(uuid())
-  teacherId      String          @unique @map("teacher_id")
+  id             String        @id @default(uuid())
+  teacherId      String        @unique @map("teacher_id")
   name           String
-  phone          String          @unique
-  passwordHash   String          @map("password_hash")
+  phone          String        @unique
   avatar         String?
   department     String
   title          String
   qualifications String[]
-  nickname       String?         // 教师昵称/展示名
-  workStats      Json?           @map("work_stats")
+  workStats      Json?         @map("work_stats")
   badges         Json?
-  role           UserRole        @default(TEACHER)
-  status         TeacherStatus   @default(ACTIVE)
-  lastLoginAt    DateTime?       @map("last_login_at")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  lastLoginAt    DateTime?     @map("last_login_at")
+  passwordHash   String        @map("password_hash")
+  status         TeacherStatus @default(ACTIVE)
+  role           UserRole      @default(TEACHER)
+  nickname       String?
   appointments   Appointment[]
-  warnings       Warning[]       @relation("AssignedWarnings")
+  warnings       Warning[]     @relation("AssignedWarnings")
 
   @@index([role])
   @@index([status])
@@ -683,23 +542,23 @@ model Teacher {
 }
 
 model Appointment {
-  id           String            @id @default(uuid())
-  studentId    String            @map("student_id")
-  teacherId    String?           @map("teacher_id")
-  roomId       String?           @map("room_id")
-  type         AppointmentType
-  date         DateTime
-  timeSlot     String            @map("time_slot")
-  status       AppointmentStatus @default(PENDING)
-  reason       String?
+  id              String            @id @default(uuid())
+  studentId       String            @map("student_id")
+  teacherId       String?           @map("teacher_id")
+  roomId          String?           @map("room_id")
+  type            AppointmentType
+  date            DateTime
+  timeSlot        String            @map("time_slot")
+  status          AppointmentStatus @default(PENDING)
+  reason          String?
   cancelReason    String?           @map("cancel_reason")
-  meetingLink     String?           @map("meeting_link")
-  feedbackScore   Int?              @map("feedback_score")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
   feedbackContent String?           @map("feedback_content")
-  createdAt    DateTime          @default(now()) @map("created_at")
-  updatedAt    DateTime          @updatedAt @map("updated_at")
-  student      Student           @relation(fields: [studentId], references: [id])
-  teacher      Teacher?          @relation(fields: [teacherId], references: [id])
+  feedbackScore   Int?              @map("feedback_score")
+  meetingLink     String?           @map("meeting_link")
+  student         Student           @relation(fields: [studentId], references: [id])
+  teacher         Teacher?          @relation(fields: [teacherId], references: [id])
 
   @@index([studentId])
   @@index([teacherId])
@@ -708,39 +567,25 @@ model Appointment {
   @@map("appointments")
 }
 
-enum AppointmentType {
-  COUNSELING
-  VR
-  GROUP
-}
-
-enum AppointmentStatus {
-  PENDING
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
-}
-
 model Post {
-  id           String     @id @default(uuid())
-  authorId     String     @map("author_id")
+  id           String           @id @default(uuid())
+  authorId     String           @map("author_id")
   content      String
   images       String[]
   location     String?
-  isAnonymous  Boolean    @default(false) @map("is_anonymous")
+  isAnonymous  Boolean          @default(false) @map("is_anonymous")
   tags         String[]
-  likeCount    Int        @default(0) @map("like_count")
-  commentCount Int        @default(0) @map("comment_count")
-  riskScore    Float?     @map("risk_score")
-  viewCount    Int        @default(0) @map("view_count")
-  status       PostStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  author       Student    @relation(fields: [authorId], references: [id])
+  likeCount    Int              @default(0) @map("like_count")
+  commentCount Int              @default(0) @map("comment_count")
+  riskScore    Float?           @map("risk_score")
+  viewCount    Int              @default(0) @map("view_count")
+  status       PostStatus       @default(ACTIVE)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
   comments     Comment[]
-  likes        PostLike[]
   collections  PostCollection[]
+  likes        PostLike[]
+  author       Student          @relation(fields: [authorId], references: [id])
 
   @@index([authorId])
   @@index([createdAt])
@@ -758,8 +603,8 @@ model Comment {
   status    CommentStatus @default(ACTIVE)
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    Student       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([authorId])
@@ -767,26 +612,14 @@ model Comment {
   @@map("comments")
 }
 
-enum PostStatus {
-  ACTIVE
-  PENDING
-  HIDDEN
-  DELETED
-}
-
-// ============================================
-// PsyTwin Pocket 小程序扩展 - 社交互动
-// ============================================
-
 model PostLike {
   id        String   @id @default(uuid())
   postId    String   @map("post_id")
   studentId String   @map("student_id")
   createdAt DateTime @default(now()) @map("created_at")
-  
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+
   @@unique([postId, studentId])
   @@index([postId])
   @@index([studentId])
@@ -799,10 +632,9 @@ model PostCollection {
   postId      String   @map("post_id")
   studentId   String   @map("student_id")
   collectedAt DateTime @default(now()) @map("collected_at")
-  
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   @@unique([postId, studentId])
   @@index([postId])
   @@index([studentId])
@@ -810,28 +642,18 @@ model PostCollection {
   @@map("post_collections")
 }
 
-enum NotificationType {
-  SYSTEM
-  APPOINTMENT
-  CHAT
-  WARNING
-  POST
-  COMMENT
-}
-
 model StudentNotification {
-  id          String           @id @default(uuid())
-  studentId   String           @map("student_id")
-  type        NotificationType
-  title       String
-  content     String
-  actionUrl   String?          @map("action_url")
-  isRead      Boolean          @default(false) @map("is_read")
-  readAt      DateTime?        @map("read_at")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  
-  student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+  id        String           @id @default(uuid())
+  studentId String           @map("student_id")
+  type      NotificationType
+  title     String
+  content   String
+  actionUrl String?          @map("action_url")
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
   @@index([studentId])
   @@index([type])
   @@index([isRead])
@@ -884,18 +706,6 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
-enum SessionType {
-  AI
-  COUNSELOR
-}
-
-enum MessageType {
-  TEXT
-  EMOTION_TAG
-  CBT_CARD
-  AUDIO
-}
-
 model Warning {
   id             String        @id @default(uuid())
   studentId      String        @map("student_id")
@@ -909,20 +719,14 @@ model Warning {
   notes          String?
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
-  student        Student       @relation(fields: [studentId], references: [id])
   counselor      Teacher?      @relation("AssignedWarnings", fields: [assignedTo], references: [id])
+  student        Student       @relation(fields: [studentId], references: [id])
 
   @@index([studentId])
   @@index([riskLevel])
   @@index([status])
   @@index([assignedTo])
   @@map("warnings")
-}
-
-enum WarningStatus {
-  PENDING
-  PROCESSING
-  RESOLVED
 }
 
 model Schedule {
@@ -941,43 +745,33 @@ model Schedule {
   @@map("schedules")
 }
 
-// ============================================
-// 系统用户与认证
-// ============================================
-
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  name        String
-  passwordHash String   @map("password_hash")
-  avatar      String?
-  role        UserRole  @default(TEACHER)
-  status      UserStatus @default(ACTIVE)
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id           String     @id @default(uuid())
+  email        String     @unique
+  name         String
+  passwordHash String     @map("password_hash")
+  avatar       String?
+  role         UserRole   @default(TEACHER)
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?  @map("last_login_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   @@index([role])
   @@index([status])
   @@map("users")
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
 model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  action      String
-  resource    String
-  resourceId  String?  @map("resource_id")
-  details     Json?
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([action])
@@ -985,28 +779,336 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ============================================
-// RAG 向量存储 - 文档分块
-// ============================================
-
 model DocumentChunk {
-  id           String   @id @default(uuid())
-  documentId   String   @map("document_id")
-  content      String
-  embedding    String?  // pgvector 向量存储
-  chunkIndex   Int      @map("chunk_index")
-  metadata     Json?    // 存储分块位置信息等
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  content    String
+  embedding  String?
+  chunkIndex Int      @map("chunk_index")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@index([documentId])
   @@index([chunkIndex])
   @@map("document_chunks")
 }
 
-// ============================================
-// 系统设置 - 数据源与同步
-// ============================================
+model DataSource {
+  id         String           @id @default(uuid())
+  name       String
+  type       DataSourceType
+  enabled    Boolean          @default(true)
+  config     Json?
+  lastSyncAt DateTime?        @map("last_sync_at")
+  status     DataSourceStatus @default(DISCONNECTED)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+  syncTasks  SyncTask[]
+
+  @@map("data_sources")
+}
+
+model SyncTask {
+  id           String         @id @default(uuid())
+  name         String
+  dataSourceId String         @map("data_source_id")
+  schedule     String
+  enabled      Boolean        @default(true)
+  status       SyncTaskStatus @default(IDLE)
+  lastSyncAt   DateTime?      @map("last_sync_at")
+  nextSyncAt   DateTime?      @map("next_sync_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  logs         SyncLog[]
+  dataSource   DataSource     @relation(fields: [dataSourceId], references: [id])
+
+  @@map("sync_tasks")
+}
+
+model SyncLog {
+  id          String        @id @default(uuid())
+  taskId      String        @map("task_id")
+  startedAt   DateTime      @map("started_at")
+  endedAt     DateTime?     @map("ended_at")
+  status      SyncLogStatus
+  dataSize    Int?          @map("data_size")
+  recordCount Int?          @map("record_count")
+  errorMsg    String?       @map("error_msg")
+  task        SyncTask      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, startedAt])
+  @@map("sync_logs")
+}
+
+model IPWhitelist {
+  id          String   @id @default(uuid())
+  ipAddress   String   @map("ip_address")
+  description String?
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String?  @map("created_by")
+
+  @@index([ipAddress])
+  @@map("ip_whitelist")
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("system_config")
+}
+
+model NotificationChannel {
+  id           String      @id @default(uuid())
+  name         String
+  type         ChannelType
+  enabled      Boolean     @default(false)
+  config       Json?
+  lastTestedAt DateTime?   @map("last_tested_at")
+  testStatus   TestStatus?
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("notification_channels")
+}
+
+model NotificationTemplate {
+  id        String       @id @default(uuid())
+  name      String
+  type      TemplateType
+  subject   String?
+  content   String
+  variables Json?
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  updatedBy String?      @map("updated_by")
+
+  @@map("notification_templates")
+}
+
+model NotificationRule {
+  id             String                @id @default(uuid())
+  name           String
+  enabled        Boolean               @default(true)
+  triggerType    TriggerType           @map("trigger_type")
+  triggerConfig  Json                  @map("trigger_config")
+  channels       String[]
+  recipients     Json
+  templateId     String?               @map("template_id")
+  silentOverride Boolean               @default(false) @map("silent_override")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  histories      NotificationHistory[]
+
+  @@map("notification_rules")
+}
+
+model NotificationHistory {
+  id          String             @id @default(uuid())
+  ruleId      String?            @map("rule_id")
+  channelType ChannelType        @map("channel_type")
+  recipient   String
+  title       String
+  content     String
+  status      NotificationStatus
+  errorMsg    String?            @map("error_msg")
+  sentAt      DateTime           @default(now()) @map("sent_at")
+  deliveredAt DateTime?          @map("delivered_at")
+  readAt      DateTime?          @map("read_at")
+  rule        NotificationRule?  @relation(fields: [ruleId], references: [id])
+
+  @@index([sentAt])
+  @@index([recipient])
+  @@map("notification_histories")
+}
+
+model SilentHours {
+  id          String    @id @default(uuid())
+  enabled     Boolean   @default(true)
+  startTime   String    @map("start_time")
+  endTime     String    @map("end_time")
+  exceptLevel RiskLevel @default(HIGH) @map("except_level")
+
+  @@map("silent_hours")
+}
+
+enum RiskLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertType {
+  HEART_RATE_SURGE
+  VOICE_TREMOR
+  SLEEP_ANOMALY
+  EMOTION_SWING
+  SOCIAL_WITHDRAWAL
+  GAIT_ANOMALY
+  EATING_ANOMALY
+}
+
+enum WorkOrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum InterventionType {
+  REGULAR_INTERVIEW
+  CBT_THERAPY
+  GROUP_COUNSELING
+  CRISIS_INTERVENTION
+  INITIAL_ASSESSMENT
+}
+
+enum DeviceType {
+  VR
+  BRACELET
+  EEG
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  IN_USE
+  MAINTENANCE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum UserRole {
+  ADMIN
+  COUNSELOR
+  ASSISTANT
+  TEACHER
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CommentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum DocStatus {
+  VECTORIZED
+  PROCESSING
+  FAILED
+}
+
+enum OpenClawRequestState {
+  RECEIVED
+  ANALYZING
+  TASK_CREATED
+  ASSIGNED
+  IN_PROGRESS
+  REVIEWING
+  COMPLETED
+  FAILED
+}
+
+enum OpenClawTaskStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum AppointmentType {
+  COUNSELING
+  VR
+  GROUP
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PostStatus {
+  ACTIVE
+  PENDING
+  HIDDEN
+  DELETED
+}
+
+enum NotificationType {
+  SYSTEM
+  APPOINTMENT
+  CHAT
+  WARNING
+  POST
+  COMMENT
+}
+
+enum SessionType {
+  AI
+  COUNSELOR
+}
+
+enum MessageType {
+  TEXT
+  EMOTION_TAG
+  CBT_CARD
+  AUDIO
+}
+
+enum WarningStatus {
+  PENDING
+  PROCESSING
+  RESOLVED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
 
 enum DataSourceType {
   VR_DEVICE
@@ -1021,22 +1123,6 @@ enum DataSourceStatus {
   ERROR
 }
 
-model DataSource {
-  id          String   @id @default(uuid())
-  name        String
-  type        DataSourceType
-  enabled     Boolean  @default(true)
-  config      Json?
-  lastSyncAt  DateTime? @map("last_sync_at")
-  status      DataSourceStatus @default(DISCONNECTED)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  
-  syncTasks   SyncTask[]
-  
-  @@map("data_sources")
-}
-
 enum SyncTaskStatus {
   IDLE
   RUNNING
@@ -1044,75 +1130,11 @@ enum SyncTaskStatus {
   ERROR
 }
 
-model SyncTask {
-  id            String   @id @default(uuid())
-  name          String
-  dataSourceId  String   @map("data_source_id")
-  dataSource    DataSource @relation(fields: [dataSourceId], references: [id])
-  schedule      String
-  enabled       Boolean  @default(true)
-  status        SyncTaskStatus @default(IDLE)
-  lastSyncAt    DateTime? @map("last_sync_at")
-  nextSyncAt    DateTime? @map("next_sync_at")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  logs          SyncLog[]
-  
-  @@map("sync_tasks")
-}
-
 enum SyncLogStatus {
   SUCCESS
   FAILED
   PARTIAL
 }
-
-model SyncLog {
-  id          String   @id @default(uuid())
-  taskId      String   @map("task_id")
-  task        SyncTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  startedAt   DateTime @map("started_at")
-  endedAt     DateTime? @map("ended_at")
-  status      SyncLogStatus
-  dataSize    Int?     @map("data_size")
-  recordCount Int?     @map("record_count")
-  errorMsg    String?  @map("error_msg")
-  
-  @@index([taskId, startedAt])
-  @@map("sync_logs")
-}
-
-// ============================================
-// 系统设置 - 安全策略
-// ============================================
-
-model IPWhitelist {
-  id          String   @id @default(uuid())
-  ipAddress   String   @map("ip_address")
-  description String?
-  enabled     Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
-  createdBy   String?  @map("created_by")
-  
-  @@index([ipAddress])
-  @@map("ip_whitelist")
-}
-
-model SystemConfig {
-  id                    String   @id @default(uuid())
-  key                   String   @unique
-  value                 String
-  description           String?
-  updatedAt             DateTime @updatedAt @map("updated_at")
-  updatedBy             String?  @map("updated_by")
-  
-  @@map("system_config")
-}
-
-// ============================================
-// 系统设置 - 通知管理
-// ============================================
 
 enum ChannelType {
   WECHAT_WORK
@@ -1126,38 +1148,11 @@ enum TestStatus {
   FAILED
 }
 
-model NotificationChannel {
-  id            String   @id @default(uuid())
-  name          String
-  type          ChannelType
-  enabled       Boolean  @default(false)
-  config        Json?
-  lastTestedAt  DateTime? @map("last_tested_at")
-  testStatus    TestStatus?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  @@map("notification_channels")
-}
-
 enum TemplateType {
   WARNING
   CRISIS
   REMINDER
   SYSTEM
-}
-
-model NotificationTemplate {
-  id          String   @id @default(uuid())
-  name        String
-  type        TemplateType
-  subject     String?
-  content     String
-  variables   Json?
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  updatedBy   String?  @map("updated_by")
-  
-  @@map("notification_templates")
 }
 
 enum TriggerType {
@@ -1168,57 +1163,10 @@ enum TriggerType {
   SYSTEM_EVENT
 }
 
-model NotificationRule {
-  id            String   @id @default(uuid())
-  name          String
-  enabled       Boolean  @default(true)
-  triggerType   TriggerType @map("trigger_type")
-  triggerConfig Json     @map("trigger_config")
-  channels      String[]
-  recipients    Json
-  templateId    String?  @map("template_id")
-  silentOverride Boolean @default(false) @map("silent_override")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  histories     NotificationHistory[]
-  
-  @@map("notification_rules")
-}
-
 enum NotificationStatus {
   PENDING
   SENT
   DELIVERED
   READ
   FAILED
-}
-
-model NotificationHistory {
-  id          String   @id @default(uuid())
-  ruleId      String?  @map("rule_id")
-  rule        NotificationRule? @relation(fields: [ruleId], references: [id])
-  channelType ChannelType @map("channel_type")
-  recipient   String
-  title       String
-  content     String
-  status      NotificationStatus
-  errorMsg    String?  @map("error_msg")
-  sentAt      DateTime @default(now()) @map("sent_at")
-  deliveredAt DateTime? @map("delivered_at")
-  readAt      DateTime? @map("read_at")
-  
-  @@index([sentAt])
-  @@index([recipient])
-  @@map("notification_histories")
-}
-
-model SilentHours {
-  id            String   @id @default(uuid())
-  enabled       Boolean  @default(true)
-  startTime     String   @map("start_time")
-  endTime       String   @map("end_time")
-  exceptLevel   RiskLevel @default(HIGH) @map("except_level")
-  
-  @@map("silent_hours")
 }
