@@ -119,12 +119,23 @@ function HrTooltip({ active, payload, label }: HrTooltipProps) {
 }
 
 // 语音波形可视化组件 - 带渐变、动画、坐标轴和图例
-function VoiceWaveform() {
+// levels: 真实音频数据(0-100)，为空时使用模拟数据
+function VoiceWaveform({ levels }: { levels?: number[] }) {
   const [bars, setBars] = useState<number[]>(() =>
     Array.from({ length: 64 }, () => Math.random() * 80 + 10)
   )
 
   useEffect(() => {
+    if (levels !== undefined && levels.length > 0) {
+      const padded = [...levels]
+      while (padded.length < 64) padded.unshift(0)
+      setBars(padded.slice(-64))
+      return
+    }
+    if (levels !== undefined) {
+      setBars(Array(64).fill(0))
+      return
+    }
     const interval = setInterval(() => {
       setBars((prev) =>
         prev.map((h) => {
@@ -134,11 +145,11 @@ function VoiceWaveform() {
       )
     }, 120)
     return () => clearInterval(interval)
-  }, [])
+  }, [levels])
 
   return (
     <div className="rounded-lg border border-border bg-white p-3 shadow-sm">
-      <div className="mb-1 flex h-[180px] items-stretch gap-1">
+      <div className="mb-1 flex h-[160px] items-stretch gap-1">
         <div className="flex flex-col justify-between py-0.5 pr-2 text-[10px] text-muted-foreground">
           <span>强度</span>
           <span>100%</span>
@@ -200,19 +211,19 @@ function VitalCard({ icon: Icon, label, value, unit, trend }: {
   icon: any, label: string, value: number, unit: string, trend?: "up" | "down" 
 }) {
   return (
-    <div className="rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800">
+    <div className="rounded-lg bg-white p-2 shadow-sm dark:bg-slate-800">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">{label}</span>
         </div>
         {trend && (
-          trend === "up" ? <TrendingUp className="h-4 w-4 text-red-500" /> : <TrendingDown className="h-4 w-4 text-green-500" />
+          trend === "up" ? <TrendingUp className="h-3.5 w-3.5 text-red-500" /> : <TrendingDown className="h-3.5 w-3.5 text-green-500" />
         )}
       </div>
-      <div className="mt-1 flex items-baseline gap-1">
-        <span className="text-2xl font-bold">{value}</span>
-        <span className="text-sm text-muted-foreground">{unit}</span>
+      <div className="mt-0.5 flex items-baseline gap-0.5">
+        <span className="text-xl font-bold">{value}</span>
+        <span className="text-xs text-muted-foreground">{unit}</span>
       </div>
     </div>
   )
@@ -243,6 +254,8 @@ export function MultimodalDataFlowView() {
   const [activeTab, setActiveTab] = useState<string>("student-list")
   const [hrHistory, setHrHistory] = useState<Array<{ time: string; 心率: number; 血氧: number; hrv: number }>>([])
   const [chartKey, setChartKey] = useState(0)
+  const [audioLevel, setAudioLevel] = useState<number[]>([])
+  const [voiceTranscription, setVoiceTranscription] = useState<string>("")
 
   const testStudent: StudentData = {
     id: "stu-test",
@@ -292,6 +305,7 @@ export function MultimodalDataFlowView() {
       setStudents([testStudent])
       setSelectedStudent(testStudent)
       setIsMock(true)
+      setAudioLevel([])
     } else {
       fetchData()
     }
@@ -373,15 +387,51 @@ export function MultimodalDataFlowView() {
       }
     })
 
+    let transcriptionTimer: ReturnType<typeof setTimeout> | null = null
+
+    eventSource.addEventListener('voice_transcription', (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.text) {
+          setVoiceTranscription(prev => {
+            const newText = data.text
+            return prev ? `${prev}\n${newText}` : newText
+          })
+          if (transcriptionTimer) clearTimeout(transcriptionTimer)
+          transcriptionTimer = setTimeout(() => {
+            setVoiceTranscription('')
+          }, 5000)
+        }
+      } catch (error) {
+        console.error('[SSE] voice_transcription parse error:', error)
+      }
+    })
+
+    eventSource.addEventListener('voice_level', (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.audioLevel !== undefined && activeTab === "realtime-test") {
+          setAudioLevel(prev => {
+            const updated = [...prev, data.audioLevel]
+            return updated.slice(-64)
+          })
+        }
+      } catch (error) {
+        console.error('[SSE] voice_level parse error:', error)
+      }
+    })
+
     eventSource.addEventListener('heartbeat', (event) => {
     })
 
     eventSource.onerror = (error) => {
-      console.error('[SSE] Error:', error)
+      console.error('[SSE] Connection error, will retry...', error)
+      eventSource.close()
     }
 
     return () => {
       eventSource.close()
+      if (transcriptionTimer) clearTimeout(transcriptionTimer)
     }
   }, [selectedStudent?.id, activeTab])
 
@@ -461,10 +511,10 @@ export function MultimodalDataFlowView() {
               {isMock && <span className="ml-1 text-amber-500">(演示)</span>}
             </CardDescription>
             <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2 w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="student-list">学生列表</TabsTrigger>
-                <TabsTrigger value="realtime-test">实时测试</TabsTrigger>
-              </TabsList>
+<TabsList className="grid w-2/3 grid-cols-2 text-sm">
+  <TabsTrigger value="student-list">学生列表</TabsTrigger>
+  <TabsTrigger value="realtime-test">实时测试</TabsTrigger>
+</TabsList>
             </Tabs>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-0">
@@ -513,33 +563,31 @@ export function MultimodalDataFlowView() {
       <div className="flex-1 overflow-y-auto">
         {/* 学生基本信息 */}
         <Card className="mb-4">
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
                   <AvatarImage src={currentStudent.name} />
-                  <AvatarFallback className="bg-primary/10 text-lg text-primary">
+                  <AvatarFallback className="bg-primary/10 text-primary">
                     {currentStudent.name[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <h3 className="text-xl font-bold">{currentStudent.name}</h3>
-                  <p className="text-sm text-muted-foreground">{currentStudent.studentId} · {currentStudent.room}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {currentStudent.scenario} · 已使用 {currentStudent.duration} 分钟
-                  </p>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-base font-bold">{currentStudent.name}</h3>
+                  <span className="text-xs text-muted-foreground border-l pl-3">{currentStudent.studentId} · {currentStudent.room}</span>
+                  <span className="text-xs text-muted-foreground border-l pl-3">{currentStudent.scenario} · 已使用 {currentStudent.duration} 分钟</span>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">当前情绪</p>
-                  <Badge className={`mt-1 ${emotionColors[currentStudent.emotion]}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">当前情绪</span>
+                  <Badge className={`text-xs ${emotionColors[currentStudent.emotion]}`}>
                     {currentStudent.emotion}
                   </Badge>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">风险等级</p>
-                  <Badge variant={currentStudent.riskLevel === "low" ? "secondary" : currentStudent.riskLevel === "medium" ? "outline" : "destructive"} className="mt-1">
+                <div className="flex items-center gap-2 border-l pl-4">
+                  <span className="text-xs text-muted-foreground">风险等级</span>
+                  <Badge variant={currentStudent.riskLevel === "low" ? "secondary" : currentStudent.riskLevel === "medium" ? "outline" : "destructive"} className="text-xs">
                     {currentStudent.riskLevel === "low" ? "低风险" : currentStudent.riskLevel === "medium" ? "中风险" : "高风险"}
                   </Badge>
                 </div>
@@ -557,7 +605,7 @@ export function MultimodalDataFlowView() {
                 <Heart className="h-5 w-5 text-red-500" />
                 生理流
               </CardTitle>
-              <CardDescription>心率 · HRV · 皮电 · 压力指数</CardDescription>
+              <CardDescription>心率 · HRV · 皮电 · 压力指数 · 脑电</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
@@ -591,20 +639,46 @@ export function MultimodalDataFlowView() {
                 />
               </div>
               {/* 实时曲线 */}
-              <div className="mt-4 h-[180px] -mx-2">
-                <p className="mb-2 pl-2 text-xs text-muted-foreground">实时生理曲线</p>
+              <div className="mt-4 h-[180px]">
+                <p className="mb-2 text-xs text-muted-foreground">实时生理曲线</p>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart key={chartKey} data={hrHistory} margin={{ top: 5, right: 60, bottom: 5, left: 0 }}>
+                  <LineChart key={chartKey} data={hrHistory} margin={{ top: 5, right: 30, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="time" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} interval={4} />
+                    <XAxis dataKey="time" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} interval={9} />
                     <YAxis yAxisId="left" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[60, 150]} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={[90, 100]} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: "#6B7280", fontSize: 10 }} axisLine={{ stroke: "#E5E7EB" }} tickLine={false} domain={['auto', 'auto']} />
                     <Tooltip content={<HrTooltip />} />
                     <Line yAxisId="left" type="monotone" dataKey="心率" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#ef4444" }} isAnimationActive={true} animationDuration={800} />
                     <Line yAxisId="right" type="monotone" dataKey="血氧" stroke="#7C3AED" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#7C3AED" }} isAnimationActive={true} animationDuration={800} />
                     <Line yAxisId="left" type="monotone" dataKey="hrv" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#10b981" }} isAnimationActive={true} animationDuration={800} />
                   </LineChart>
                 </ResponsiveContainer>
+              </div>
+              <div className="pt-3">
+                <p className="mb-2 pl-2 text-xs text-muted-foreground">脑电数据</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">α</span>
+                      <span className="text-xs text-blue-600">放松度</span>
+                    </div>
+                    <p className="mt-1 text-xl font-bold text-blue-600">{currentStudent.eeg.alpha} <span className="text-xs text-muted-foreground">μV</span></p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">β</span>
+                      <span className="text-xs text-green-600">活跃度</span>
+                    </div>
+                    <p className="mt-1 text-xl font-bold text-green-600">{currentStudent.eeg.beta} <span className="text-xs text-muted-foreground">μV</span></p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">θ</span>
+                      <span className="text-xs text-purple-600">倦意</span>
+                    </div>
+                    <p className="mt-1 text-xl font-bold text-purple-600">{currentStudent.eeg.theta} <span className="text-xs text-muted-foreground">μV</span></p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -616,13 +690,13 @@ export function MultimodalDataFlowView() {
                 <Mic className="h-5 w-5 text-purple-500" />
                 语音流
               </CardTitle>
-              <CardDescription>情感分析 · 语音颤抖指数</CardDescription>
+              <CardDescription>情感分析 · 语音颤抖指数 · 实时转写</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-                  <p className="text-sm text-muted-foreground">情感倾向</p>
-                  <p className={`mt-1 text-2xl font-bold ${
+                <div className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800">
+                  <p className="text-xs text-muted-foreground">情感倾向</p>
+                  <p className={`mt-0.5 text-lg font-bold ${
                     currentStudent.voice.sentiment === "positive" ? "text-green-500" :
                     currentStudent.voice.sentiment === "negative" ? "text-red-500" : "text-gray-500"
                   }`}>
@@ -630,9 +704,9 @@ export function MultimodalDataFlowView() {
                      currentStudent.voice.sentiment === "negative" ? "消极" : "中性"}
                   </p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-                  <p className="text-sm text-muted-foreground">语音颤抖指数</p>
-                  <p className={`mt-1 text-2xl font-bold ${
+                <div className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800">
+                  <p className="text-xs text-muted-foreground">语音颤抖指数</p>
+                  <p className={`mt-0.5 text-lg font-bold ${
                     currentStudent.voice.tremorIndex > 0.5 ? "text-red-500" :
                     currentStudent.voice.tremorIndex > 0.3 ? "text-amber-500" : "text-green-500"
                   }`}>
@@ -642,7 +716,32 @@ export function MultimodalDataFlowView() {
               </div>
               <div className="mt-4">
                 <p className="mb-2 text-xs text-muted-foreground">实时情感波形图</p>
-                <VoiceWaveform />
+                <VoiceWaveform levels={activeTab === "realtime-test" ? audioLevel : undefined} />
+              </div>
+              <div className="mt-4 pt-4">
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-lg blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 animate-pulse" />
+                  <div className="relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg border border-purple-200 dark:border-purple-800 p-3 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="relative">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                        <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full" />
+                      </div>
+                      <p className="text-xs font-medium text-purple-600 dark:text-purple-400">实时转写</p>
+                    </div>
+                    <div className="h-[50px] overflow-y-auto text-sm leading-relaxed">
+                      {voiceTranscription ? (
+                        <p className="text-slate-700 dark:text-slate-200 animate-fade-in">
+                          {voiceTranscription}
+                        </p>
+                      ) : (
+                        <p className="text-slate-400 dark:text-slate-500 italic">
+                          等待语音输入...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -660,13 +759,25 @@ export function MultimodalDataFlowView() {
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">主要表情</p>
-                  <p className="mt-1 text-xl font-bold">{currentStudent.expression.primary}</p>
+                  <p className="mt-1 text-xl font-bold">
+                    {currentStudent.expression.primary === "happy" || currentStudent.expression.primary === "joyful" ? "开心" :
+                     currentStudent.expression.primary === "sad" ? "悲伤" :
+                     currentStudent.expression.primary === "angry" ? "愤怒" :
+                     currentStudent.expression.primary === "fear" || currentStudent.expression.primary === "fearful" ? "恐惧" :
+                     currentStudent.expression.primary === "surprise" || currentStudent.expression.primary === "surprised" ? "惊讶" :
+                     currentStudent.expression.primary === "disgust" || currentStudent.expression.primary === "disgusted" ? "厌恶" :
+                     currentStudent.expression.primary === "neutral" ? "中性" : "未知"}
+                  </p>
                 </div>
-                <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800">
-                  <span className="text-3xl">
-                    {currentStudent.expression.primary === "微笑" ? "😊" :
-                     currentStudent.expression.primary === "皱眉" ? "😟" :
-                     currentStudent.expression.primary === "严肃" ? "😐" : "🙂"}
+                <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800">
+                  <span className="text-5xl">
+                    {currentStudent.expression.primary === "happy" || currentStudent.expression.primary === "joyful" ? "😄" :
+                     currentStudent.expression.primary === "sad" ? "😢" :
+                     currentStudent.expression.primary === "angry" ? "😠" :
+                     currentStudent.expression.primary === "fear" || currentStudent.expression.primary === "fearful" ? "😨" :
+                     currentStudent.expression.primary === "surprise" || currentStudent.expression.primary === "surprised" ? "😮" :
+                     currentStudent.expression.primary === "disgust" || currentStudent.expression.primary === "disgusted" ? "🤢" :
+                     currentStudent.expression.primary === "neutral" ? "😐" : "😊"}
                   </span>
                 </div>
               </div>
@@ -736,50 +847,6 @@ export function MultimodalDataFlowView() {
             </CardContent>
           </Card>
 
-          {/* 脑电数据 */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Brain className="h-5 w-5 text-green-500" />
-                脑电数据 (EEG)
-              </CardTitle>
-              <CardDescription>Alpha · Beta · Theta 波段分析</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Alpha 波 (α)</span>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 dark:bg-blue-950">
-                      放松度
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-3xl font-bold text-blue-600">{currentStudent.eeg.alpha} <span className="text-sm font-normal">μV</span></p>
-                  <Progress value={currentStudent.eeg.alpha / 20 * 100} className="mt-2" />
-                </div>
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Beta 波 (β)</span>
-                    <Badge variant="outline" className="bg-green-50 text-green-600 dark:bg-green-950">
-                      活跃度
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-3xl font-bold text-green-600">{currentStudent.eeg.beta} <span className="text-sm font-normal">μV</span></p>
-                  <Progress value={currentStudent.eeg.beta / 20 * 100} className="mt-2" />
-                </div>
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Theta 波 (θ)</span>
-                    <Badge variant="outline" className="bg-purple-50 text-purple-600 dark:bg-purple-950">
-                      倦意/抑郁倾向
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-3xl font-bold text-purple-600">{currentStudent.eeg.theta} <span className="text-sm font-normal">μV</span></p>
-                  <Progress value={currentStudent.eeg.theta / 20 * 100} className="mt-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

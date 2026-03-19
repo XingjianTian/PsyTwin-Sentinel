@@ -50,6 +50,7 @@ model Student {
   timelineEvents      TimelineEvent[]
   vitalSigns          VitalSign[]
   voiceAnalyses       VoiceAnalysis[]
+  voiceTranscriptions VoiceTranscription[]
   vrSessions          VRSession[]
   warnings            Warning[]
   workOrders          WorkOrder[]
@@ -330,6 +331,19 @@ model VoiceAnalysis {
   @@index([sentiment])
   @@index([studentId, timestamp])
   @@map("voice_analyses")
+}
+
+model VoiceTranscription {
+  id         String   @id @default(cuid())
+  studentId  String   @map("student_id")
+  text       String
+  timestamp  DateTime
+  createdAt  DateTime @default(now()) @map("created_at")
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([timestamp])
+  @@map("voice_transcriptions")
 }
 
 model ExpressionData {

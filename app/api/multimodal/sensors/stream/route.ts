@@ -56,7 +56,18 @@ export async function GET(request: NextRequest) {
               return
             }
 
-            sendEvent("multimodal_data", data)
+            const eventType = data.type === 'voice_transcription' ? 'voice_transcription' 
+              : data.type === 'voice_level' ? 'voice_level'
+              : 'multimodal_data'
+
+            console.log(`[SSE] Sending event: ${eventType}`, {
+              studentId: data.studentId,
+              hasText: !!data.text,
+              hasAudioLevel: data.audioLevel !== undefined,
+              hasVitalSign: !!data.vitalSign,
+            })
+
+            sendEvent(eventType, data)
           } catch (error) {
             console.error("[SSE] Failed to parse message:", error)
           }

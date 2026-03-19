@@ -223,7 +223,7 @@
 
 #### 技术实现规范
 
-**学生档案详细设计规范** 参见 [OpenSpecs-StudentProfile.md](./OpenSpecs-StudentProfile.md)，包含：
+**学生档案详细设计规范** 参见 [OpenSpecs-StudentProfile.md](OpenSpecs-StudentProfile.md)，包含：
 - 数据库 Schema 对齐方案
 - API 接口设计
 - 页面组件结构
