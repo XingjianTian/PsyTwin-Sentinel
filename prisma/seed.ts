@@ -130,32 +130,6 @@ async function main() {
 
   // 20个学生的干预记录（每个学生至少1条，部分为进展中状态）
   const interventionRecords = [
-    // 已完成的记录
-    { id: 'ir-01', studentId: 'stu-zhangyu', date: '2026-02-15', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '状态良好', status: 'completed' },
-    { id: 'ir-02', studentId: 'stu-zhangmingyuan', date: '2026-01-20', type: InterventionType.CBT_THERAPY, counselor: '张伟', duration: '60分钟', result: '认知重构进展顺利', status: 'completed' },
-    { id: 'ir-03', studentId: 'stu-liusiyuan', date: '2025-12-28', type: InterventionType.GROUP_COUNSELING, counselor: '王丽', duration: '90分钟', result: '社交互动改善', status: 'completed' },
-    { id: 'ir-04', studentId: 'stu-zhaotianyu', date: '2025-12-15', type: InterventionType.CRISIS_INTERVENTION, counselor: '刘芳', duration: '45分钟', result: '情绪稳定', status: 'completed' },
-    { id: 'ir-05', studentId: 'stu-chenyuqing', date: '2025-11-22', type: InterventionType.INITIAL_ASSESSMENT, counselor: '刘芳', duration: '60分钟', result: '建立干预方案', status: 'completed' },
-    { id: 'ir-06', studentId: 'stu-wuzhiyuan', date: '2026-01-10', type: InterventionType.CBT_THERAPY, counselor: '张伟', duration: '55分钟', result: '社交焦虑减轻', status: 'completed' },
-    { id: 'ir-07', studentId: 'stu-zhouhangyu', date: '2025-11-05', type: InterventionType.REGULAR_INTERVIEW, counselor: '王丽', duration: '45分钟', result: '心理状态良好', status: 'completed' },
-    { id: 'ir-08', studentId: 'stu-huangsimeng', date: '2026-01-15', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '压力缓解', status: 'completed' },
-    { id: 'ir-09', studentId: 'stu-linzhihao', date: '2025-12-01', type: InterventionType.GROUP_COUNSELING, counselor: '张伟', duration: '85分钟', result: '团队协作能力提升', status: 'completed' },
-    { id: 'ir-10', studentId: 'stu-wangyuyan', date: '2025-11-20', type: InterventionType.CBT_THERAPY, counselor: '王丽', duration: '60分钟', result: '自信心增强', status: 'completed' },
-    // 进展中的记录
-    { id: 'ir-11', studentId: 'stu-liweimin', date: '2026-03-05', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '学业规划持续跟进中', status: 'in_progress' },
-    { id: 'ir-12', studentId: 'stu-sunxiaoxiao', date: '2026-03-08', type: InterventionType.INITIAL_ASSESSMENT, counselor: '张伟', duration: '65分钟', result: '初步评估进行中', status: 'in_progress' },
-    { id: 'ir-13', studentId: 'stu-zhoujian', date: '2026-03-01', type: InterventionType.CBT_THERAPY, counselor: '王丽', duration: '45分钟', result: '认知行为治疗进行中', status: 'in_progress' },
-    { id: 'ir-14', studentId: 'stu-wuting', date: '2026-03-06', type: InterventionType.GROUP_COUNSELING, counselor: '刘芳', duration: '90分钟', result: '团体辅导持续进行中', status: 'in_progress' },
-    { id: 'ir-15', studentId: 'stu-zhengkai', date: '2026-03-04', type: InterventionType.CBT_THERAPY, counselor: '张伟', duration: '60分钟', result: '思维模式调整中', status: 'in_progress' },
-    { id: 'ir-16', studentId: 'stu-wangfang', date: '2026-03-02', type: InterventionType.REGULAR_INTERVIEW, counselor: '王丽', duration: '50分钟', result: '情绪管理训练中', status: 'in_progress' },
-    { id: 'ir-17', studentId: 'stu-fengtao', date: '2026-03-07', type: InterventionType.GROUP_COUNSELING, counselor: '刘芳', duration: '85分钟', result: '团队协作能力提升中', status: 'in_progress' },
-    { id: 'ir-18', studentId: 'stu-chenjing', date: '2026-03-03', type: InterventionType.INITIAL_ASSESSMENT, counselor: '张伟', duration: '70分钟', result: '睡眠问题评估中', status: 'in_progress' },
-    { id: 'ir-19', studentId: 'stu-yangbo', date: '2026-03-05', type: InterventionType.REGULAR_INTERVIEW, counselor: '王丽', duration: '45分钟', result: '适应性辅导持续中', status: 'in_progress' },
-    { id: 'ir-20', studentId: 'stu-xiaoli', date: '2026-03-06', type: InterventionType.CBT_THERAPY, counselor: '刘芳', duration: '50分钟', result: '心理韧性培养进行中', status: 'in_progress' },
-  ]
-
-  for (const r of interventionRecords) {
-  const interventionRecords = [
     { id: 'ir-01', studentId: 'stu-zhangyu', date: '2026-02-15', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '状态良好', status: 'completed' },
     { id: 'ir-02', studentId: 'stu-zhangmingyuan', date: '2026-01-20', type: InterventionType.CBT_THERAPY, counselor: '张伟', duration: '60分钟', result: '认知重构进展顺利', status: 'completed' },
     { id: 'ir-03', studentId: 'stu-liusiyuan', date: '2025-12-28', type: InterventionType.GROUP_COUNSELING, counselor: '王丽', duration: '90分钟', result: '社交互动改善', status: 'completed' },
@@ -629,5 +603,3 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
-
-}
