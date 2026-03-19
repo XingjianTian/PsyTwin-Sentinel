@@ -221,11 +221,6 @@ export function TeamDashboard() {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">AI 思维</h3>
-        <p className="text-xs text-muted-foreground">监听每个 Agent 的当前思绪与执行状态</p>
-      </div>
-
       {agents.length === 0 ? (
         <Card className="border-dashed border-border/70 bg-muted/10">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">

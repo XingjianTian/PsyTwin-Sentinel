@@ -161,8 +161,8 @@ export function OpenClawOrchestrationView() {
           {/* Main Content */}
           <div className={isOfficeTab ? "xl:col-span-2 flex flex-col" : "w-full"}>
             <TabsContent value="office" className="mt-0 flex-1 min-h-0 flex flex-col">
-              <div className="text-center text-[10px] text-muted-foreground mb-1">
-                🤖 {agents.length} 个智能体节点 · 点击小人进行对话
+              <div className="text-xs text-muted-foreground mb-2">
+                多智能体可视化编排，点击智能体头像以对话
               </div>
               <AgentGridOffice agents={agents} onSelectAgent={setSelectedAgent} />
             </TabsContent>

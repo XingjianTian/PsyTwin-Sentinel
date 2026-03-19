@@ -84,18 +84,18 @@ export function ActivityLog() {
   return (
     <Card className="border-border bg-card">
       <CardHeader
-        className="cursor-pointer border-b border-border py-2"
+        className="cursor-pointer border-b border-border py-1"
         onClick={() => setCollapsed((prev) => !prev)}
       >
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xs text-foreground">
-            <Activity className="h-3.5 w-3.5" />
+            <Activity className="h-3 w-3" />
             活动日志
             <span className="text-[9px] text-green-500">● LIVE</span>
           </CardTitle>
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <span>{total || mergedActivities.length} 条</span>
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !collapsed && "rotate-180")} />
+            <ChevronDown className={cn("h-3 w-3 transition-transform", !collapsed && "rotate-180")} />
           </div>
         </div>
       </CardHeader>
@@ -105,7 +105,7 @@ export function ActivityLog() {
           <div
             ref={containerRef}
             onScroll={handleScroll}
-            className="max-h-[140px] space-y-1 overflow-y-auto p-2"
+            className="max-h-[90px] space-y-0 overflow-y-auto p-1.5"
           >
             {mergedActivities.length === 0 ? (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-center text-[11px] text-muted-foreground">
@@ -116,16 +116,16 @@ export function ActivityLog() {
                 <div
                   key={item.id}
                   className={cn(
-                    "rounded border border-border/60 bg-muted/30 px-2 py-1.5 transition-all duration-300 ease-out hover:bg-muted/50",
+                    "rounded border border-border/60 bg-muted/30 px-2 py-1 transition-all duration-300 ease-out hover:bg-muted/50",
                     index === 0 && "animate-in fade-in slide-in-from-top-2 duration-500 border-primary/40 bg-primary/5"
                   )}
                 >
                   {/* 第一行：时间 + 状态 */}
-                  <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-[9px] text-muted-foreground">{formatTime(item.timestamp, item.time)}</span>
                     {item.state && (
                       <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded-full",
+                        "text-[9px] px-1 py-0.5 rounded-full",
                         item.state === "completed" && "bg-green-500/15 text-green-600",
                         item.state === "in_progress" && "bg-blue-500/15 text-blue-600",
                         item.state === "analyzing" && "bg-amber-500/15 text-amber-600",
@@ -142,10 +142,10 @@ export function ActivityLog() {
                   </div>
                   
                   {/* 第二行：彩色Name标签 + 状态描述 */}
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 mt-0.5">
                     {/* Agent Name 彩色卡片 */}
                     <span
-                      className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md border"
+                      className="shrink-0 text-[10px] font-medium px-1 py-0.5 rounded-md border"
                       style={{
                         backgroundColor: `${item.agentColor || "#64748b"}15`,
                         borderColor: `${item.agentColor || "#64748b"}40`,
@@ -160,14 +160,6 @@ export function ActivityLog() {
                       {item.message?.replace?.(/^\S+\s*/, "") || item.message}
                     </span>
                   </div>
-                  
-                  {/* 第三行：消息内容预览（如果有） */}
-                  {(item.payload?.text || item.payload?.content || item.payload?.data?.text) && (
-                    <p className="mt-1.5 text-[10px] text-muted-foreground leading-tight pl-0.5 truncate">
-                      "{(item.payload?.text || item.payload?.content || item.payload?.data?.text)?.toString?.()?.slice?.(0, 12)?.replace?.(/\n/g, " ")}"
-                      {((item.payload?.text || item.payload?.content || item.payload?.data?.text)?.toString?.()?.length || 0) > 12 && "..."}
-                    </p>
-                  )}
                 </div>
               ))
             )}
