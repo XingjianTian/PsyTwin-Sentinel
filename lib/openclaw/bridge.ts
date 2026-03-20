@@ -46,6 +46,7 @@ type BridgeState = {
   connected: boolean
   connecting: boolean
   lastError: string | null
+  pendingOutgoing: Array<{ agentId: string; message: string; resolve: (v: unknown) => void; reject: (e: unknown) => void }>
 }
 
 const globalBridgeState = globalThis as unknown as {
@@ -61,6 +62,7 @@ if (!globalBridgeState.__psytwinOpenClawBridgeState) {
     connected: false,
     connecting: false,
     lastError: null,
+    pendingOutgoing: [],
   }
 }
 
@@ -670,6 +672,34 @@ function scheduleReconnect(state: BridgeState) {
   }, 5000)
 }
 
+function processOutgoingQueue(state: BridgeState) {
+  if (!state.ws || state.ws.readyState !== 1 || state.pendingOutgoing.length === 0) return
+
+  const item = state.pendingOutgoing.shift()
+  if (!item) return
+
+  const id = `bridge-req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  
+  state.ws.send(JSON.stringify({
+    type: "req",
+    id,
+    method: "chat",
+    params: {
+      agentId: item.agentId,
+      message: item.message,
+      user: "psytwin",
+    },
+  }))
+}
+
+export function sendMessageViaBridge(agentId: string, message: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const state = globalBridgeState.__psytwinOpenClawBridgeState!
+    state.pendingOutgoing.push({ agentId, message, resolve, reject })
+    processOutgoingQueue(state)
+  })
+}
+
 async function onWsClosed(state: BridgeState, reason: string) {
   state.connected = false
   state.connecting = false
@@ -725,6 +755,7 @@ async function connectOpenClawBridge() {
         lastConnectedAt: new Date(),
         lastError: null,
       })
+      processOutgoingQueue(state)
     })
 
     ws.on("message", async (raw: any) => {
@@ -812,6 +843,19 @@ async function connectOpenClawBridge() {
               state: "completed",
               result: payload.result,
             })
+          }
+          return
+        }
+
+        // 处理响应对应的 bridge 请求
+        if (msg.type === "res" && msg.id?.startsWith("bridge-req-")) {
+          const pending = state.pendingOutgoing.shift()
+          if (pending) {
+            if (msg.error) {
+              pending.reject(new Error(msg.error.message || "Gateway error"))
+            } else {
+              pending.resolve(msg.result || msg.response || msg)
+            }
           }
           return
         }

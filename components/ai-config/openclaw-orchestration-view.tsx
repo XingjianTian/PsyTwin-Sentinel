@@ -21,42 +21,45 @@ import { TeamDashboard } from "./team-dashboard"
 import { AgentChatPanel } from "./agent-chat-panel"
 import type { AgentGridItem } from "./agent-grid-label"
 
-// 加载 agents 的函数
-async function loadAgents(
-  setAgents: (agents: AgentGridItem[]) => void,
-  setSelectedAgent?: (agent: AgentGridItem) => void
-) {
-  try {
-    const res = await fetch("/api/openclaw/config")
-    const data = await res.json()
-    if (data.agents) {
-      setAgents(data.agents)
-      const mainAgent = data.agents.find((a: AgentGridItem) => a.id === "main")
-      if (mainAgent && setSelectedAgent) {
-        setSelectedAgent(mainAgent)
-      }
-    }
-  } catch {
-    // 忽略错误
-  }
-}
-
 export function OpenClawOrchestrationView() {
   const { requests, activities } = useOpenClawWorkflowStream()
   const [agents, setAgents] = useState<AgentGridItem[]>([])
   const [activeTab, setActiveTab] = useState("office")
   const [selectedAgent, setSelectedAgent] = useState<AgentGridItem | null>(null)
 
-  // 初始加载
   useEffect(() => {
-    loadAgents(setAgents, setSelectedAgent)
+    async function loadAndSelect() {
+      try {
+        const res = await fetch("/api/openclaw/config")
+        const data = await res.json()
+        if (data.agents) {
+          setAgents(data.agents)
+          const mainAgent = data.agents.find((a: AgentGridItem) => a.id === "main")
+          if (mainAgent) {
+            setSelectedAgent(mainAgent)
+          }
+        }
+      } catch {
+      }
+    }
+    loadAndSelect()
   }, [])
 
   // 监听 agents 更新事件（当 WebSocket 检测到新的 agents 列表时）
   useEffect(() => {
     const handleAgentsUpdate = () => {
       console.log("[OpenClaw] Agents list updated, refreshing...")
-      loadAgents(setAgents)
+      fetch("/api/openclaw/config")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.agents) {
+            setAgents(data.agents)
+            const mainAgent = data.agents.find((a: AgentGridItem) => a.id === "main")
+            if (mainAgent) {
+              setSelectedAgent(mainAgent)
+            }
+          }
+        })
     }
 
     openClawEventBus.on(OPENCLAW_EVENTS.AGENTS_UPDATE, handleAgentsUpdate)
