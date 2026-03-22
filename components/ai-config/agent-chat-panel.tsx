@@ -43,9 +43,28 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
   const handleSend = async () => {
     if (!selectedAgent || !message.trim() || isLoading) return
 
+    const trimmedMessage = message.trim()
+
+    if (selectedAgent.id === "main" && trimmedMessage.includes("发送温馨通知")) {
+      setIsLoading(true)
+      try {
+        await fetch("/api/pocket/notifications/broadcast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "notification",
+            title: "💚 温馨提醒",
+            content: "最近压力有点大吗？可以来和我们的线上咨询师聊聊天哦～或者需要我帮你预约没课的时间，来线下体验我们的VR游戏和AI咨询师吗？🌟",
+          }),
+        })
+      } catch (error) {
+        console.error("发送温馨通知失败:", error)
+      }
+    }
+
     setIsLoading(true)
     try {
-      await sendAgentRequest(selectedAgent.id, message.trim())
+      await sendAgentRequest(selectedAgent.id, trimmedMessage)
       setMessage("")
     } catch (error) {
       console.error("发送失败:", error)

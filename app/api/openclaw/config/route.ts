@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
-import { ensureOpenClawBridge } from "@/lib/openclaw/bridge"
 
 const db = prisma as any
 
@@ -33,7 +32,6 @@ function enrichAgent(agent: any) {
 }
 
 export async function GET() {
-  ensureOpenClawBridge()
 
   const agents = await db.openClawAgent.findMany({
     orderBy: [{ isOnline: "desc" }, { updatedAt: "desc" }],

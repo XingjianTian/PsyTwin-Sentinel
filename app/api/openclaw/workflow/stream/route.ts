@@ -1,4 +1,3 @@
-import { ensureOpenClawBridge } from "@/lib/openclaw/bridge"
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
 import { prisma } from "@/lib/prisma"
 
@@ -8,7 +7,6 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  ensureOpenClawBridge()
 
   const encoder = new TextEncoder()
   let alive = true

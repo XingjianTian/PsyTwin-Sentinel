@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
-import { ensureOpenClawBridge } from "@/lib/openclaw/bridge"
 
 const db = prisma as any
 
@@ -13,7 +12,6 @@ function toRequestState(state: string) {
 }
 
 export async function GET(request: NextRequest) {
-  ensureOpenClawBridge()
 
   const { searchParams } = new URL(request.url)
   const type = searchParams.get("type")

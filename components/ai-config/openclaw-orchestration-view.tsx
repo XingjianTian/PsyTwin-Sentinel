@@ -12,6 +12,8 @@ import {
 import { useOpenClawWorkflowStream } from "@/lib/openclaw/use-workflow-stream"
 import { openClawEventBus, OPENCLAW_EVENTS } from "@/lib/openclaw/event-bus"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LayoutGrid } from "lucide-react"
 import { AgentGridOffice } from "./agent-grid-office"
 import { LivePanel } from "./live-panel"
 import { StatsCards } from "./stats-cards"
@@ -26,6 +28,7 @@ export function OpenClawOrchestrationView() {
   const [agents, setAgents] = useState<AgentGridItem[]>([])
   const [activeTab, setActiveTab] = useState("office")
   const [selectedAgent, setSelectedAgent] = useState<AgentGridItem | null>(null)
+  const [showGrid, setShowGrid] = useState(true)
 
   useEffect(() => {
     async function loadAndSelect() {
@@ -164,10 +167,29 @@ export function OpenClawOrchestrationView() {
           {/* Main Content */}
           <div className={isOfficeTab ? "xl:col-span-2 flex flex-col" : "w-full"}>
             <TabsContent value="office" className="mt-0 flex-1 min-h-0 flex flex-col">
-              <div className="text-xs text-muted-foreground mb-2">
-                多智能体可视化编排，点击智能体头像以对话
-              </div>
-              <AgentGridOffice agents={agents} onSelectAgent={setSelectedAgent} />
+              <Card className="flex flex-1 flex-col border-border bg-card">
+                <CardHeader className="shrink-0 border-b border-border px-2 py-0.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <LayoutGrid className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs font-medium">可视化交互界面</span>
+                      <span className="text-[9px] text-green-500 font-medium">● LIVE</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        多智能体可视化编排，点击智能体头像以对话
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowGrid((v) => !v)}
+                      className="rounded border border-border bg-background/80 px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      {showGrid ? "🔲 隐藏网格" : "⊞ 显示网格"}
+                    </button>
+                  </div>
+                </CardHeader>
+                <CardContent className="min-h-0 flex-1 p-0">
+                  <AgentGridOffice agents={agents} onSelectAgent={setSelectedAgent} showGrid={showGrid} />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="team" className="mt-0">

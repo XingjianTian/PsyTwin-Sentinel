@@ -482,7 +482,7 @@ const response = await fetch('/api/openclaw/agent-chat', {
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        PsyTwin 系统架构                          │
+│               PsyTwin Sentinel校园心理健康后台管理系统 系统架构      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │   前端层 (Next.js 16)                                           │
@@ -743,3 +743,6 @@ PsyTwin-Sentinel/
 <p align="center">
   <strong>PsyTwin</strong> - 守护每一颗心灵 💚
 </p>
+
+
+

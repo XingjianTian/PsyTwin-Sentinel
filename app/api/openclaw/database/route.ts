@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
-import { ensureOpenClawBridge } from "@/lib/openclaw/bridge"
 
 const db = prisma
 
@@ -142,7 +141,6 @@ async function getTableRowCount(tableName: string) {
 }
 
 export async function GET(request: Request) {
-  ensureOpenClawBridge()
 
   const { searchParams } = new URL(request.url)
   const action = searchParams.get("action") || "tables"

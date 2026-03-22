@@ -8,14 +8,14 @@ import { AgentGridLabel, type AgentGridItem } from "./agent-grid-label"
 interface AgentGridOfficeProps {
   agents: AgentGridItem[]
   onSelectAgent?: (agent: AgentGridItem) => void
+  showGrid?: boolean
 }
 
-export function AgentGridOffice({ agents, onSelectAgent }: AgentGridOfficeProps) {
-  const [showGrid, setShowGrid] = useState(true)
+export function AgentGridOffice({ agents, onSelectAgent, showGrid = true }: AgentGridOfficeProps) {
   const grid = getGridVisualization()
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/30">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-card">
       <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: "100%" }}>
         <Image
           src="/map.jpg"
@@ -84,15 +84,6 @@ export function AgentGridOffice({ agents, onSelectAgent }: AgentGridOfficeProps)
               />
             ))}
           </div>
-        </div>
-
-        <div className="absolute right-2 top-2 z-20">
-          <button
-            onClick={() => setShowGrid((v) => !v)}
-            className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm hover:bg-muted transition-colors"
-          >
-            {showGrid ? "🔲 隐藏网格" : "⊞ 显示网格"}
-          </button>
         </div>
 
         {agents.length === 0 && (

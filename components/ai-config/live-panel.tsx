@@ -56,18 +56,8 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
   const lastItem = group[group.length - 1]
 
   const hasFailed = group.some(i => i.type === "failed" || i.state === "failed")
-  const isCompleted = group.some(i => i.type === "lifecycle.end" || i.state === "completed" || i.type === "response.completed")
+  const isCompleted = group.some(i => i.type === "lifecycle.end" || i.state === "completed" || i.type === "response.completed" || i.type === "pocket.completed")
   const isInProgress = group.some(i => i.state === "in_progress" || i.state === "analyzing")
-
-  const status = hasFailed ? "failed" : isCompleted ? "completed" : isInProgress ? "in_progress" : "pending"
-
-  const subAgentItem = group.find(i => i.type === "subagent.response")
-  let displayMessage = firstItem.message?.slice(0, 40) || "新请求"
-  if (subAgentItem) {
-    const raw = subAgentItem.message || ""
-    const cleaned = raw.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, " ").replace(/\s+/g, " ").trim()
-    displayMessage = `【预览】${cleaned.slice(0, 50)}`
-  }
 
   const durationMs = (lastItem.timestamp || 0) - (firstItem.timestamp || 0)
   const durationStr = durationMs > 0
@@ -76,20 +66,47 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
     : `${Math.round(durationMs / 60000)}分钟`
     : ""
 
-  const statusIcon = status === "completed" ? "✓" :
-                     status === "in_progress" ? "◐" :
-                     status === "failed" ? "✗" : "○"
-
-  const avatarItem = subAgentItem || firstItem
+  const avatarItem = firstItem
   const rawName = avatarItem.agentName || avatarItem.agentId || "系统"
   const agentMeta = getAgentMeta(rawName)
   const avatarPath = getAgentAvatar(avatarItem.agentId || "")
   const avatarColor = agentMeta?.color || "#64748b"
 
+  const steps = []
+  if (group.some(i => i.type === "pocket.chat" || i.type === "request.start")) {
+    steps.push({ label: "收到", color: "bg-gray-400" })
+  }
+  if (group.some(i => i.state === "analyzing" || i.type === "lifecycle.start")) {
+    steps.push({ label: "分析", color: "bg-blue-400" })
+  }
+  if (group.some(i => i.type === "subagent.response")) {
+    steps.push({ label: "子代理", color: "bg-cyan-400" })
+  }
+  if (isInProgress) {
+    steps.push({ label: "处理", color: "bg-purple-400" })
+  }
+  if (isCompleted) {
+    steps.push({ label: "完成", color: "bg-green-400" })
+  }
+  if (hasFailed) {
+    steps.push({ label: "失败", color: "bg-red-400" })
+  }
+
+  const isPocket = group.some(i => i.type === "pocket.chat" || i.type === "pocket.completed")
+  const isSentinel = group.some(i => i.type === "request.start" || i.type === "response.completed" || i.type === "lifecycle.start" || i.type === "lifecycle.end")
+  const isVR = group.some(i => i.type === "stream.delta" || i.type === "stream.assistant" || i.type === "subagent.response")
+
+  const sourceLabel = isPocket ? "Pocket小程序" : isSentinel ? "Sentinel管理" : "VR任务"
+  const sourceColors = isPocket
+    ? { bg: "bg-cyan-500/10", border: "border-cyan-500/30", text: "text-cyan-600" }
+    : isSentinel
+    ? { bg: "bg-purple-500/10", border: "border-purple-500/30", text: "text-purple-600" }
+    : { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-600" }
+
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/40 bg-card hover:bg-muted/30 hover:border-border/60 hover:shadow-sm transition-all cursor-pointer"
+      className="flex items-center gap-3 px-2 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/30 hover:border-border/60 hover:shadow-sm transition-all cursor-pointer"
     >
       <div
         className="w-8 h-8 rounded-md border-2 shrink-0 overflow-hidden"
@@ -115,7 +132,7 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 mb-1">
           <span className="text-xs font-medium" style={{ color: avatarColor }}>
             {agentMeta?.name || rawName}
           </span>
@@ -123,18 +140,21 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
             {formatTime(firstItem.timestamp, firstItem.time)}
           </span>
         </div>
-        <p className="text-[11px] text-foreground/80 truncate mt-0.5">{displayMessage}</p>
+        <div className="flex items-center gap-1 flex-nowrap overflow-hidden">
+          {steps.map((step) => (
+            <span key={step.label} className={cn("text-[10px] px-1.5 py-0.5 rounded text-white font-medium shrink-0", step.color)}>
+              {step.label}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
         {durationStr && (
           <span className="text-[9px] text-muted-foreground">{durationStr}</span>
         )}
-        <span className={cn("text-[10px] px-1.5 py-0.5 rounded", status === "completed" && "bg-green-500/10 text-green-600", status === "in_progress" && "bg-blue-500/10 text-blue-600", status === "failed" && "bg-red-500/10 text-red-600", status === "pending" && "bg-gray-500/10 text-gray-500")}>
-          {status === "completed" && "完成"}
-          {status === "in_progress" && "进行中"}
-          {status === "failed" && "失败"}
-          {status === "pending" && "等待"}
+        <span className={cn("text-[10px] px-2 py-1 rounded border shadow-sm", sourceColors.bg, sourceColors.border, sourceColors.text)}>
+          {sourceLabel}
         </span>
       </div>
     </div>
@@ -144,8 +164,7 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
 function DetailDialog({ group, open, onClose }: { group: OpenClawActivityItem[]; open: boolean; onClose: () => void }) {
   if (!open) return null
 
-  const subAgentItems = group.filter(i => i.type === "subagent.response" || i.type === "stream.delta")
-  const firstItem = group[0]
+  const sortedItems = [...group].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -158,7 +177,7 @@ function DetailDialog({ group, open, onClose }: { group: OpenClawActivityItem[];
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {group.map((item, index) => (
+          {sortedItems.map((item, index) => (
             <div key={item.id} className="p-3 rounded-lg border bg-muted/30">
               <div className="flex items-center gap-2 mb-2">
                 <span
@@ -200,14 +219,15 @@ export function LivePanel() {
       groups.get(key)!.push(item)
     }
 
-    const sortedGroups = Array.from(groups.values()).map(group => {
-      return group.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-    })
+    const sortedGroups = Array.from(groups.values())
 
     sortedGroups.sort((a, b) => {
       const latestA = a[a.length - 1].timestamp || 0
       const latestB = b[b.length - 1].timestamp || 0
-      return latestB - latestA
+      if (latestB !== latestA) return latestB - latestA
+      const firstA = a[0].timestamp || 0
+      const firstB = b[0].timestamp || 0
+      return firstB - firstA
     })
 
     return sortedGroups.slice(0, 5)
@@ -218,7 +238,7 @@ export function LivePanel() {
   return (
     <>
       <Card className="flex h-full flex-col border-border bg-card">
-        <CardHeader className="shrink-0 border-b border-border px-3 py-1.5">
+        <CardHeader className="shrink-0 border-b border-border px-2 py-0.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Activity className="h-3 w-3 text-muted-foreground" />
@@ -234,13 +254,13 @@ export function LivePanel() {
           </div>
         </CardHeader>
 
-        <CardContent className="min-h-0 flex-1 p-2 overflow-y-auto">
+        <CardContent className="min-h-0 flex-1 p-1 overflow-y-auto">
           {groupedActivities.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-[11px] text-muted-foreground">等待实时事件...</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {groupedActivities.map((group) => (
                 <WorkflowRow
                   key={(group[0].requestId || group[0].id)}
