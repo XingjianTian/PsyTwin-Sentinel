@@ -73,9 +73,9 @@ const menuGroups: MenuGroup[] = [
     label: "AI配置",
     href: "#",
     subItems: [
-      { icon: Workflow, label: "OpenClaw 编排", href: "/ai-config?tab=openclaw" },
       { icon: Database, label: "RAG 向量知识库", href: "/ai-config?tab=rag" },
       { icon: BrainCircuit, label: "模型与策略中心", href: "/ai-config?tab=strategy" },
+      { icon: Workflow, label: "OpenClaw 编排", href: "/ai-config?tab=openclaw" },
     ],
   },
   {

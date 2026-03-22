@@ -239,6 +239,55 @@ export function RagKnowledgeBaseView() {
         </Card>
 
         <Card className="border-border bg-card shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold text-foreground">向量数据库状态</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border text-muted-foreground">
+                  <th className="py-1.5 pr-3 text-left font-medium">属性</th>
+                  <th className="px-3 py-1.5 text-left font-medium">含义</th>
+                  <th className="pl-3 py-1.5 text-left font-medium">值</th>
+                </tr>
+              </thead>
+              <tbody className="text-muted-foreground">
+                <tr className="border-b border-border/30">
+                  <td className="py-1.5 pr-3 font-mono">backend</td>
+                  <td className="px-3 py-1.5">向量数据库引擎</td>
+                  <td className="pl-3 py-1.5 font-mono">qmd</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-1.5 pr-3 font-mono">citations</td>
+                  <td className="px-3 py-1.5">引用来源追踪</td>
+                  <td className="pl-3 py-1.5 font-mono">auto</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-1.5 pr-3 font-mono">sessions.enabled</td>
+                  <td className="px-3 py-1.5">会话状态管理</td>
+                  <td className="pl-3 py-1.5 font-mono">true</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-1.5 pr-3 font-mono">update.interval</td>
+                  <td className="px-3 py-1.5">索引更新间隔</td>
+                  <td className="pl-3 py-1.5 font-mono">5m</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-1.5 pr-3 font-mono">update.debounceMs</td>
+                  <td className="px-3 py-1.5">防抖延迟</td>
+                  <td className="pl-3 py-1.5 font-mono">15000ms</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-3 font-mono">update.onBoot</td>
+                  <td className="px-3 py-1.5">启动时更新索引</td>
+                  <td className="pl-3 py-1.5 font-mono">true</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Search className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-semibold text-foreground">RAG 检索测试</CardTitle>

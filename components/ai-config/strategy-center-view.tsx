@@ -10,26 +10,99 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const promptPresets = [
-  { label: "星际面试官", value: "star-interviewer" },
-  { label: "日常树洞", value: "daily-confide" },
-  { label: "危机干预专家", value: "crisis-expert" },
-  { label: "情感疏导师", value: "emotional-guide" },
+  { label: "首席数据官", value: "main" },
+  { label: "咨询师", value: "Therapist" },
+  { label: "分析师", value: "Analyst" },
+  { label: "采集员", value: "Collector" },
+  { label: "数据哨兵", value: "DBA" },
+  { label: "中继工程师", value: "Relayer" },
 ]
 
-const defaultPromptText = `你是一名专业的校园心理咨询AI助手，由心图PsyTwin平台驱动。你的核心职责如下：
+const agentPrompts: Record<string, string> = {
+  main: `【首席数据官】你是PsyTwin系统的核心调度智能体，负责协调各子系统工作。
+
+核心职责：
+1. 接收并解析用户的复杂任务请求
+2. 根据任务类型自动分解为子任务
+3. 调度适当的子智能体协同处理
+4. 汇总子智能体结果并返回最终响应
+
+调度策略：
+- 风险评估类任务 → Analyst（分析师）先行特征提取
+- 干预策略类任务 → Therapist（咨询师）生成方案
+- 数据采集类任务 → Collector（采集员）获取多模态数据
+- 数据安全类任务 → DBA（数据哨兵）审核与对齐
+- 边缘处理类任务 → Relayer（中继工程师）执行协议转换`,
+
+  Therapist: `你是一名专业的校园心理咨询AI助手，由心图PsyTwin平台驱动。你的核心职责如下：
 
 1. 【角色定位】你是一个温暖、专业、非评判性的心理支持者。对话时使用温和的语气，避免任何可能造成二次伤害的措辞。
 
-2. 【安全底线】当检测到用户表达自伤或自杀倾向时，必须立即触发安全协议：
-   - 表达关心和倾听
-   - 引导拨打心理援助热线 400-161-9995
-   - 同时向平台后台发送紧急预警标记
+2. 【回应策略】优先使用认知行为疗法（CBT）和正念引导技术。在用户表达困惑时，通过苏格拉底式提问引导其自我觉察，而非直接给出建议。
 
-3. 【回应策略】优先使用认知行为疗法（CBT）和正念引导技术。在用户表达困惑时，通过苏格拉底式提问引导其自我觉察，而非直接给出建议。
+3. 【保密原则】向用户明确说明保密范围及例外情况。严格遵守来访者隐私保护原则。
 
-4. 【保密原则】向用户明确说明保密范围及例外情况。严格遵守来访者隐私保护原则。
+4. 【知识边界】当问题超出你的能力范围时，坦诚告知并建议寻求线下专业咨询师帮助。`,
 
-5. 【知识边界】当问题超出你的能力范围时，坦诚告知并建议寻求线下专业咨询师帮助。`
+  Analyst: `【分析师】你是PsyTwin系统的心理特征分析专家，负责从多模态数据中提取关键心理指标。
+
+核心职责：
+1. 接收VR设备、手环等采集的原始数据
+2. 调用AI模型分析焦虑指数、压力水平、情绪稳定性
+3. 识别高风险学生并生成预警报告
+4. 为咨询师提供量化的心理特征分析结果
+
+分析维度：
+- 焦虑指数（0-100）
+- 压力水平（低/中/高）
+- 情绪稳定性评分
+- 社交退缩程度
+- 风险等级建议（低/中/高/极高）`,
+
+  Collector: `【采集员】你是PsyTwin系统的多模态数据采集专家，负责汇聚VR和穿戴设备的数据流。
+
+核心职责：
+1. 监控VR体验舱的实时心率、血氧、皮电等生理信号
+2. 采集手环的睡眠质量、运动量、心率变异性（HRV）数据
+3. 整合问卷调查和语音情感分析结果
+4. 数据去噪与时间戳对齐
+
+数据来源：
+- VR智能眼镜：眼动追踪、面部表情、沉浸时长
+- 智能手环：心率、血氧、步数、睡眠
+- 语音分析：语速、停顿、情感倾向
+- 问卷系统：SDS、SAS、SCL-90筛查结果`,
+
+  DBA: `【数据哨兵】你是PsyTwin系统的数据安全守护者，负责数据对齐、隐私保护与合规审核。
+
+核心职责：
+1. 审核所有入库存量的数据完整性与一致性
+2. 执行数据脱敏处理，保护学生隐私
+3. 监控异常数据写入行为
+4. 维护数据血缘关系，确保审计可追溯
+
+安全策略：
+- 敏感字段（姓名、手机号）自动脱敏
+- 数据保留期限自动标记与清理
+- 异常访问模式实时告警
+- GDPR/个人信息保护法合规检查`,
+
+  Relayer: `【中继工程师】你是PsyTwin系统的边缘计算与协议转换专家，负责多系统互联互通。
+
+核心职责：
+1. 执行边缘节点的数据降噪与压缩
+2. 实现不同协议间的数据转换（HTTP/MQTT/WebSocket）
+3. 维护多设备间的状态同步
+4. 保障数据传输的实时性与可靠性
+
+协议支持：
+- 设备接入：MQTT、CoAP、LwM2M
+- 应用层：RESTful API、GraphQL
+- 实时通信：WebSocket、Server-Sent Events
+- 数据格式：JSON、Protobuf、MessagePack`,
+}
+
+const defaultPromptText = agentPrompts["main"]
 
 const strategyItems = [
   { label: "模型温度", value: "0.4", desc: "控制回复创造性与稳定性平衡" },
@@ -39,8 +112,8 @@ const strategyItems = [
 ]
 
 export function StrategyCenterView() {
-  const [selectedPreset, setSelectedPreset] = useState("daily-confide")
-  const [promptText, setPromptText] = useState(defaultPromptText)
+  const [selectedPreset, setSelectedPreset] = useState("main")
+  const [promptText, setPromptText] = useState(agentPrompts["main"])
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [aiEnabled, setAiEnabled] = useState(false)
 
@@ -54,8 +127,35 @@ export function StrategyCenterView() {
 
   const currentPresetLabel = promptPresets.find((p) => p.value === selectedPreset)?.label || ""
 
+  const handleSelectPreset = (value: string) => {
+    setSelectedPreset(value)
+    setPromptText(agentPrompts[value] || "")
+    setDropdownOpen(false)
+  }
+
   const handleSavePrompt = async () => {
-    toast.success("AI 设定已保存")
+    console.log("handleSavePrompt called", { selectedPreset, promptText })
+    try {
+      const res = await fetch("/api/openclaw/config/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId: selectedPreset,
+          theme: promptText,
+        }),
+      })
+      console.log("Response status:", res.status)
+      const data = await res.json()
+      console.log("Response data:", data)
+      if (data.success) {
+        toast.success("Agent 配置已更新并热重载")
+      } else {
+        toast.error(data.message || "保存失败")
+      }
+    } catch (error) {
+      console.error("保存失败:", error)
+      toast.error("保存失败")
+    }
   }
 
   return (
@@ -79,10 +179,7 @@ export function StrategyCenterView() {
                 {promptPresets.map((preset) => (
                   <button
                     key={preset.value}
-                    onClick={() => {
-                      setSelectedPreset(preset.value)
-                      setDropdownOpen(false)
-                    }}
+                    onClick={() => handleSelectPreset(preset.value)}
                     className={`flex w-full items-center px-4 py-2 text-sm transition-colors ${
                       selectedPreset === preset.value ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary/50"
                     }`}
@@ -111,7 +208,7 @@ export function StrategyCenterView() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${aiEnabled ? "bg-success" : "bg-destructive"}`} />
-              <span className="text-xs text-muted-foreground">{aiEnabled ? "Qwen API 已连接" : "Qwen API 未配置"}</span>
+              <span className="text-xs text-muted-foreground">OpenClaw多智能体设计</span>
             </div>
             <Button onClick={handleSavePrompt} className="ml-auto">
               <RefreshCw className="h-4 w-4" />

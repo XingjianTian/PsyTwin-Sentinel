@@ -79,6 +79,18 @@ async function main() {
     })
   }
 
+  await prisma.user.upsert({
+    where: { email: 'admin@psytwin.com' },
+    update: {},
+    create: {
+      email: 'admin@psytwin.com',
+      name: '管理员',
+      passwordHash: await hashPassword('admin123'),
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    },
+  })
+
   // 20个学生数据
   const students = [
     { id: 'stu-zhangyu', name: '张宇', studentNo: '2025030218', className: '大数据2502', facultyId: 'fac-data', riskLevel: RiskLevel.LOW, mbti: 'INTJ' },
