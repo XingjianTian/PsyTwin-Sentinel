@@ -132,20 +132,21 @@ model Alert {
 }
 
 model WorkOrder {
-  id        String          @id @default(uuid())
-  studentId String          @map("student_id")
-  className String          @map("class_name")
-  trigger   String
-  riskLevel RiskLevel       @map("risk_level")
-  method    String
-  counselor String
-  status    WorkOrderStatus
-  date      DateTime
-  detail    String?
-  summary   String?
-  createdAt DateTime        @default(now()) @map("created_at")
-  updatedAt DateTime        @updatedAt @map("updated_at")
-  student   Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id           String          @id @default(uuid())
+  studentId    String          @map("student_id")
+  className    String          @map("class_name")
+  trigger      String
+  riskLevel    RiskLevel       @map("risk_level")
+  method       String
+  counselor    String
+  status       WorkOrderStatus
+  date         DateTime
+  detail       String?
+  summary      String?
+  aiAssessment String?         @map("ai_assessment")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  student      Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
   @@index([riskLevel])

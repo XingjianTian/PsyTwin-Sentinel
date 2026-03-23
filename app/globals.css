@@ -192,3 +192,122 @@
   transition-timing-function: ease;
   transition-duration: 150ms;
 }
+
+/* 风险评分圆环 */
+@keyframes score-fill {
+  from {
+    stroke-dashoffset: 283;
+  }
+}
+
+@keyframes ring-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+.ring-glow {
+  animation: ring-glow 2s ease-in-out infinite;
+}
+
+/* 卡片内容切换动画 */
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up-fade 0.3s ease-out forwards;
+}
+
+.risk-score-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.risk-score-ring circle {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.animate-score-fill {
+  animation: score-fill 0.8s ease-out forwards;
+}
+
+/* 风险等级脉冲动画 */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.risk-pulse-high {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.risk-pulse-high::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  width: 6px;
+  height: 6px;
+  background-color: #EF4444;
+  border-radius: 50%;
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.risk-pulse-medium {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.risk-pulse-medium::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  width: 6px;
+  height: 6px;
+  background-color: #F59E0B;
+  border-radius: 50%;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 工单卡片 Hover 上浮效果 */
+.work-order-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.work-order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.work-order-card.selected {
+  transform: none;
+}
+
+.work-order-card.selected:hover {
+  transform: none;
+}

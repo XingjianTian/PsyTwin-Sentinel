@@ -22,6 +22,7 @@ export interface RiskWorkOrder {
   level: "high" | "medium" | "low"
   time: string
   summary: string
+  aiAssessment: string | null
 }
 
 function mapRiskLevel(level: RiskLevel): RiskWorkOrder["level"] {
@@ -48,11 +49,11 @@ function formatOrderTime(date: Date): string {
  */
 export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
   return cacheAside(
-    "risk:workorders:pending",
+    "risk:workorders:pending:v4",
     async () => {
       const orders = await prisma.workOrder.findMany({
         where: {
-          riskLevel: { in: [RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.LOW] },
+          riskLevel: { in: [RiskLevel.HIGH, RiskLevel.MEDIUM] },
           status: WorkOrderStatus.PENDING,
         },
         include: {
@@ -67,7 +68,7 @@ export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
         },
       })
 
-      return orders.map((order) => ({
+      const mappedOrders = orders.map((order) => ({
         id: order.id,
         name: order.student.name,
         className: order.className,
@@ -75,7 +76,19 @@ export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
         level: mapRiskLevel(order.riskLevel),
         time: formatOrderTime(order.date),
         summary: order.summary ?? order.detail ?? "暂无摘要",
+        aiAssessment: order.aiAssessment,
       }))
+
+      // 排序：高危在前，同等级按时间
+      const riskOrder = { high: 0, medium: 1, low: 2 }
+      mappedOrders.sort((a, b) => {
+        if (a.level !== b.level) {
+          return riskOrder[a.level] - riskOrder[b.level]
+        }
+        return b.time.localeCompare(a.time)
+      })
+
+      return mappedOrders
     },
     180 // 3 分钟 TTL
   )

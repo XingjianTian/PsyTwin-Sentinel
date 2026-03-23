@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -19,8 +19,9 @@ import {
 } from "@/app/actions/risk-trace"
 import { WorkOrderDetailSheet } from "@/components/work-order-detail-sheet"
 
-// AI assessment text
-const aiAssessment = `【Qwen-14B 风险溯源分析报告】
+// 默认 AI 评估报告（用于没有个性化评估数据的工单）
+function getDefaultAIAssessment(studentName: string): string {
+  return `【Qwen-14B 风险溯源分析报告 - ${studentName}】
 
 综合多模态数据交叉验证，该生近期心理状态评估如下：
 
@@ -32,6 +33,89 @@ const aiAssessment = `【Qwen-14B 风险溯源分析报告】
 
 【风险等级评估】：中高风险（综合评分 78/100）
 【建议干预方案】：启动二级预警流程，安排心理咨询师48小时内面谈，同步通知辅导员关注。`
+}
+
+// 从AI评估文本中提取风险评分
+function extractRiskScore(text: string): number {
+  const match = text.match(/(\d+)\/100/)
+  return match ? parseInt(match[1]) : 75
+}
+
+// 获取风险评分对应的颜色
+function getRiskScoreColor(score: number): string {
+  if (score >= 80) return "#EF4444"
+  if (score >= 60) return "#F59E0B"
+  if (score >= 40) return "#EAB308"
+  return "#10B981"
+}
+
+// 根据风险等级获取推荐策略
+function getRecommendations(level: "high" | "medium" | "low"): { label: string; className: string }[] {
+  const base = [
+    { label: "辅导员关注", className: "border-blue-500/50 bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600" }
+  ]
+  
+  if (level === "low") {
+    return base
+  }
+  
+  if (level === "medium") {
+    return [
+      { label: "心理咨询", className: "border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600" },
+      ...base,
+      { label: "家长沟通", className: "border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600" }
+    ]
+  }
+  
+  // high
+  return [
+    { label: "立即干预", className: "border-destructive/50 bg-destructive/15 px-3 py-1 text-sm font-bold text-destructive" },
+    { label: "心理咨询", className: "border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600" },
+    ...base,
+    { label: "家长沟通", className: "border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600" }
+  ]
+}
+
+// 风险评分圆环组件
+function RiskScoreRing({ score }: { score: number }) {
+  const circumference = 2 * Math.PI * 45
+  const offset = circumference - (score / 100) * circumference
+  const color = getRiskScoreColor(score)
+  
+  return (
+    <div className="relative inline-flex items-center justify-center" key={score}>
+      <svg className="risk-score-ring h-14 w-14" viewBox="0 0 100 100">
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          className="text-muted/20"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="animate-score-fill ring-glow"
+          style={{ color }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm font-bold animate-pulse" style={{ color }}>
+          {score}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export function RiskTraceView() {
   const [workOrders, setWorkOrders] = useState<RiskWorkOrder[]>([])
@@ -41,6 +125,47 @@ export function RiskTraceView() {
   const [error, setError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [animationKey, setAnimationKey] = useState(0)
+  const [displayedText, setDisplayedText] = useState("")
+  const [typingComplete, setTypingComplete] = useState(false)
+  const prevSelectedIdRef = useRef<string | null>(null)
+  const selectedCardRef = useRef<HTMLLIElement | null>(null)
+
+  // 工单切换时触发动画并滚动到可视区域
+  useEffect(() => {
+    if (selectedOrder && selectedOrder.id !== prevSelectedIdRef.current) {
+      setAnimationKey((k) => k + 1)
+      prevSelectedIdRef.current = selectedOrder.id
+      
+      // 滚动到选中的卡片
+      setTimeout(() => {
+        selectedCardRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        })
+      }, 50)
+    }
+  }, [selectedOrder?.id])
+
+  // 打字机效果
+  useEffect(() => {
+    setTypingComplete(false)
+    const fullText = selectedOrder?.aiAssessment ?? getDefaultAIAssessment(selectedOrder?.name ?? "该生")
+    setDisplayedText("")
+    
+    let index = 0
+    const timer = setInterval(() => {
+      if (index <= fullText.length) {
+        setDisplayedText(fullText.slice(0, index))
+        index++
+      } else {
+        clearInterval(timer)
+        setTypingComplete(true)
+      }
+    }, 8)
+    
+    return () => clearInterval(timer)
+  }, [selectedOrder?.id, animationKey])
 
   async function loadOrders() {
     try {
@@ -114,21 +239,21 @@ export function RiskTraceView() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-5">
+    <div className="grid h-[calc(100vh-140px)] gap-4 lg:grid-cols-5">
       {/* Left: Work order list */}
-      <div className="lg:col-span-2">
-        <Card className="border-border bg-card shadow-sm">
+      <div className="flex h-full flex-col lg:col-span-2">
+        <Card className="flex h-full flex-col border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <CardTitle className="text-base font-semibold text-foreground">
-              高危预警工单列表
+              中高危预警工单列表
             </CardTitle>
             <Badge className="ml-auto border-destructive/30 bg-destructive/15 text-destructive">
               {workOrders.length} 条待处理
             </Badge>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <ScrollArea className="h-[calc(100vh-200px)]">
+          <CardContent className="flex-1 overflow-hidden px-3 pb-3">
+            <ScrollArea className="h-[520px]">
               {isLoading ? (
                 <p className="px-2 py-6 text-sm text-muted-foreground">正在加载工单...</p>
               ) : error ? (
@@ -138,7 +263,10 @@ export function RiskTraceView() {
               ) : (
                 <ul className="flex flex-col gap-2">
                   {workOrders.map((order) => (
-                    <li key={order.id}>
+                    <li 
+                      key={order.id} 
+                      ref={selectedOrder?.id === order.id ? selectedCardRef : undefined}
+                    >
                       <div
                         role="button"
                         tabIndex={0}
@@ -149,9 +277,9 @@ export function RiskTraceView() {
                             setSelectedOrder(order)
                           }
                         }}
-                        className={`w-full cursor-pointer rounded-lg border px-3 py-3 text-left transition-all ${
+                        className={`work-order-card w-full cursor-pointer rounded-lg border px-3 py-3 text-left transition-all ${
                           selectedOrder?.id === order.id
-                            ? "border-destructive/40 bg-destructive/10 ring-1 ring-destructive/20"
+                            ? "selected border-destructive/40 bg-destructive/10 ring-1 ring-destructive/20"
                             : "border-border bg-muted/50 hover:bg-muted"
                         }`}
                       >
@@ -161,7 +289,7 @@ export function RiskTraceView() {
                           <Badge
                             className={`ml-auto text-xs ${
                               order.level === "high"
-                                ? "border-destructive/30 bg-destructive/20 text-destructive"
+                                ? "border-destructive/30 bg-destructive/20 text-destructive animate-pulse-ring"
                                 : order.level === "medium"
                                   ? "border-warning/30 bg-warning/20 text-warning"
                                   : "border-success/30 bg-success/15 text-success"
@@ -196,21 +324,34 @@ export function RiskTraceView() {
         </Card>
       </div>
 
-      {/* Right: AI Risk Assessment only */}
       {/* Right: AI Risk Assessment - aligned with work order list */}
       <div className="lg:col-span-3">
-        {/* Card C: AI Risk Assessment - Full Width */}
-        <Card className="border-2 border-chart-4/30 bg-card shadow-lg">
+        <Card className="flex h-full flex-col border-2 border-chart-4/30 bg-card shadow-lg">
           <CardHeader className="flex flex-row items-center gap-3 pb-3">
             <BrainCircuit className="h-6 w-6 text-chart-4" />
             <CardTitle className="text-lg font-bold text-foreground">
-              AI 风险评估结论
+              AI 风险感知预警
             </CardTitle>
-            <Badge className="ml-auto border-chart-4/30 bg-chart-4/10 font-mono text-xs text-chart-4">
-              Qwen-14B
-            </Badge>
+            <div className="ml-auto flex items-center gap-2">
+              {selectedOrder && (
+                <>
+                  <Badge className={
+                    selectedOrder.level === "high"
+                      ? "border-destructive/50 bg-destructive/15 px-2 py-1 text-sm font-bold text-destructive"
+                      : selectedOrder.level === "medium"
+                        ? "border-warning/50 bg-warning/15 px-2 py-1 text-sm font-bold text-warning"
+                        : "border-success/50 bg-success/15 px-2 py-1 text-sm font-bold text-success"
+                  }>
+                    {selectedOrder.level === "high" ? "高危" : selectedOrder.level === "medium" ? "中危" : "低危"}
+                  </Badge>
+                  {typingComplete && (
+                    <RiskScoreRing score={extractRiskScore(displayedText)} />
+                  )}
+                </>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-1 flex-col space-y-4 overflow-hidden px-6 pb-6">
             {workOrders.length > 0 && (
               <>
                 {/* 推荐策略 Tag 突出显示 */}
@@ -219,24 +360,23 @@ export function RiskTraceView() {
                     <ShieldCheck className="h-5 w-5" />
                     推荐策略：
                   </span>
-                  <Badge className="border-destructive/50 bg-destructive/15 px-3 py-1 text-sm font-bold text-destructive">
-                    立即干预
-                  </Badge>
-                  <Badge className="border-amber-500/50 bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-600">
-                    心理咨询
-                  </Badge>
-                  <Badge className="border-blue-500/50 bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600">
-                    辅导员关注
-                  </Badge>
-                  <Badge className="border-purple-500/50 bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-600">
-                    家长沟通
-                  </Badge>
+                  {selectedOrder && getRecommendations(selectedOrder.level).map((rec, idx) => (
+                    <Badge key={idx} className={rec.className}>
+                      {rec.label}
+                    </Badge>
+                  ))}
                 </div>
 
-                <ScrollArea className="h-[480px]">
-                  <pre className="whitespace-pre-wrap font-sans text-m leading-relaxed text-secondary-foreground/90">
-                    {aiAssessment}
-                  </pre>
+                <ScrollArea className="h-[360px]">
+                  <div
+                    key={animationKey}
+                    className="animate-slide-up"
+                  >
+                    <pre className="whitespace-pre-wrap pr-4 font-sans text-sm leading-relaxed text-secondary-foreground/90">
+                      {displayedText}
+                      <span className="animate-pulse">▋</span>
+                    </pre>
+                  </div>
                 </ScrollArea>
 
                 <div className="flex items-center justify-end gap-3 pt-2">
@@ -278,9 +418,12 @@ export function RiskTraceView() {
             )}
 
             {workOrders.length === 0 && (
-              <div className="flex h-[480px] flex-col items-center justify-center space-y-4 text-center">
-                <div className="rounded-full border-4 border-success/20 bg-success/10 p-8">
-                  <ShieldCheck className="h-16 w-16 text-success" />
+              <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 animate-ping rounded-full border-4 border-success/30 opacity-20" />
+                  <div className="rounded-full border-4 border-success/20 bg-success/10 p-8">
+                    <ShieldCheck className="h-16 w-16 text-success" />
+                  </div>
                 </div>
                 <h3 className="text-xl font-semibold text-foreground">太好了！</h3>
                 <p className="max-w-md text-muted-foreground">
