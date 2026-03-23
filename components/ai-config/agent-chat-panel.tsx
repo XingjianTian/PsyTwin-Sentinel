@@ -54,7 +54,7 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
           body: JSON.stringify({
             type: "notification",
             title: "💚 温馨提醒",
-            content: "最近压力有点大吗？可以来和我们的线上咨询师聊聊天哦～或者需要我帮你预约没课的时间，来线下体验我们的VR游戏和AI咨询师吗？🌟",
+            content: "亲爱的同学，最近学习压力大吗？如果感到焦虑或疲惫，可以来和我们的线上咨询师聊聊天，也可以预约没课的时间来线下体验VR游戏和AI咨询服务哦 🌟",
           }),
         })
       } catch (error) {
