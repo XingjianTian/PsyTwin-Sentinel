@@ -19,20 +19,9 @@ import {
 } from "@/app/actions/risk-trace"
 import { WorkOrderDetailSheet } from "@/components/work-order-detail-sheet"
 
-// 默认 AI 评估报告（用于没有个性化评估数据的工单）
-function getDefaultAIAssessment(studentName: string): string {
-  return `【Qwen-14B 风险溯源分析报告 - ${studentName}】
-
-综合多模态数据交叉验证，该生近期心理状态评估如下：
-
-1. 语音情感分析：在最近3次课堂发言中，声学特征显示语音基频（F0）波动幅度超出正常范围217%，梅尔频率倒谱系数（MFCC）呈现焦虑特征模式。语速较基线水平降低34%，伴随频繁停顿和语气词增多。
-
-2. 生理特征监测：心率变异性（HRV）指标持续偏低，SDNN值为28.3ms（正常参考>50ms），提示自主神经调节功能受损。睡眠质量评分为2.1/10，深睡眠占比仅11%。
-
-3. 行为轨迹分析：社交网络图谱显示近14天社交半径收缩至宿舍楼栋范围内，食堂就餐频率下降72%。图书馆打卡记录中断。
-
-【风险等级评估】：中高风险（综合评分 78/100）
-【建议干预方案】：启动二级预警流程，安排心理咨询师48小时内面谈，同步通知辅导员关注。`
+// 清理多余的空行
+function cleanAssessmentText(text: string): string {
+  return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
 // 从AI评估文本中提取风险评分
@@ -150,7 +139,7 @@ export function RiskTraceView() {
   // 打字机效果
   useEffect(() => {
     setTypingComplete(false)
-    const fullText = selectedOrder?.aiAssessment ?? getDefaultAIAssessment(selectedOrder?.name ?? "该生")
+    const fullText = cleanAssessmentText(selectedOrder?.aiAssessment ?? "暂无风险溯源分析报告")
     setDisplayedText("")
     
     let index = 0
@@ -344,9 +333,7 @@ export function RiskTraceView() {
                   }>
                     {selectedOrder.level === "high" ? "高危" : selectedOrder.level === "medium" ? "中危" : "低危"}
                   </Badge>
-                  {typingComplete && (
-                    <RiskScoreRing score={extractRiskScore(displayedText)} />
-                  )}
+                  <RiskScoreRing score={extractRiskScore(selectedOrder?.aiAssessment ?? "")} />
                 </>
               )}
             </div>
