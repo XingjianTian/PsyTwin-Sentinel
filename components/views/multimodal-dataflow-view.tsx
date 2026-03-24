@@ -510,7 +510,7 @@ export function MultimodalDataFlowView() {
               {students.length} 位学生正在体验中
               {isMock && <span className="ml-1 text-amber-500">(演示)</span>}
             </CardDescription>
-            {!isMock && students.length > 0 && (
+            {students.length > 0 && (
               <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2 w-full">
                 <TabsList className="grid w-2/3 grid-cols-2 text-sm">
                   <TabsTrigger value="student-list">学生列表</TabsTrigger>

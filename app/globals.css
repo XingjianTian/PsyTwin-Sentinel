@@ -311,3 +311,36 @@
 .work-order-card.selected:hover {
   transform: none;
 }
+
+/* VR Dashboard 动画 */
+
+/* 表格行淡入上浮 */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* 成功标签脉冲动画 */
+@keyframes pulse-success {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.animate-pulse-success {
+  animation: pulse-success 2s ease-in-out infinite;
+}

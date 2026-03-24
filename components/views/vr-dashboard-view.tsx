@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -21,6 +21,7 @@ import {
   LineChart,
   Line,
   Legend,
+  Cell,
 } from "recharts"
 
 import {
@@ -28,6 +29,7 @@ import {
   getDashboardVrRecords,
   type DashboardVrRecord,
 } from "@/app/actions/vr-dashboard"
+import { cn } from "@/lib/utils"
 
 /* ── KPI stats ── */
 const stats = [
@@ -71,10 +73,10 @@ const stats = [
 
 /* ── Scene usage data ── */
 const sceneData = [
-  { scene: "社交焦虑脱敏", 频次: 2340 },
-  { scene: "考试压力释放", 频次: 1980 },
-  { scene: "正念冥想空间", 频次: 2680 },
-  { scene: "情绪宣泄训练", 频次: 1432 },
+  { scene: "焦虑脱敏", 频次: 2340, color: "#7C3AED" },
+  { scene: "压力释放", 频次: 1980, color: "#F59E0B" },
+  { scene: "冥想空间", 频次: 2680, color: "#10B981" },
+  { scene: "情绪疗愈", 频次: 1432, color: "#3B82F6" },
 ]
 
 /* ── Before/After stress line data ── */
@@ -130,6 +132,37 @@ export function VrDashboardView() {
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [actingId, setActingId] = useState<string | null>(null)
+  const [animatedCards, setAnimatedCards] = useState<boolean[]>([false, false, false, false])
+  const [animatedCharts, setAnimatedCharts] = useState(false)
+  const [animatedTable, setAnimatedTable] = useState(false)
+  const [countValues, setCountValues] = useState([0, 0, 0, 0])
+  
+  const statValues = [8432, 23.5, 76.8, 42]
+  const statSuffixes = ["", " 分钟", "%", " 台"]
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimatedCards([true, true, true, true])
+      setAnimatedCharts(true)
+      setAnimatedTable(true)
+      
+      const duration = 1500
+      const steps = 60
+      const interval = duration / steps
+      
+      let step = 0
+      const timer = setInterval(() => {
+        step++
+        const progress = step / steps
+        const eased = 1 - Math.pow(1 - progress, 3)
+        setCountValues(statValues.map(v => Math.round(v * eased * 10) / 10))
+        if (step >= steps) clearInterval(timer)
+      }, interval)
+      
+      return () => clearInterval(timer)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   async function loadRecords() {
     try {
@@ -169,23 +202,18 @@ export function VrDashboardView() {
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Gamepad2 className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-semibold text-foreground">
-              四大场景使用频次
+              四大场景使用时长
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sceneData} margin={{ top: 10, right: 10, bottom: 30, left: 0 }}>
+                <BarChart data={sceneData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                   <XAxis
                     dataKey="scene"
-                    tick={{ fill: "#6B7280", fontSize: 11 }}
+                    tick={false}
                     axisLine={{ stroke: "#E5E7EB" }}
-                    tickLine={false}
-                    interval={0}
-                    angle={-20}
-                    textAnchor="end"
-                    height={50}
                   />
                   <YAxis
                     tick={{ fill: "#6B7280", fontSize: 10 }}
@@ -195,13 +223,31 @@ export function VrDashboardView() {
                   <Tooltip content={<SceneTooltip />} cursor={{ fill: "rgba(124, 58, 237, 0.05)" }} />
                   <Bar
                     dataKey="频次"
-                    fill="#7C3AED"
                     radius={[4, 4, 0, 0]}
-                    barSize={40}
+                    barSize={50}
                     fillOpacity={0.85}
-                  />
+                    isAnimationActive={animatedCharts}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  >
+                    {sceneData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            <div className="mt-4 flex flex-wrap justify-end gap-4">
+              {sceneData.map((item) => (
+                <span
+                  key={item.scene}
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
+                  style={{ backgroundColor: `${item.color}15`, color: item.color }}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.scene}
+                </span>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -249,6 +295,9 @@ export function VrDashboardView() {
                     strokeWidth={2}
                     dot={{ fill: "#F59E0B", r: 3 }}
                     activeDot={{ r: 5, fill: "#F59E0B" }}
+                    isAnimationActive={animatedCharts}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
                   />
                   <Line
                     type="monotone"
@@ -257,6 +306,9 @@ export function VrDashboardView() {
                     strokeWidth={2}
                     dot={{ fill: "#10B981", r: 3 }}
                     activeDot={{ r: 5, fill: "#10B981" }}
+                    isAnimationActive={animatedCharts}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -267,22 +319,25 @@ export function VrDashboardView() {
 
       {/* ── Middle: 4 stat cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
+        {stats.map((s, i) => (
           <Card
             key={s.label}
-            className={`relative overflow-hidden border bg-gradient-to-br ${s.gradient} ${s.borderColor} backdrop-blur-sm`}
+            className={cn(
+              `relative overflow-hidden border bg-gradient-to-br ${s.gradient} ${s.borderColor} backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`,
+              animatedCards[i] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}
+            style={{ transitionDelay: `${i * 100}ms` }}
           >
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className={`rounded-lg bg-background/40 p-2.5 ${s.iconColor}`}>
-                <s.icon className="h-5 w-5" />
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className={`rounded-lg bg-background/40 p-2 ${s.iconColor}`}>
+                <s.icon className="h-4 w-4" />
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="mt-0.5 text-xl font-bold text-foreground">{s.value}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{s.change}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground truncate">{s.label}</p>
+                <p className="text-lg font-bold text-foreground">{countValues[i].toLocaleString()}{statSuffixes[i]}</p>
+                <p className="text-xs text-muted-foreground truncate">{s.change}</p>
               </div>
             </CardContent>
-            {/* subtle glow corner */}
             <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br ${s.gradient} opacity-40 blur-xl`} />
           </Card>
         ))}
@@ -295,9 +350,6 @@ export function VrDashboardView() {
           <CardTitle className="text-base font-semibold text-foreground">
             最新VR干预记录
           </CardTitle>
-          <span className="ml-auto text-xs text-muted-foreground">
-            共 {vrRecords.length} 条记录
-          </span>
         </CardHeader>
         <CardContent>
           {actionMessage ? (
@@ -328,10 +380,14 @@ export function VrDashboardView() {
                     </td>
                   </tr>
                 ) : null}
-                {vrRecords.map((r) => (
+                {vrRecords.map((r, idx) => (
                   <tr
                     key={r.id}
-                    className="border-b border-border/30 transition-colors hover:bg-secondary/20"
+                    className={cn(
+                      "border-b border-border/30 transition-colors hover:bg-secondary/20",
+                      animatedTable && "animate-fade-in-up"
+                    )}
+                    style={{ animationDelay: `${idx * 50}ms` }}
                   >
                     <td className="px-3 py-2.5 font-medium text-foreground">{r.name}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{r.cls}</td>
@@ -354,7 +410,7 @@ export function VrDashboardView() {
                     <td className="px-3 py-2.5">
                       <Badge className={`text-xs ${
                         r.result === "positive"
-                          ? "border-success/30 bg-success/10 text-success"
+                          ? "border-success/30 bg-success/10 text-success animate-pulse-success"
                           : "border-chart-4/30 bg-chart-4/10 text-chart-4"
                       }`}>
                         {r.result === "positive" ? "有效改善" : "持续观察"}
