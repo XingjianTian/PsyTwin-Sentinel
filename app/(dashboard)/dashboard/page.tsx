@@ -15,7 +15,7 @@ export default function DashboardPage() {
           <AlertRadarCard />
         </div>
       </div>
-      <div className="mt-4">
+      <div className="mt-6">
         <FunnelCard />
       </div>
     </>

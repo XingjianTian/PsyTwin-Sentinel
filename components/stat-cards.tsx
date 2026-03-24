@@ -47,12 +47,12 @@ export function StatCards() {
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+          className="group flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg"
         >
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.iconBg}`}
           >
-            <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+            <stat.icon className={`h-5 w-5 ${stat.iconColor} transition-transform duration-200 group-hover:scale-110`} />
           </div>
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">{stat.label}</p>

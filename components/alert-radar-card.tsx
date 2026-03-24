@@ -57,15 +57,19 @@ export function AlertRadarCard() {
   useEffect(() => {
     const interval = setInterval(() => {
       const pool = newAlertPool[Math.floor(Math.random() * newAlertPool.length)]
-      const newAlert: AlertItem = {
-        id: nextId.current++,
-        name: pool.name,
-        className: randomClass(),
-        type: pool.type,
-        level: pool.level,
-        time: getTimeStr(),
-      }
-      setAlerts((prev) => [newAlert, ...prev.slice(0, 19)])
+      setAlerts((prev) => {
+        const existingNames = new Set(prev.map(a => a.name))
+        if (existingNames.has(pool.name)) return prev
+        const newAlert: AlertItem = {
+          id: nextId.current++,
+          name: pool.name,
+          className: randomClass(),
+          type: pool.type,
+          level: pool.level,
+          time: getTimeStr(),
+        }
+        return [newAlert, ...prev.slice(0, 19)]
+      })
     }, 3000)
 
     const wsInterval = setInterval(() => {
@@ -80,8 +84,8 @@ export function AlertRadarCard() {
   }, [])
 
   return (
-    <Card className="border-border bg-card shadow-sm">
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
+    <Card className="border-border bg-card shadow-sm h-[550px] flex flex-col">
+      <CardHeader className="flex flex-row items-center gap-2 pb-2 shrink-0">
         <Radio className="h-5 w-5 text-destructive" />
         <CardTitle className="text-base font-semibold text-foreground">
           实时预警雷达
@@ -98,41 +102,41 @@ export function AlertRadarCard() {
           </span>
         </div>
       </CardHeader>
-      <CardContent className="px-4 pb-4">
+      <CardContent className="flex-1 flex flex-col px-4 pb-4 min-h-0 overflow-hidden">
         <div className="mb-2 grid grid-cols-[1fr_auto_auto] items-center gap-3 px-2 text-xs font-medium text-muted-foreground">
-          <span>学生姓名 / 班级</span>
+          <span>学生信息</span>
           <span>预警类型</span>
           <span className="text-right">时间</span>
         </div>
 
-        <ScrollArea className="h-[340px] pr-2">
-          <ul className="flex flex-col gap-1.5">
-            {alerts.map((alert, i) => (
+        <ScrollArea className="flex-1 pr-2 min-h-0">
+          <ul className="flex flex-col gap-2">
+            {alerts.slice(0, 6).map((alert, i) => (
               <li
                 key={alert.id}
-                className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md px-2 py-2 transition-all ${
+                className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-md px-3 py-3 transition-all ${
                   i === 0
                     ? "bg-destructive/10 ring-1 ring-destructive/20"
                     : "bg-muted/50 hover:bg-muted"
                 }`}
               >
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-sm font-medium text-foreground">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="text-base font-semibold text-foreground">
                     {alert.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">{alert.className}</span>
+                  <span className="text-sm text-muted-foreground">{alert.className}</span>
                 </div>
                 <Badge
                   variant={alert.level === "critical" ? "destructive" : "secondary"}
                   className={
                     alert.level === "critical"
-                      ? "border-destructive/30 bg-destructive/20 text-destructive"
-                      : "border-warning/30 bg-warning/20 text-warning"
+                      ? "border-destructive/30 bg-destructive/20 text-destructive text-sm"
+                      : "border-warning/30 bg-warning/20 text-warning text-sm"
                   }
                 >
                   {alert.type}
                 </Badge>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="font-mono text-sm text-muted-foreground">
                   {alert.time}
                 </span>
               </li>
@@ -140,7 +144,7 @@ export function AlertRadarCard() {
           </ul>
         </ScrollArea>
 
-        <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground shrink-0">
           <span>
             今日预警：
             <span className="font-mono font-semibold text-destructive">
