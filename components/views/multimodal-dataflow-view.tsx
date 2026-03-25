@@ -688,23 +688,27 @@ export function MultimodalDataFlowView() {
             <div className="flex-1 rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:border-amber-800 dark:from-slate-800 dark:to-slate-900">
               <div className="flex items-center gap-2 mb-2">
                 <Brain className="h-4 w-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-600">行为分析</span>
+                <span className="text-lg font-medium text-amber-600">行为分析</span>
               </div>
               <div className="space-y-1.5 text-base">
                 <p className="text-muted-foreground">
-                  {currentStudent.behavior.interactionFreq > 1 ? "✓ 高交互频率，表现出积极态度" :
+                  {activeTab === "realtime-test" && !currentStudent.behavior.interactionFreq ? "○ 等待数据..." :
+                   currentStudent.behavior.interactionFreq > 1 ? "✓ 高交互频率，表现出积极态度" :
                    currentStudent.behavior.interactionFreq > 0.5 ? "○ 中等交互频率" : "△ 交互较少，需要关注"}
                 </p>
                 <p className="text-muted-foreground">
-                  {currentStudent.behavior.responseDelay > 2 ? "△ 反应较慢" :
+                  {activeTab === "realtime-test" && !currentStudent.behavior.responseDelay ? "○ 等待数据..." :
+                   currentStudent.behavior.responseDelay > 2 ? "△ 反应较慢" :
                    currentStudent.behavior.responseDelay > 1.5 ? "○ 反应正常" : "✓ 反应迅速"}
                 </p>
                 <p className="text-muted-foreground">
-                  {currentStudent.behavior.handTremor > 0.3 ? "△ 手部震颤明显" :
+                  {activeTab === "realtime-test" && !currentStudent.behavior.handTremor ? "○ 等待数据..." :
+                   currentStudent.behavior.handTremor > 0.3 ? "△ 手部震颤明显" :
                    currentStudent.behavior.handTremor > 0.2 ? "○ 轻微震颤" : "✓ 手部稳定"}
                 </p>
                 <p className="text-muted-foreground">
-                  {currentStudent.behavior.avoidanceCount > 5 ? "△ 回避行为较多" :
+                  {activeTab === "realtime-test" && !currentStudent.behavior.avoidanceCount ? "○ 等待数据..." :
+                   currentStudent.behavior.avoidanceCount > 5 ? "△ 回避行为较多" :
                    currentStudent.behavior.avoidanceCount > 2 ? "○ 偶有回避" : "✓ 无明显回避"}
                 </p>
               </div>
