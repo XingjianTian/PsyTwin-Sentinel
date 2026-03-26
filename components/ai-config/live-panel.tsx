@@ -18,7 +18,7 @@ const AGENT_AVATAR_MAP: Record<string, string> = {
   dba: "/agents-icons/DBA.png",
   relayer: "/agents-icons/Relayer.png",
   therapist: "/agents-icons/Therapist.png",
-  main: "/agents-icons/main.png",
+  main: "/agents-icons/psytwin.jpg",
 }
 
 function formatTime(value?: number, fallback?: string) {
@@ -96,7 +96,7 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
   const isSentinel = group.some(i => i.type === "request.start" || i.type === "response.completed" || i.type === "lifecycle.start" || i.type === "lifecycle.end")
   const isVR = group.some(i => i.type === "stream.delta" || i.type === "stream.assistant" || i.type === "subagent.response")
 
-  const sourceLabel = isPocket ? "Pocket小程序" : isSentinel ? "Sentinel管理" : "VR任务"
+  const sourceLabel = isPocket ? "微信小程序" : isSentinel ? "指挥中心" : "VR任务"
   const sourceColors = isPocket
     ? { bg: "bg-cyan-500/10", border: "border-cyan-500/30", text: "text-cyan-600" }
     : isSentinel
@@ -106,10 +106,10 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-3 px-2 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/30 hover:border-border/60 hover:shadow-sm transition-all cursor-pointer"
+      className="flex items-start gap-3 px-3 py-3 rounded-lg border-2 border-border bg-card shadow-sm hover:bg-muted/30 hover:shadow-md transition-all cursor-pointer"
     >
       <div
-        className="w-8 h-8 rounded-md border-2 shrink-0 overflow-hidden"
+        className="w-10 h-10 rounded-md border-2 shrink-0 overflow-hidden"
         style={{ borderColor: avatarColor }}
         title={agentMeta?.name || rawName}
       >
@@ -117,13 +117,13 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
           <Image
             src={avatarPath}
             alt={agentMeta?.name || rawName}
-            width={32}
-            height={32}
+            width={40}
+            height={40}
             className="w-full h-full object-cover"
           />
         ) : (
           <div
-            className="w-full h-full flex items-center justify-center text-xs font-medium"
+            className="w-full h-full flex items-center justify-center text-sm font-medium"
             style={{ backgroundColor: avatarColor + "30", color: avatarColor }}
           >
             {agentMeta ? agentMeta.emoji || agentMeta.name.slice(0, 1) : "?"}
@@ -131,31 +131,30 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-xs font-medium" style={{ color: avatarColor }}>
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium" style={{ color: avatarColor }}>
             {agentMeta?.name || rawName}
           </span>
-          <span className="text-[9px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {formatTime(firstItem.timestamp, firstItem.time)}
           </span>
+          {durationStr && (
+            <span className="text-xs text-muted-foreground ml-auto">{durationStr}</span>
+          )}
         </div>
-        <div className="flex items-center gap-1 flex-nowrap overflow-hidden">
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
           {steps.map((step) => (
-            <span key={step.label} className={cn("text-[10px] px-1.5 py-0.5 rounded text-white font-medium shrink-0", step.color)}>
+            <span key={step.label} className={cn("text-xs px-2 py-0.5 rounded text-white font-medium shrink-0", step.color)}>
               {step.label}
             </span>
           ))}
         </div>
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
-        {durationStr && (
-          <span className="text-[9px] text-muted-foreground">{durationStr}</span>
-        )}
-        <span className={cn("text-[10px] px-2 py-1 rounded border shadow-sm", sourceColors.bg, sourceColors.border, sourceColors.text)}>
-          {sourceLabel}
-        </span>
+        <div className="flex items-center justify-end">
+          <span className={cn("text-xs px-2 py-1 rounded border shadow-sm", sourceColors.bg, sourceColors.border, sourceColors.text)}>
+            {sourceLabel}
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -230,7 +229,7 @@ export function LivePanel() {
       return firstB - firstA
     })
 
-    return sortedGroups.slice(0, 5)
+    return sortedGroups.slice(0, 4)
   }, [activities])
 
   const totalEvents = groupedActivities.reduce((sum, g) => sum + g.length, 0)
@@ -242,7 +241,7 @@ export function LivePanel() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Activity className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs font-medium">活动日志</span>
+              <span className="text-base font-medium">活动日志</span>
               <span className="text-[9px] text-green-500">● LIVE</span>
               {groupedActivities.length > 0 && (
                 <span className="text-[9px] text-muted-foreground/60 ml-1">点击查看详情</span>

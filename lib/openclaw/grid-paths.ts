@@ -34,17 +34,50 @@ export const GRID_CONNECTIONS: Record<number, number[]> = {
   5: [2, 4],
 }
 
-/** 获取随机起点 */
-export function getRandomSpawnPoint(): GridPoint {
+// 各智能体活动区域（可用的点位列表）
+export const AGENT_ZONES: Record<string, number[]> = {
+  main: [1, 2, 4, 5],
+  Therapist: [2],
+  Analyst: [5],
+  Collector: [0],
+  DBA: [4, 5],
+  Relayer: [0, 3],
+}
+
+// 各智能体固定出生点
+const AGENT_SPAWN_POINTS: Record<string, number> = {
+  main: 1,
+  Therapist: 2,
+  Analyst: 5,
+  Collector: 0,
+  DBA: 4,
+  Relayer: 3,
+}
+
+/** 获取固定出生点 */
+export function getRandomSpawnPoint(agentId?: string): GridPoint {
+  const spawnId = agentId ? (AGENT_SPAWN_POINTS[agentId] ?? undefined) : undefined
+  if (spawnId !== undefined) {
+    return GRID_POINTS[spawnId]
+  }
   const randomIndex = Math.floor(Math.random() * GRID_POINTS.length)
   return GRID_POINTS[randomIndex]
 }
 
 /** 从当前点的连接点中随机选择下一个目标 */
-export function getNextTargetPoint(currentId: number): GridPoint {
-  const connections = GRID_CONNECTIONS[currentId]
-  const randomIndex = Math.floor(Math.random() * connections.length)
-  return GRID_POINTS[connections[randomIndex]]
+export function getNextTargetPoint(currentId: number, agentId?: string): GridPoint {
+  const zone = agentId ? AGENT_ZONES[agentId] : null
+  let pool = GRID_CONNECTIONS[currentId]
+
+  if (zone) {
+    pool = pool.filter(id => zone.includes(id))
+    if (pool.length === 0) {
+      return GRID_POINTS[currentId]
+    }
+  }
+
+  const randomIndex = Math.floor(Math.random() * pool.length)
+  return GRID_POINTS[pool[randomIndex]]
 }
 
 /** 根据两点距离计算移动时长（秒） */

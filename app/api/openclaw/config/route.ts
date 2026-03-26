@@ -8,8 +8,8 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 // Agent 默认样式映射
-const AGENT_STYLES: Record<string, { emoji: string; color: string; role: string }> = {
-  main: { emoji: "🧭", color: "#3b82f6", role: "协调中枢" },
+const AGENT_STYLES: Record<string, { name?: string; emoji: string; color: string; role: string }> = {
+  main: { name: "小芯", emoji: "🧭", color: "#3b82f6", role: "协调中枢" },
   bingbu: { emoji: "🛠️", color: "#22c55e", role: "技术实现" },
   gongbu: { emoji: "⚙️", color: "#f59e0b", role: "工程部署" },
   hubu: { emoji: "💰", color: "#06b6d4", role: "资源管理" },
@@ -23,6 +23,7 @@ function enrichAgent(agent: any) {
   if (style) {
     return {
       ...agent,
+      name: style.name || agent.name,
       emoji: agent.emoji || style.emoji,
       color: agent.color || style.color,
       role: agent.role || style.role,

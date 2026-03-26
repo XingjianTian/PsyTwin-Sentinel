@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const promptPresets = [
-  { label: "首席数据官", value: "main" },
+  { label: "小芯", value: "main" },
   { label: "咨询师", value: "Therapist" },
   { label: "分析师", value: "Analyst" },
   { label: "采集员", value: "Collector" },
@@ -19,7 +19,7 @@ const promptPresets = [
 ]
 
 const agentPrompts: Record<string, string> = {
-  main: `【首席数据官】你是PsyTwin系统的核心调度智能体，负责协调各子系统工作。
+  main: `【小芯】你是PsyTwin系统的核心调度智能体，负责协调各子系统工作。
 
 核心职责：
 1. 接收并解析用户的复杂任务请求

@@ -1,6 +1,6 @@
 export const AGENTS = {
   main: {
-    name: "首席数据官",
+    name: "小芯",
     emoji: "🎯",
     color: "#ff006e",
     role: "总览全局",
@@ -40,7 +40,7 @@ export const AGENTS = {
 export type AgentId = keyof typeof AGENTS
 
 export const AGENT_DESCRIPTIONS: Record<string, string> = {
-  main: "首席数据官 - 协调全局，统筹所有子系统",
+  main: "小芯 - 协调全局，统筹所有子系统",
   Collector: "采集员 - 负责监控 VR 与手环的多模态原始流",
   Therapist: "咨询师 - 生成 VR 干预策略与孪生体交互",
   Relayer: "中继工程师 - 执行边缘降噪与协议转换",

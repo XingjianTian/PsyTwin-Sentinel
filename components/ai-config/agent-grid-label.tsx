@@ -25,7 +25,7 @@ const AGENT_AVATAR_MAP: Record<string, string> = {
   "dba": "/agents-icons/DBA.png",
   "relayer": "/agents-icons/Relayer.png",
   "therapist": "/agents-icons/Therapist.png",
-  "main": "/agents-icons/main.png",
+  "main": "/agents-icons/psytwin.jpg",
 }
 
 // 根据 agent ID 获取头像路径
@@ -82,7 +82,7 @@ export function AgentGridLabel({ agent, onClick, isSelected }: AgentGridLabelPro
 
   useEffect(() => {
     setMounted(true)
-    setCurrentPoint(getRandomSpawnPoint())
+    setCurrentPoint(getRandomSpawnPoint(agent.id))
   }, [agent.id])
   const [moveDuration, setMoveDuration] = useState(3)
 
@@ -90,7 +90,7 @@ export function AgentGridLabel({ agent, onClick, isSelected }: AgentGridLabelPro
     if (isMoving || !currentPoint) return
     setIsMoving(true)
 
-    const next = getNextTargetPoint(currentPoint.id)
+    const next = getNextTargetPoint(currentPoint.id, agent.id)
     setTargetPointId(next.id)
     
     // 计算移动方向决定动画时长
@@ -113,13 +113,13 @@ export function AgentGridLabel({ agent, onClick, isSelected }: AgentGridLabelPro
 
     const loop = async () => {
       while (active) {
-        await new Promise((r) => setTimeout(r, 1000 + Math.random() * 2000))
+        await new Promise((r) => setTimeout(r, 2000 + Math.random() * 4000))
         if (!active) break
         await moveToNext()
       }
     }
 
-    const timer = setTimeout(loop, 500 + Math.random() * 1500)
+    const timer = setTimeout(loop, 1000)
     return () => {
       active = false
       clearTimeout(timer)
