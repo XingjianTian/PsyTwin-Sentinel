@@ -249,7 +249,9 @@ export function MultimodalDataFlowView() {
       setSelectedStudentId(testStudent.id)
       setIsMock(true)
     }
+  }, [])
 
+  useEffect(() => {
     const eventSource = new EventSource('/api/multimodal/sensors/stream')
 
     eventSource.addEventListener('connected', () => {})
