@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BrainCircuit, Check, ChevronDown, RefreshCw, Settings2, SlidersHorizontal } from "lucide-react"
+import { BrainCircuit, Check, RefreshCw, Settings2, SlidersHorizontal, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { checkAIStatus } from "@/app/actions/ai-services"
@@ -102,8 +102,6 @@ const agentPrompts: Record<string, string> = {
 - 数据格式：JSON、Protobuf、MessagePack`,
 }
 
-const defaultPromptText = agentPrompts["main"]
-
 const strategyItems = [
   { label: "模型温度", value: "0.4", desc: "控制回复创造性与稳定性平衡" },
   { label: "最大回复长度", value: "1200 Tokens", desc: "用于限制单次输出长度" },
@@ -113,25 +111,129 @@ const strategyItems = [
 
 export function StrategyCenterView() {
   const [selectedPreset, setSelectedPreset] = useState("main")
-  const [promptText, setPromptText] = useState(agentPrompts["main"])
+  const [currentAgentName, setCurrentAgentName] = useState("")
+  const [promptText, setPromptText] = useState("")
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [aiEnabled, setAiEnabled] = useState(false)
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [comboboxValue, setComboboxValue] = useState("")
+  const [agentList, setAgentList] = useState<{ label: string; value: string }[]>([])
+  const [promptMap, setPromptMap] = useState<Record<string, string>>({})
+
+  const loadAgents = async (resetSelection = false) => {
+    try {
+      const res = await fetch("/api/openclaw/config/agents")
+      const data = await res.json()
+      if (data.success && data.agents) {
+        const list = data.agents.map((a: any) => ({ label: a.name, value: a.id }))
+        const map: Record<string, string> = {}
+        data.agents.forEach((a: any) => {
+          map[a.id] = a.theme || ""
+        })
+        setAgentList(list)
+        setPromptMap(map)
+        if (resetSelection && list.length > 0) {
+          setSelectedPreset(list[0].value)
+          setPromptText(map[list[0].value] || "")
+        } else if (list.length > 0) {
+          const currentExists = list.find((a: { value: string }) => a.value === selectedPreset)
+          if (currentExists) {
+            setPromptText(map[selectedPreset] || "")
+          } else {
+            setSelectedPreset(list[0].value)
+            setPromptText(map[list[0].value] || "")
+          }
+        }
+      }
+    } catch (err) {
+      console.error("加载 Agent 失败:", err)
+    }
+  }
 
   useEffect(() => {
     async function loadStatus() {
       const status = await checkAIStatus()
       setAiEnabled(status.enabled)
     }
+    loadAgents(true)
     loadStatus()
   }, [])
 
-  const currentPresetLabel = promptPresets.find((p) => p.value === selectedPreset)?.label || ""
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest(".combobox-container")) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [dropdownOpen])
+
+  const currentPresetLabel = agentList.find((p) => p.value === selectedPreset)?.label || ""
 
   const handleSelectPreset = (value: string) => {
+    const label = agentList.find(a => a.value === value)?.label || ""
     setSelectedPreset(value)
-    setPromptText(agentPrompts[value] || "")
+    setCurrentAgentName(label)
+    setPromptText(promptMap[value] || "")
+    setComboboxValue("")
     setDropdownOpen(false)
   }
+
+  const NAME_TO_ID: Record<string, string> = {
+    "采集员": "Collector",
+    "分析师": "Analyst",
+    "咨询师": "Therapist",
+    "DBA": "DBA",
+  }
+
+  const handleDesignAgent = (name: string, value: string) => {
+    const id = NAME_TO_ID[name] || value
+    setSelectedPreset(id)
+    setCurrentAgentName(name)
+    setPromptText("")
+    setDropdownOpen(false)
+  }
+
+  const handleDeleteAgent = async () => {
+    if (!selectedPreset) return
+    const label = agentList.find(a => a.value === selectedPreset)?.label || ""
+    if (agentList.length <= 1) {
+      toast.error("至少保留一个 Agent")
+      return
+    }
+
+    if (!confirm(`确认删除 Agent "${label}"？此操作不可恢复。`)) return
+
+    try {
+      const res = await fetch("/api/openclaw/config/agents", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: selectedPreset }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`已删除 Agent: ${label}`)
+        const newList = agentList.filter(a => a.value !== selectedPreset)
+        const newMap = { ...promptMap }
+        delete newMap[selectedPreset]
+        setAgentList(newList)
+        setPromptMap(newMap)
+        setSelectedPreset(newList[0].value)
+        setPromptText(newMap[newList[0].value] || "")
+      } else {
+        toast.error(data.message || "删除失败")
+      }
+    } catch {
+      toast.error("删除失败")
+    }
+  }
+
+  const filteredAgents = agentList.filter(a =>
+    a.label.toLowerCase().includes(comboboxValue.toLowerCase())
+  )
 
   const handleSavePrompt = async () => {
     console.log("handleSavePrompt called", { selectedPreset, promptText })
@@ -142,6 +244,7 @@ export function StrategyCenterView() {
         body: JSON.stringify({
           agentId: selectedPreset,
           theme: promptText,
+          name: currentAgentName || agentList.find(a => a.value === selectedPreset)?.label || "",
         }),
       })
       console.log("Response status:", res.status)
@@ -149,12 +252,43 @@ export function StrategyCenterView() {
       console.log("Response data:", data)
       if (data.success) {
         toast.success("Agent 配置已更新并热重载")
+        await loadAgents()
       } else {
         toast.error(data.message || "保存失败")
       }
     } catch (error) {
       console.error("保存失败:", error)
       toast.error("保存失败")
+    }
+  }
+
+  const handleEnhancePrompt = async () => {
+    if (!promptText.trim() || isEnhancing) return
+
+    const currentLabel = agentList.find(p => p.value === selectedPreset)?.label || ""
+
+    setIsEnhancing(true)
+    try {
+      const res = await fetch("/api/ai/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: promptText,
+          agentName: currentLabel,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.enhanced) {
+        setPromptText(data.enhanced)
+        toast.success("AI 已补充 Prompt 内容")
+      } else {
+        toast.error(data.message || "AI 补充失败")
+      }
+    } catch (error) {
+      console.error("AI 补充失败:", error)
+      toast.error("AI 补充失败")
+    } finally {
+      setIsEnhancing(false)
     }
   }
 
@@ -166,35 +300,64 @@ export function StrategyCenterView() {
           <CardTitle className="text-base font-semibold text-foreground">模型与策略中心</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-4">
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary/50"
-            >
-              <span>预设角色：{currentPresetLabel}</span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-            {dropdownOpen && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-border bg-popover py-1 shadow-xl">
-                {promptPresets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleSelectPreset(preset.value)}
-                    className={`flex w-full items-center px-4 py-2 text-sm transition-colors ${
-                      selectedPreset === preset.value ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary/50"
-                    }`}
-                  >
-                    {preset.label}
-                    {selectedPreset === preset.value && <Check className="ml-auto h-4 w-4 text-primary" />}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 combobox-container">
+              <input
+                type="text"
+                value={comboboxValue}
+                onChange={(e) => {
+                  setComboboxValue(e.target.value)
+                  setDropdownOpen(true)
+                }}
+                onFocus={() => setDropdownOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && comboboxValue.trim()) {
+                    e.preventDefault()
+                    const name = comboboxValue.trim()
+                    const id = NAME_TO_ID[name] || name.toLowerCase().replace(/\s+/g, "-")
+                    handleDesignAgent(name, id)
+                  }
+                }}
+                placeholder={currentPresetLabel || "搜索或添加 Agent..."}
+                className="w-full rounded-lg border border-border bg-secondary/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              {dropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-popover py-1 shadow-xl">
+                  {filteredAgents.map((preset) => (
+                    <button
+                      key={preset.value}
+                      onClick={() => handleSelectPreset(preset.value)}
+                      className={`flex w-full items-center px-4 py-2 text-sm transition-colors ${
+                        selectedPreset === preset.value ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      {preset.label}
+                      {selectedPreset === preset.value && <Check className="ml-auto h-4 w-4 text-primary" />}
+                    </button>
+                  ))}
+                  {comboboxValue.trim() && (
+                    <button
+                      onClick={() => {
+                        const name = comboboxValue.trim()
+                        const id = NAME_TO_ID[name] || name.toLowerCase().replace(/\s+/g, "-")
+                        handleDesignAgent(name, id)
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-primary/10 font-medium"
+                    >
+                      <span>设计 "{comboboxValue}" 提示词</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <Button size="sm" variant="destructive" onClick={handleDeleteAgent}>
+              删除
+            </Button>
           </div>
 
           <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-muted/30">
             <div className="flex items-center gap-2 border-b border-border px-3 py-1.5 text-xs text-muted-foreground">
-              <span className="font-mono">system_prompt.txt</span>
+              <span className="font-mono">agent.theme</span>
               <span className="ml-auto text-muted-foreground/50">{promptText.length} 字符</span>
             </div>
             <textarea
@@ -210,10 +373,24 @@ export function StrategyCenterView() {
               <span className={`h-2 w-2 rounded-full ${aiEnabled ? "bg-success" : "bg-destructive"}`} />
               <span className="text-xs text-muted-foreground">OpenClaw多智能体设计</span>
             </div>
-            <Button onClick={handleSavePrompt} className="ml-auto">
-              <RefreshCw className="h-4 w-4" />
-              保存并重载模型
-            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-lg blur opacity-40 group-hover:opacity-70 transition duration-500" />
+                <Button
+                  variant="outline"
+                  onClick={handleEnhancePrompt}
+                  disabled={isEnhancing || !promptText.trim()}
+                  className="relative gap-1.5 bg-background"
+                >
+                  <Sparkles className={`h-4 w-4 ${isEnhancing ? "animate-spin" : ""}`} />
+                  {isEnhancing ? "补充中..." : "AI 补充"}
+                </Button>
+              </div>
+              <Button variant="outline" onClick={handleSavePrompt} className="gap-1.5">
+                <RefreshCw className="h-4 w-4" />
+                保存并重载模型
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

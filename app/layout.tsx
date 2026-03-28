@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Noto_Sans_SC, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const notoSansSC = Noto_Sans_SC({
@@ -36,6 +37,7 @@ export default function RootLayout({
       >
         {children}
         <Analytics />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   )
