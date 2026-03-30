@@ -1,7 +1,7 @@
 "use client"
 
 import { Bell, Search } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState } from "react"
 
 export function DashboardHeader() {
@@ -11,21 +11,8 @@ export function DashboardHeader() {
     <header className="flex h-14 items-center justify-between border-b border-border bg-white px-6 shadow-sm">
       {/* Left: Logo & Title */}
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="text-primary"
-          >
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor"
-              opacity="0.6"
-            />
-            <circle cx="12" cy="12" r="3" fill="currentColor" />
-          </svg>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+          <img src="/agents-icons/psytwin.jpg" alt="PsyTwin" className="h-full w-full object-cover" />
         </div>
         <h1 className="text-base font-semibold tracking-wide text-foreground">
           心图<span className="font-mono text-primary">PsyTwin</span>
@@ -65,11 +52,11 @@ export function DashboardHeader() {
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 border border-border">
             <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-              辅
+              心
             </AvatarFallback>
           </Avatar>
           <span className="hidden text-sm text-muted-foreground lg:inline">
-            辅导员
+            心理咨询师
           </span>
         </div>
       </div>
