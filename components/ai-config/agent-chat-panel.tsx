@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Send, Loader2 } from "lucide-react"
 import Image from "next/image"
 
@@ -39,6 +39,14 @@ function getAgentAvatar(agentId: string): string | null {
 export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const playSendSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {})
+    }
+  }
 
   const handleSend = async () => {
     if (!selectedAgent || !message.trim() || isLoading) return
@@ -66,6 +74,7 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
     try {
       await sendAgentRequest(selectedAgent.id, trimmedMessage)
       setMessage("")
+      setTimeout(playSendSound, 1000)
     } catch (error) {
       console.error("发送失败:", error)
     } finally {
@@ -151,6 +160,7 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
           )}
         </Button>
       </div>
+      <audio ref={audioRef} src="/audio/send.mp3" preload="auto" />
     </div>
   )
 }

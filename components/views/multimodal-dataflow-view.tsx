@@ -217,10 +217,10 @@ export function MultimodalDataFlowView() {
       情感标签: "未知",
     },
     expression: {
-      primary: "未知",
-      anxiety: 0,
-      sadness: 0,
-      anger: 0,
+      primary: "nervous",
+      anxiety: 0.75,
+      sadness: 0.1,
+      anger: 0.05,
     },
     behavior: {
       interactionFreq: 0,
@@ -586,6 +586,7 @@ export function MultimodalDataFlowView() {
                    currentStudent.expression.primary === "fear" || currentStudent.expression.primary === "fearful" ? "恐惧" :
                    currentStudent.expression.primary === "surprise" || currentStudent.expression.primary === "surprised" ? "惊讶" :
                    currentStudent.expression.primary === "disgust" || currentStudent.expression.primary === "disgusted" ? "厌恶" :
+                   currentStudent.expression.primary === "nervous" ? "紧张" :
                    currentStudent.expression.primary === "neutral" ? "中性" : "未知"}
                 </p>
               </div>
@@ -597,6 +598,7 @@ export function MultimodalDataFlowView() {
                    currentStudent.expression.primary === "fear" || currentStudent.expression.primary === "fearful" ? "😨" :
                    currentStudent.expression.primary === "surprise" || currentStudent.expression.primary === "surprised" ? "😮" :
                    currentStudent.expression.primary === "disgust" || currentStudent.expression.primary === "disgusted" ? "🤢" :
+                   currentStudent.expression.primary === "nervous" ? "😰" :
                    currentStudent.expression.primary === "neutral" ? "😐" : "😊"}
                 </span>
               </div>

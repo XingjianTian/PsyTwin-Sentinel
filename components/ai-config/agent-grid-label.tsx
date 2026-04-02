@@ -209,16 +209,6 @@ export function AgentGridLabel({ agent, onClick, isSelected }: AgentGridLabelPro
               )}
             </div>
           </motion.div>
-
-          {/* 位置 ID（调试信息） */}
-          <div
-            className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-[10px] opacity-30"
-            style={{ color: agentColor }}
-          >
-            {isMoving && targetPointId !== null
-              ? `${currentPoint.id}→${targetPointId}`
-              : `P${currentPoint.id}`}
-          </div>
         </div>
       </motion.div>
     </div>
