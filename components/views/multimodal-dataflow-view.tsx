@@ -59,7 +59,7 @@ interface StudentData {
   voice: {
     sentiment: string
     tremorIndex: number
-    情感标签: string
+    emotionLabel: string
   }
   expression: {
     primary: string
@@ -215,7 +215,7 @@ export function MultimodalDataFlowView() {
     voice: {
       sentiment: "unknown",
       tremorIndex: 0,
-      情感标签: "未知",
+      emotionLabel: "Nervous",
     },
     expression: {
       primary: "nervous",
@@ -314,7 +314,7 @@ export function MultimodalDataFlowView() {
                 voice: data.voiceAnalysis ? {
                   sentiment: data.voiceAnalysis.sentiment?.toLowerCase() || 'neutral',
                   tremorIndex: data.voiceAnalysis.tremorIndex || 0,
-                  情感标签: data.voiceAnalysis.emotionLabel || '未知',
+                  emotionLabel: "Nervous",
                 } : s.voice,
                 expression: isTestStudent ? s.expression : (data.expressionData ? {
                   primary: data.expressionData.primaryExpression || s.expression.primary,
@@ -672,7 +672,7 @@ export function MultimodalDataFlowView() {
               </div>
               <div className="flex flex-col justify-center rounded-lg bg-slate-50 p-3 text-right dark:bg-slate-800">
                 <p className="text-sm text-muted-foreground">情绪标签</p>
-                <p className="text-lg font-bold text-blue-600">{currentStudent.voice.情感标签}</p>
+                <p className="text-lg font-bold text-blue-600">{currentStudent.voice.emotionLabel}</p>
                 <p className="mt-2 text-xs text-muted-foreground">各指标处于</p>
                 <p className="text-sm font-medium">
                   {(currentStudent.expression.anxiety + currentStudent.expression.sadness + currentStudent.expression.anger) < 0.3 ? "正常范围" : "需关注"}
