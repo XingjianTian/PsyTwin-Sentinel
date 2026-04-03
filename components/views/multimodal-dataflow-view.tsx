@@ -193,6 +193,7 @@ export function MultimodalDataFlowView() {
   const [chartKey, setChartKey] = useState(0)
   const [audioLevel, setAudioLevel] = useState<number[]>([])
   const [voiceTranscription, setVoiceTranscription] = useState<string>("")
+  const [hasReceivedData, setHasReceivedData] = useState(false)
 
   const testStudent: StudentData = {
     id: "stu-test",
@@ -251,6 +252,37 @@ export function MultimodalDataFlowView() {
     }
   }, [])
 
+  // 视觉流模拟：收到数据后才开始紧张状态跳动
+  useEffect(() => {
+    if (activeTab !== "realtime-test" || !hasReceivedData) return
+
+    const fluctuate = () => {
+      const anxiety = 0.55 + Math.random() * 0.4
+      const sadness = 0.1 + Math.random() * 0.25
+      const anger = 0.05 + Math.random() * 0.2
+
+      setStudents(prev => prev.map(s => {
+        if (s.id === selectedStudentId || s.id === "stu-test") {
+          return {
+            ...s,
+            expression: {
+              primary: "nervous",
+              anxiety: Math.min(0.98, anxiety),
+              sadness: Math.min(0.4, sadness),
+              anger: Math.min(0.3, anger),
+            }
+          }
+        }
+        return s
+      }))
+    }
+
+    fluctuate()
+    const interval = setInterval(fluctuate, 1500 + Math.random() * 1500)
+
+    return () => clearInterval(interval)
+  }, [activeTab, selectedStudentId, hasReceivedData])
+
   useEffect(() => {
     const eventSource = new EventSource('/api/multimodal/sensors/stream')
 
@@ -261,6 +293,9 @@ export function MultimodalDataFlowView() {
         const data = JSON.parse(event.data)
         const currentStudent = students.find(s => s.id === selectedStudentId)
         const isTestStudent = activeTab === "realtime-test" && data.studentId === "stu-test"
+        if (isTestStudent) {
+          setHasReceivedData(true)
+        }
         if ((currentStudent && data.studentId === currentStudent.id) || isTestStudent) {
           const now = new Date()
           const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
@@ -281,12 +316,12 @@ export function MultimodalDataFlowView() {
                   tremorIndex: data.voiceAnalysis.tremorIndex || 0,
                   情感标签: data.voiceAnalysis.emotionLabel || '未知',
                 } : s.voice,
-                expression: data.expressionData ? {
+                expression: isTestStudent ? s.expression : (data.expressionData ? {
                   primary: data.expressionData.primaryExpression || s.expression.primary,
                   anxiety: data.expressionData.anxietyLevel || 0,
                   sadness: data.expressionData.sadnessLevel || 0,
                   anger: data.expressionData.angerLevel || 0,
-                } : s.expression,
+                } : s.expression),
                 behavior: data.behaviorData ? {
                   interactionFreq: data.behaviorData.interactionFreq || 0,
                   handTremor: data.behaviorData.handTremor || 0,
