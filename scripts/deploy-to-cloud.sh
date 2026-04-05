@@ -39,7 +39,7 @@ if [ "$SEED_TEST_DATA" = "true" ]; then
   echo "🧪 插入业务测试数据..."
   npx tsx prisma/seed/02-faculties.ts
   npx tsx prisma/seed/03-users.ts
-  npx tsx prisma/seed/04-students.ts
+  # 学生数据已在主 seed.ts (prisma/seed.ts) 中创建，无需单独运行
 fi
 
 echo "✅ 部署完成！"

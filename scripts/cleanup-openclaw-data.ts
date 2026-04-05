@@ -24,8 +24,6 @@ async function cleanupOpenClawData() {
     const requestsResult = await prisma.$executeRaw`TRUNCATE TABLE openclaw_requests RESTART IDENTITY CASCADE`
     console.log("   ✅ requests 表已清空\n")
 
-    // 4. 可选：重置智能体状态为 idle
-    console.log("🔄 重置智能体状态...")
     // 4. 可选：重置智能体状态为离线
     console.log("🔄 重置智能体状态...")
     await prisma.$executeRaw`

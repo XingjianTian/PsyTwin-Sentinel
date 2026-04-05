@@ -50,8 +50,9 @@ if (!dbUrlMatch) {
 const databaseUrl = dbUrlMatch[1];
 console.log(`🔗 数据库: ${databaseUrl.replace(/:\/\/[^:]+:[^@]+@/, '://***:***@')}\n`);
 
-// 解析连接信息
-const urlMatch = databaseUrl.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
+// 解析连接信息（去除查询参数）
+const cleanUrl = databaseUrl.split('?')[0];
+const urlMatch = cleanUrl.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
 if (!urlMatch) {
   console.error('❌ 错误: 无法解析数据库连接 URL');
   process.exit(1);

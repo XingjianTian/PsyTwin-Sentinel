@@ -188,7 +188,7 @@ export function MultimodalDataFlowView() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [isMock, setIsMock] = useState(false)
-  const [activeTab, setActiveTab] = useState<string>("student-list")
+  const [activeTab, setActiveTab] = useState<string>("realtime-test")
   const [hrHistory, setHrHistory] = useState<Array<{ time: string; 心率: number; 血氧: number; hrv: number }>>([])
   const [chartKey, setChartKey] = useState(0)
   const [audioLevel, setAudioLevel] = useState<number[]>([])
