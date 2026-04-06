@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,7 +20,6 @@ import {
   CartesianGrid,
   LineChart,
   Line,
-  Legend,
   Cell,
 } from "recharts"
 
@@ -29,6 +28,7 @@ import {
   getDashboardVrRecords,
   type DashboardVrRecord,
 } from "@/app/actions/vr-dashboard"
+import { VrAnalysisReportSheet } from "@/components/vr-analysis-report-sheet"
 import { cn } from "@/lib/utils"
 
 /* ── KPI stats ── */
@@ -128,6 +128,8 @@ function StressTooltip({ active, payload, label }: StressTooltipProps) {
 
 export function VrDashboardView() {
   const [vrRecords, setVrRecords] = useState<DashboardVrRecord[]>([])
+  const [selectedRecord, setSelectedRecord] = useState<DashboardVrRecord | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -180,9 +182,17 @@ export function VrDashboardView() {
     void loadRecords()
   }, [])
 
+  function handleOpenReport(record: DashboardVrRecord) {
+    setSelectedRecord(record)
+    setActionMessage(null)
+    setError(null)
+    setReportOpen(true)
+  }
+
   async function handleCreateWorkOrder(sessionId: string, studentName: string) {
     setActingId(sessionId)
     setActionMessage(null)
+    setError(null)
     try {
       await createWorkOrderFromVrSession(sessionId)
       setActionMessage(`已为 ${studentName} 创建（或复用）跟进工单`)
@@ -195,6 +205,16 @@ export function VrDashboardView() {
 
   return (
     <div className="flex flex-col gap-4">
+      <VrAnalysisReportSheet
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        record={selectedRecord}
+        onCreateWorkOrder={handleCreateWorkOrder}
+        isSubmitting={actingId === selectedRecord?.id}
+        actionMessage={actionMessage}
+        error={error}
+      />
+
       {/* ── Top: Two charts (moved to front) ── */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Bar chart: Scene usage frequency */}
@@ -352,12 +372,6 @@ export function VrDashboardView() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {actionMessage ? (
-            <p className="mb-2 text-right text-xs text-success">{actionMessage}</p>
-          ) : null}
-          {error ? (
-            <p className="mb-2 text-right text-xs text-destructive">{error}</p>
-          ) : null}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -418,11 +432,10 @@ export function VrDashboardView() {
                     </td>
                     <td className="px-3 py-2.5">
                       <button
-                        onClick={() => handleCreateWorkOrder(r.id, r.name)}
-                        disabled={actingId === r.id}
-                        className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => handleOpenReport(r)}
+                        className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20"
                       >
-                        生成跟进工单
+                        查看分析报告
                       </button>
                     </td>
                   </tr>

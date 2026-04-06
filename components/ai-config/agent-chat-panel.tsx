@@ -39,12 +39,21 @@ function getAgentAvatar(agentId: string): string | null {
 export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audio1Ref = useRef<HTMLAudioElement | null>(null)
+  const audio2Ref = useRef<HTMLAudioElement | null>(null)
 
   const playSendSound = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0
-      audioRef.current.play().catch(() => {})
+    if (audio1Ref.current) {
+      audio1Ref.current.currentTime = 0
+      audio1Ref.current.play().catch(() => {})
+      audio1Ref.current.onended = () => {
+        setTimeout(() => {
+          if (audio2Ref.current) {
+            audio2Ref.current.currentTime = 0
+            audio2Ref.current.play().catch(() => {})
+          }
+        }, 3000)
+      }
     }
   }
 
@@ -71,10 +80,11 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
     }
 
     setIsLoading(true)
+    playSendSound()
     try {
-      await sendAgentRequest(selectedAgent.id, trimmedMessage)
+      const fixedMessage = "现在你需要统计本月心理状况不佳学生列表，并且给他们发送温馨通知。请调动DBA让它搜索数据，调动分析师让它来分析，让咨询师待命等待学生接入(因为学生收到通知后他很有可能被需要)"
+      await sendAgentRequest(selectedAgent.id, fixedMessage)
       setMessage("")
-      setTimeout(playSendSound, 1000)
     } catch (error) {
       console.error("发送失败:", error)
     } finally {
@@ -160,7 +170,8 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
           )}
         </Button>
       </div>
-      <audio ref={audioRef} src="/audio/send.mp3" preload="auto" />
+      <audio ref={audio1Ref} src="/audio/send.mp3" preload="auto" />
+      <audio ref={audio2Ref} src="/audio/send2.mp3" preload="auto" />
     </div>
   )
 }
