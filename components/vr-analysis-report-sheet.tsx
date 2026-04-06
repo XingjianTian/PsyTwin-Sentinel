@@ -115,35 +115,33 @@ export function VrAnalysisReportSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-l-border/70 sm:max-w-3xl">
+      <SheetContent side="right" className="w-full overflow-hidden border-l-border/70 sm:max-w-3xl">
         <SheetHeader className="sr-only">
           <SheetTitle>
             {record ? `${record.name} 的 VR 分析报告` : "VR 分析报告"}
           </SheetTitle>
         </SheetHeader>
 
-        <div className="mt-10 pr-1 pb-4">
+        <div className="mt-10 flex-1 overflow-y-auto pr-1">
           {!record ? (
             <div className="rounded-lg border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
               未找到分析报告数据
             </div>
           ) : (
-            <div className="space-y-4 pb-2">
+            <div className="space-y-4 pb-4">
               <div className="rounded-2xl border border-destructive/20 bg-card p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <BrainCircuit className="h-7 w-7 text-destructive" />
                       <div>
-                        <p className="text-2xl font-semibold text-foreground">AI 风险感知预警</p>
-                        <p className="text-sm text-muted-foreground">
-                          [Qwen-14B VR 干预效果分析报告 - {record.name}]
-                        </p>
+                        <p className="text-2xl font-semibold text-foreground">AI 风险分析报告</p>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       <Badge className={riskMeta!.levelClassName}>{riskMeta!.level}</Badge>
+                      <Badge className="border-border bg-secondary/40 text-foreground">{record.name}</Badge>
                       <Badge className="border-border bg-secondary/40 text-foreground">{record.cls}</Badge>
                       <Badge className="border-border bg-secondary/40 text-foreground">{record.scene}</Badge>
                       <Badge className="border-border bg-secondary/40 text-foreground">体验时长：{record.duration}</Badge>
@@ -235,25 +233,25 @@ export function VrAnalysisReportSheet({
                   </p>
                 </div>
               </div>
-
-              <div className="mt-2 border-t border-border/60 pt-3">
-                {actionMessage ? (
-                  <p className="mb-2 text-sm text-success">{actionMessage}</p>
-                ) : null}
-                {error ? (
-                  <p className="mb-2 text-sm text-destructive">{error}</p>
-                ) : null}
-                <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" onClick={() => onOpenChange(false)}>
-                    关闭
-                  </Button>
-                  <Button onClick={() => void handleCreateWorkOrder()} disabled={!record || isSubmitting}>
-                    {isSubmitting ? "生成中..." : "生成跟进工单"}
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
+        </div>
+
+        <div className="shrink-0 border-t border-border/60 bg-background px-4 py-3">
+          {actionMessage ? (
+            <p className="mb-2 text-sm text-success">{actionMessage}</p>
+          ) : null}
+          {error ? (
+            <p className="mb-2 text-sm text-destructive">{error}</p>
+          ) : null}
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              关闭
+            </Button>
+            <Button onClick={() => void handleCreateWorkOrder()} disabled={!record || isSubmitting}>
+              {isSubmitting ? "生成中..." : "生成跟进工单"}
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
