@@ -24,11 +24,6 @@ function RequestRow({ request }: { request: OpenClawRequestItem }) {
 
   return (
     <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5 transition-all duration-300 ease-in-out hover:shadow-md">
-  const currentIndex = STATE_INDEX[request.state as keyof typeof STATE_INDEX] ?? 0
-  const agentName = request.agentName || request.assignedTo || "未分派"
-
-  return (
-    <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5">
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <p className="line-clamp-2 text-[11px] text-foreground">{request.content}</p>
         <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">
@@ -45,12 +40,7 @@ function RequestRow({ request }: { request: OpenClawRequestItem }) {
             <div
               key={state.id}
               className={cn(
-              className={cn(
                 "h-1 flex-1 rounded-full transition-all duration-500 ease-out",
-                isDone && "bg-green-500",
-                isCurrent && "animate-pulse bg-primary",
-                !isDone && !isCurrent && "bg-muted-foreground/20"
-              )}
                 isDone && "bg-green-500",
                 isCurrent && "animate-pulse bg-primary",
                 !isDone && !isCurrent && "bg-muted-foreground/20"

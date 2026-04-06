@@ -100,9 +100,7 @@ function HrTooltip({ active, payload, label }: { active?: boolean; payload?: Arr
 }
 
 function VoiceWaveform({ levels }: { levels?: number[] }) {
-  const [bars, setBars] = useState<number[]>(() =>
-    Array.from({ length: 40 }, () => Math.random() * 80 + 10)
-  )
+  const [bars, setBars] = useState<number[]>(Array(40).fill(5))
 
   useEffect(() => {
     if (levels !== undefined && levels.length > 0) {
@@ -195,6 +193,7 @@ export function MultimodalDataFlowView() {
   const [voiceTranscription, setVoiceTranscription] = useState<string>("")
   const [hasReceivedData, setHasReceivedData] = useState(false)
 
+  // 初始状态：所有值设为未知/0，等待真实数据
   const testStudent: StudentData = {
     id: "stu-test",
     name: "测试学生",
@@ -215,13 +214,13 @@ export function MultimodalDataFlowView() {
     voice: {
       sentiment: "unknown",
       tremorIndex: 0,
-      emotionLabel: "Nervous",
+      emotionLabel: "未知",
     },
     expression: {
-      primary: "nervous",
-      anxiety: 0.75,
-      sadness: 0.1,
-      anger: 0.05,
+      primary: "unknown",
+      anxiety: 0,
+      sadness: 0,
+      anger: 0,
     },
     behavior: {
       interactionFreq: 0,
@@ -238,8 +237,12 @@ export function MultimodalDataFlowView() {
       setStudents([testStudent])
       setSelectedStudentId(testStudent.id)
       setIsMock(true)
+      setLoading(false)
       setAudioLevel([])
+      setHrHistory([])
+      setHasReceivedData(false)
     } else {
+      setLoading(true)
       fetchData()
     }
   }
@@ -249,8 +252,15 @@ export function MultimodalDataFlowView() {
       setStudents([testStudent])
       setSelectedStudentId(testStudent.id)
       setIsMock(true)
+      setLoading(false)
+      setHasReceivedData(false)
+      setAudioLevel([])
+      setHrHistory([])
+    } else {
+      setLoading(true)
+      fetchData()
     }
-  }, [])
+  }, [activeTab])
 
   // 视觉流模拟：收到数据后才开始紧张状态跳动
   useEffect(() => {
@@ -284,6 +294,8 @@ export function MultimodalDataFlowView() {
   }, [activeTab, selectedStudentId, hasReceivedData])
 
   useEffect(() => {
+    if (activeTab !== "realtime-test") return
+
     const eventSource = new EventSource('/api/multimodal/sensors/stream')
 
     eventSource.addEventListener('connected', () => {})
@@ -291,62 +303,67 @@ export function MultimodalDataFlowView() {
     eventSource.addEventListener('multimodal_data', (event) => {
       try {
         const data = JSON.parse(event.data)
-        const currentStudent = students.find(s => s.id === selectedStudentId)
         const isTestStudent = activeTab === "realtime-test" && data.studentId === "stu-test"
         if (isTestStudent) {
           setHasReceivedData(true)
         }
-        if ((currentStudent && data.studentId === currentStudent.id) || isTestStudent) {
-          const now = new Date()
-          const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
-
-          setStudents(prev => prev.map(s => {
-            if ((currentStudent && data.studentId === s.id) || isTestStudent) {
-              return {
-                ...s,
-                vitals: data.vitalSign ? {
-                  heartRate: data.vitalSign.heartRate || s.vitals.heartRate,
-                  hrv: data.vitalSign.hrv || s.vitals.hrv,
-                  bloodOxygen: data.vitalSign.bloodOxygen ?? s.vitals.bloodOxygen,
-                  gsr: data.vitalSign.gsr || s.vitals.gsr,
-                  stress: data.vitalSign.stressIndex || s.vitals.stress,
-                } : s.vitals,
-                voice: data.voiceAnalysis ? {
-                  sentiment: data.voiceAnalysis.sentiment?.toLowerCase() || 'neutral',
-                  tremorIndex: data.voiceAnalysis.tremorIndex || 0,
-                  emotionLabel: "Nervous",
-                } : s.voice,
-                expression: isTestStudent ? s.expression : (data.expressionData ? {
-                  primary: data.expressionData.primaryExpression || s.expression.primary,
-                  anxiety: data.expressionData.anxietyLevel || 0,
-                  sadness: data.expressionData.sadnessLevel || 0,
-                  anger: data.expressionData.angerLevel || 0,
-                } : s.expression),
-                behavior: data.behaviorData ? {
-                  interactionFreq: data.behaviorData.interactionFreq || 0,
-                  handTremor: data.behaviorData.handTremor || 0,
-                  responseDelay: data.behaviorData.responseDelay || 0,
-                  avoidanceCount: data.behaviorData.avoidanceCount || 0,
-                } : s.behavior,
+        setStudents(prev => {
+          const currentStudent = prev.find(s => s.id === selectedStudentId)
+          if ((currentStudent && data.studentId === currentStudent.id) || isTestStudent) {
+            const now = new Date()
+            const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
+            return prev.map(s => {
+              if ((currentStudent && data.studentId === s.id) || isTestStudent) {
+                return {
+                  ...s,
+                  vitals: data.vitalSign ? {
+                    heartRate: data.vitalSign.heartRate || s.vitals.heartRate,
+                    hrv: data.vitalSign.hrv || s.vitals.hrv,
+                    bloodOxygen: data.vitalSign.bloodOxygen ?? s.vitals.bloodOxygen,
+                    gsr: data.vitalSign.gsr || s.vitals.gsr,
+                    stress: data.vitalSign.stressIndex || s.vitals.stress,
+                  } : s.vitals,
+                  voice: data.voiceAnalysis ? {
+                    sentiment: data.voiceAnalysis.sentiment?.toLowerCase() || 'neutral',
+                    tremorIndex: data.voiceAnalysis.tremorIndex || 0,
+                    emotionLabel: data.voiceAnalysis.emotionLabel || "未知",
+                  } : s.voice,
+                  expression: isTestStudent ? s.expression : (data.expressionData ? {
+                    primary: data.expressionData.primaryExpression || s.expression.primary,
+                    anxiety: data.expressionData.anxietyLevel || 0,
+                    sadness: data.expressionData.sadnessLevel || 0,
+                    anger: data.expressionData.angerLevel || 0,
+                  } : s.expression),
+                  behavior: data.behaviorData ? {
+                    interactionFreq: data.behaviorData.interactionFreq || 0,
+                    handTremor: data.behaviorData.handTremor || 0,
+                    responseDelay: data.behaviorData.responseDelay || 0,
+                    avoidanceCount: data.behaviorData.avoidanceCount || 0,
+                  } : s.behavior,
+                }
               }
-            }
-            return s
-          }))
-
-          if (data.vitalSign?.heartRate) {
-            setHrHistory(prev => {
-              const lastOxygen = prev.slice(-1)[0]?.血氧 ?? 0
-              const lastHrv = prev.slice(-1)[0]?.hrv ?? 0
-              const newData = [...prev, {
-                time: timeStr,
-                心率: data.vitalSign.heartRate,
-                血氧: data.vitalSign.bloodOxygen ?? lastOxygen,
-                hrv: data.vitalSign.hrv ?? lastHrv,
-              }]
-              return newData.slice(-30)
+              return s
             })
           }
-        }
+          return prev
+        })
+
+        setHrHistory(prev => {
+          if (data.vitalSign?.heartRate) {
+            const now = new Date()
+            const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
+            const lastOxygen = prev.slice(-1)[0]?.血氧 ?? 0
+            const lastHrv = prev.slice(-1)[0]?.hrv ?? 0
+            const newData = [...prev, {
+              time: timeStr,
+              心率: data.vitalSign.heartRate,
+              血氧: data.vitalSign.bloodOxygen ?? lastOxygen,
+              hrv: data.vitalSign.hrv ?? lastHrv,
+            }]
+            return newData.slice(-30)
+          }
+          return prev
+        })
       } catch (error) {
         console.error('[SSE] Parse error:', error)
       }
@@ -397,7 +414,7 @@ export function MultimodalDataFlowView() {
       eventSource.close()
       if (transcriptionTimer) clearTimeout(transcriptionTimer)
     }
-  }, [selectedStudentId, activeTab, students])
+  }, [activeTab])
 
   async function fetchData() {
     setLoading(true)
@@ -421,10 +438,6 @@ export function MultimodalDataFlowView() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    fetchData()
-  }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -627,14 +640,15 @@ export function MultimodalDataFlowView() {
               </div>
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                 <span className="text-3xl">
-                  {currentStudent.expression.primary === "happy" || currentStudent.expression.primary === "joyful" ? "😄" :
+                  {currentStudent.expression.primary === "unknown" ? "❓" :
+                   currentStudent.expression.primary === "happy" || currentStudent.expression.primary === "joyful" ? "😄" :
                    currentStudent.expression.primary === "sad" ? "😢" :
                    currentStudent.expression.primary === "angry" ? "😠" :
                    currentStudent.expression.primary === "fear" || currentStudent.expression.primary === "fearful" ? "😨" :
                    currentStudent.expression.primary === "surprise" || currentStudent.expression.primary === "surprised" ? "😮" :
                    currentStudent.expression.primary === "disgust" || currentStudent.expression.primary === "disgusted" ? "🤢" :
                    currentStudent.expression.primary === "nervous" ? "😰" :
-                   currentStudent.expression.primary === "neutral" ? "😐" : "😊"}
+                   currentStudent.expression.primary === "neutral" ? "😐" : "❓"}
                 </span>
               </div>
             </div>
