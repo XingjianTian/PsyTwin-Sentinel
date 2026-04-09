@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   useOpenClawWorkflowStream,
   type OpenClawActivityItem,
+  type OpenClawRequestItem,
 } from "@/lib/openclaw/use-workflow-stream"
 import { cn } from "@/lib/utils"
 import { AGENTS } from "@/lib/openclaw/agents.config"
@@ -55,7 +56,15 @@ function getAgentAvatar(agentId: string): string | null {
   return null
 }
 
-function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClick: () => void }) {
+function WorkflowRow({
+  group,
+  request,
+  onClick,
+}: {
+  group: OpenClawActivityItem[]
+  request?: OpenClawRequestItem
+  onClick: () => void
+}) {
   const firstItem = group[0]
   const lastItem = group[group.length - 1]
 
@@ -96,9 +105,22 @@ function WorkflowRow({ group, onClick }: { group: OpenClawActivityItem[]; onClic
     steps.push({ label: "失败", color: "bg-red-400" })
   }
 
-  const isPocket = group.some(i => i.type === "pocket.chat" || i.type === "pocket.completed")
-  const isSentinel = group.some(i => i.type === "request.start" || i.type === "response.completed" || i.type === "lifecycle.start" || i.type === "lifecycle.end")
-  const isVR = group.some(i => i.type === "stream.delta" || i.type === "stream.assistant" || i.type === "subagent.response")
+  // 来源标签优先看请求本身，避免快照裁剪后只剩中间事件导致误判。
+  const requestRunId = request?.runId || ""
+  const isPocketRequest = requestRunId.startsWith("pocket-")
+  const isSentinelRequest = requestRunId.startsWith("sse-")
+
+  const fallbackPocket = group.some((item) => item.type === "pocket.chat")
+  const fallbackSentinel = group.some((item) =>
+    item.type === "request.start" || item.type === "lifecycle.start" || item.type === "dispatch.created" || item.type === "dispatch.start" || item.type === "lifecycle.review" || item.type === "response.completed"
+  )
+  const fallbackVR = group.some((item) =>
+    item.type === "stream.delta" || item.type === "stream.assistant"
+  )
+
+  const isPocket = isPocketRequest || (!isSentinelRequest && fallbackPocket)
+  const isSentinel = isSentinelRequest || (!isPocketRequest && fallbackSentinel)
+  const isVR = !isPocket && !isSentinel && fallbackVR
 
   const sourceLabel = isPocket ? "微信小程序" : isSentinel ? "指挥中心" : "VR任务"
   const sourceColors = isPocket
@@ -208,8 +230,12 @@ function DetailDialog({ group, open, onClose }: { group: OpenClawActivityItem[];
 }
 
 export function LivePanel() {
-  const { activities } = useOpenClawWorkflowStream()
+  const { activities, requests } = useOpenClawWorkflowStream()
   const [selectedGroup, setSelectedGroup] = useState<OpenClawActivityItem[] | null>(null)
+
+  const requestMap = useMemo(() => {
+    return new Map(requests.map((request) => [request.id, request]))
+  }, [requests])
 
   const groupedActivities = useMemo(() => {
     const groups = new Map<string, OpenClawActivityItem[]>()
@@ -268,6 +294,7 @@ export function LivePanel() {
                 <WorkflowRow
                   key={(group[0].requestId || group[0].id)}
                   group={group}
+                  request={group[0].requestId ? requestMap.get(group[0].requestId) : undefined}
                   onClick={() => setSelectedGroup(group)}
                 />
               ))}

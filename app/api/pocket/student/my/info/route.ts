@@ -1,9 +1,7 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/pocket/student/my/info

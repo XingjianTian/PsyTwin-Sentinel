@@ -1,11 +1,8 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import { successResponse, errorResponse, validationError } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
 import { PostStatus } from "@prisma/client"
-
-// 创建本地 Prisma 实例（避免 Edge Runtime 兼容性问题）
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/pocket/posts

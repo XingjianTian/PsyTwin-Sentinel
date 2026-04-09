@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
-const prisma = new PrismaClient()
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { getCurrentUser } from "@/lib/pocket-auth"
 

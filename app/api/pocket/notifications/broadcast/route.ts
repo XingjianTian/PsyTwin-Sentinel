@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
-import { PrismaClient, NotificationType } from "@prisma/client"
+import { NotificationType } from "@prisma/client"
+
+import { prisma } from "@/lib/db"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
-
-const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,10 +1,7 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import { successResponse, errorResponse } from "@/lib/api-response"
 import { TeacherStatus, UserRole } from "@prisma/client"
-
-// 创建本地 Prisma 实例
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/pocket/teachers

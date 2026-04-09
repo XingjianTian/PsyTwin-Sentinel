@@ -12,6 +12,41 @@ import { verifyToken } from "@/lib/auth"
 
 const DEFAULT_DEMO_USER_ID = "stu001"
 
+async function resolveDemoUserId(): Promise<string> {
+  const preferredUser = await prisma.student.findFirst({
+    where: {
+      id: DEFAULT_DEMO_USER_ID,
+    },
+    select: { id: true },
+  })
+
+  if (preferredUser) {
+    return preferredUser.id
+  }
+
+  const fallbackUser = await prisma.student.findFirst({
+    where: {
+      OR: [
+        { id: "stu-xiaoming" },
+        { phone: "13800138001" },
+      ],
+    },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  })
+
+  if (fallbackUser) {
+    return fallbackUser.id
+  }
+
+  const firstStudent = await prisma.student.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  })
+
+  return firstStudent?.id || DEFAULT_DEMO_USER_ID
+}
+
 export async function getCurrentUserId(request: NextRequest): Promise<string> {
   const authHeader = request.headers.get("authorization")
   
@@ -26,7 +61,7 @@ export async function getCurrentUserId(request: NextRequest): Promise<string> {
     }
   }
   
-  return DEFAULT_DEMO_USER_ID
+  return resolveDemoUserId()
 }
 
 export async function getCurrentUser(request: NextRequest) {

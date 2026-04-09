@@ -1,10 +1,7 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import { successResponse, errorResponse, validationError } from "@/lib/api-response"
-import bcrypt from "bcryptjs"
-import { generateToken } from "@/lib/auth"
-
-const prisma = new PrismaClient()
+import { generateToken, verifyPassword } from "@/lib/auth"
 
 /**
  * POST /api/pocket/auth/login/password
@@ -45,20 +42,16 @@ export async function POST(request: NextRequest) {
 
     if (!student) {
       return Response.json(
-        errorResponse("手机号或密码错误", 1001),
+        errorResponse("账号不存在", 1001),
         { status: 401 }
       )
     }
 
-    // 验证密码
-    const isValidPassword = await bcrypt.compare(password, student.passwordHash || "")
-    
-    // 演示模式：如果密码不匹配，也允许登录（方便测试）
-    const isDemoMode = true
-    
-    if (!isValidPassword && !isDemoMode) {
+    const isValidPassword = await verifyPassword(password, student.passwordHash || "")
+
+    if (!isValidPassword) {
       return Response.json(
-        errorResponse("手机号或密码错误", 1001),
+        errorResponse("密码错误", 1002),
         { status: 401 }
       )
     }

@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import { successResponse, errorResponse, notFoundError, validationError } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
 import { toAppointmentDTO, UpdateAppointmentRequest } from "@/lib/pocket-dto"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/pocket/appointments/:id

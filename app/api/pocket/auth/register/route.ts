@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
-import { PrismaClient, StudentStatus, RiskLevel } from "@prisma/client"
-const prisma = new PrismaClient()
+import { StudentStatus, RiskLevel } from "@prisma/client"
 import { successResponse, errorResponse, validationError } from "@/lib/api-response"
 import bcrypt from "bcryptjs"
 import { generateToken } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 
 /**
  * POST /api/pocket/auth/register

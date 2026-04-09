@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+
+import { prisma } from "@/lib/db"
 import { successResponse, errorResponse, notFoundError } from "@/lib/api-response"
 import { getCurrentUserId } from "@/lib/pocket-auth"
-
-const prisma = new PrismaClient()
 
 /**
  * PATCH /api/pocket/notifications/:id
