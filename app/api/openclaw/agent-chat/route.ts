@@ -3,6 +3,7 @@ import { getOpenClawGatewayConfig } from "@/lib/openclaw/config"
 import { openClawEventBus, OPENCLAW_EVENTS } from "@/lib/openclaw/event-bus"
 import { prisma } from "@/lib/prisma"
 import { AGENTS } from "@/lib/openclaw/agents.config"
+import { isOpenClawDemoRequest, runOpenClawDemoWorkflow } from "@/lib/openclaw/demo-script"
 
 const db = prisma as any
 
@@ -136,6 +137,20 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
       type: "request.start",
     })
+
+    // 复杂任务演示优先走预设脚本，前端动态区域仍然沿用同一套 SSE 事件流。
+    if (isOpenClawDemoRequest(agentId, message)) {
+      const demoResponse = await runOpenClawDemoWorkflow({
+        requestId: dbRequest.id,
+        agentId,
+      })
+
+      return NextResponse.json({
+        success: true,
+        response: demoResponse,
+        runId,
+      })
+    }
 
     const response = await fetch(`${targetUrl}/v1/responses`, {
       method: "POST",

@@ -34,15 +34,19 @@ function formatTime(value?: number, fallback?: string) {
 type AgentMeta = { name: string; emoji: string; color: string; role: string }
 
 function getAgentMeta(nameOrId: string): AgentMeta | null {
+  const normalized = nameOrId === "首席数据官" ? "main" : nameOrId
   const entry = Object.entries(AGENTS).find(
     ([key, meta]) =>
-      key.toLowerCase() === nameOrId.toLowerCase() ||
-      meta.name === nameOrId
+      key.toLowerCase() === normalized.toLowerCase() ||
+      meta.name === normalized
   )
   return entry ? entry[1] as AgentMeta : null
 }
 
 function getAgentAvatar(agentId: string): string | null {
+  if (agentId === "首席数据官") {
+    return AGENT_AVATAR_MAP.main
+  }
   const directMatch = AGENT_AVATAR_MAP[agentId.toLowerCase()]
   if (directMatch) return directMatch
   for (const [key, path] of Object.entries(AGENT_AVATAR_MAP)) {

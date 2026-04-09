@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AGENT_DESCRIPTIONS } from "@/lib/openclaw/agents.config"
 import { sendAgentRequest } from "@/lib/openclaw/agent-chat"
+import { OPENCLAW_COMPLEX_DEMO_MESSAGE } from "@/lib/openclaw/demo-script"
 import type { AgentGridItem } from "./agent-grid-label"
 
 interface AgentChatPanelProps {
@@ -42,48 +43,30 @@ export function AgentChatPanel({ selectedAgent }: AgentChatPanelProps) {
   const audio1Ref = useRef<HTMLAudioElement | null>(null)
   const audio2Ref = useRef<HTMLAudioElement | null>(null)
 
-  const playSendSound = () => {
+  const playStartSound = () => {
     if (audio1Ref.current) {
       audio1Ref.current.currentTime = 0
       audio1Ref.current.play().catch(() => {})
-      audio1Ref.current.onended = () => {
-        setTimeout(() => {
-          if (audio2Ref.current) {
-            audio2Ref.current.currentTime = 0
-            audio2Ref.current.play().catch(() => {})
-          }
-        }, 3000)
-      }
+    }
+  }
+
+  const playCompletedSound = () => {
+    if (audio2Ref.current) {
+      audio2Ref.current.currentTime = 0
+      audio2Ref.current.play().catch(() => {})
     }
   }
 
   const handleSend = async () => {
     if (!selectedAgent || !message.trim() || isLoading) return
 
-    const trimmedMessage = message.trim()
-
-    if (selectedAgent.id === "main" && trimmedMessage.includes("发送温馨通知")) {
-      setIsLoading(true)
-      try {
-        await fetch("/api/pocket/notifications/broadcast", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "notification",
-            title: "💚 温馨提醒",
-            content: "亲爱的同学，最近学习压力大吗？如果感到焦虑或疲惫，可以来和我们的线上咨询师聊聊天，也可以预约没课的时间来线下体验VR游戏和AI咨询服务哦 🌟",
-          }),
-        })
-      } catch (error) {
-        console.error("发送温馨通知失败:", error)
-      }
-    }
-
     setIsLoading(true)
-    playSendSound()
+    playStartSound()
     try {
-      const fixedMessage = "现在你需要统计本月心理状况不佳学生列表，并且给他们发送温馨通知。请调动DBA让它搜索数据，调动分析师让它来分析，让咨询师待命等待学生接入(因为学生收到通知后他很有可能被需要)"
-      await sendAgentRequest(selectedAgent.id, fixedMessage)
+      const response = await sendAgentRequest(selectedAgent.id, OPENCLAW_COMPLEX_DEMO_MESSAGE)
+      if (!("error" in response)) {
+        playCompletedSound()
+      }
       setMessage("")
     } catch (error) {
       console.error("发送失败:", error)
