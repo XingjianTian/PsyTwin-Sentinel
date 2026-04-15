@@ -31,7 +31,7 @@ async function main() {
       role: '边缘处理',
     },
     DBA: {
-      name: '数据哨兵',
+      name: 'DBA',
       emoji: '🛡️',
       color: '#1e40af',
       role: '数据管理',

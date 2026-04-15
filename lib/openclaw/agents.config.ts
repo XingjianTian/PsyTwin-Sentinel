@@ -24,7 +24,7 @@ export const AGENTS = {
     role: "边缘处理",
   },
   DBA: {
-    name: "数据哨兵",
+    name: "DBA",
     emoji: "🛡️",
     color: "#1e40af",
     role: "数据管理",
@@ -44,6 +44,6 @@ export const AGENT_DESCRIPTIONS: Record<string, string> = {
   Collector: "采集员 - 负责监控 VR 与手环的多模态原始流",
   Therapist: "咨询师 - 生成 VR 干预策略与孪生体交互",
   Relayer: "中继工程师 - 执行边缘降噪与协议转换",
-  DBA: "数据哨兵 - 负责数据对齐与入库",
+  DBA: "DBA - 负责数据对齐与入库",
   Analyst: "分析师 - 调用模型提取焦虑与压力特征",
 }

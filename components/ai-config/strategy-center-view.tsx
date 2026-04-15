@@ -14,7 +14,7 @@ const promptPresets = [
   { label: "咨询师", value: "Therapist" },
   { label: "分析师", value: "Analyst" },
   { label: "采集员", value: "Collector" },
-  { label: "数据哨兵", value: "DBA" },
+  { label: "DBA", value: "DBA" },
   { label: "中继工程师", value: "Relayer" },
 ]
 
@@ -31,7 +31,7 @@ const agentPrompts: Record<string, string> = {
 - 风险评估类任务 → Analyst（分析师）先行特征提取
 - 干预策略类任务 → Therapist（咨询师）生成方案
 - 数据采集类任务 → Collector（采集员）获取多模态数据
-- 数据安全类任务 → DBA（数据哨兵）审核与对齐
+- 数据安全类任务 → DBA 审核与对齐
 - 边缘处理类任务 → Relayer（中继工程师）执行协议转换`,
 
   Therapist: `你是一名专业的校园心理咨询AI助手，由心图PsyTwin平台驱动。你的核心职责如下：
@@ -73,7 +73,7 @@ const agentPrompts: Record<string, string> = {
 - 语音分析：语速、停顿、情感倾向
 - 问卷系统：SDS、SAS、SCL-90筛查结果`,
 
-  DBA: `【数据哨兵】你是PsyTwin系统的数据安全守护者，负责数据对齐、隐私保护与合规审核。
+  DBA: `【DBA】你是PsyTwin系统的数据安全守护者，负责数据对齐、隐私保护与合规审核。
 
 核心职责：
 1. 审核所有入库存量的数据完整性与一致性
@@ -264,7 +264,7 @@ export function StrategyCenterView() {
 
   // 写死的 AI 补充 Prompt（300字左右，针对 DBA、采集员、分析师）
   const ENHANCED_PROMPTS: Record<string, string> = {
-    DBA: `【数据哨兵】你是心图系统的数据安全守护者，负责数据对齐、隐私保护与合规审核是你的核心使命。
+    DBA: `【DBA】你是心图系统的数据安全守护者，负责数据对齐、隐私保护与合规审核是你的核心使命。
 
 核心职责：
 1. 审核所有入库存量的数据完整性与一致性，检查时间戳对齐与字段规范性，对缺失字段执行自动填补或人工复核

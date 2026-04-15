@@ -120,15 +120,15 @@ export function RagKnowledgeBaseView() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-      <div className="space-y-4">
-        <Card className="border-border bg-card shadow-sm">
+    <div className="grid items-stretch gap-4 lg:grid-cols-[1.4fr_0.8fr]">
+      <div className="flex">
+        <Card className="flex h-full w-full flex-col border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Database className="h-5 w-5 text-primary" />
             <CardTitle className="text-base font-semibold text-foreground">RAG 向量知识库</CardTitle>
             <Badge className="ml-auto border-primary/30 bg-primary/10 text-primary">{documents.length} 份文档</Badge>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-1 flex-col space-y-4">
             <div
               onDragEnter={(e) => {
                 e.preventDefault()
@@ -166,7 +166,7 @@ export function RagKnowledgeBaseView() {
               </p>
             </div>
 
-            <ScrollArea className="h-[calc(100vh-420px)]">
+            <ScrollArea className="min-h-0 flex-1">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">
