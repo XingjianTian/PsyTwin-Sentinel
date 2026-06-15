@@ -29,25 +29,25 @@
 
 ---
 
-## 与 PsyTwin-Pocket 的双向文件链接
+## 与 PsyTwin-Pocket 的双向文档链接
 
-Sentinel 是跨端 API 契约的生产方，Pocket 是消费方。为了避免文档复制后漂移，两端通过文件级链接互相指向关键文档。当前 Windows 会话没有创建符号软链接的权限，本机实际使用同卷 `HardLink`，编辑任一端都会同步到同一份文件数据。
+Sentinel 是跨端 API 契约的生产方，Pocket 是消费方。为了避免文档复制后漂移，两端通过 Markdown 相对路径互相指向关键文档，方便开发者和 AI 识别两个项目之间的关系。
 
 | 本项目链接 | 指向 | 用途 |
 |------|------|------|
-| [`pocket_api_guide.md`](./pocket_api_guide.md) | `PsyTwin-Pocket/docs/API_GUIDE.md` | 查看 Pocket 请求层、Base URL 与 API 模块写法 |
-| [`pocket_project_overview.md`](./pocket_project_overview.md) | `PsyTwin-Pocket/docs/PROJECT_OVERVIEW.md` | 查看 Pocket 项目定位、页面结构和生态角色 |
+| [`pocket_api_guide.md`](./pocket_api_guide.md) | `../../PsyTwin-Pocket/docs/API_GUIDE.md` | 查看 Pocket 请求层、Base URL 与 API 模块写法 |
+| [`pocket_project_overview.md`](./pocket_project_overview.md) | `../../PsyTwin-Pocket/docs/PROJECT_OVERVIEW.md` | 查看 Pocket 项目定位、页面结构和生态角色 |
 
 Pocket 侧同时通过以下链接回指 Sentinel：
 
 | Pocket 链接 | 指向 | 用途 |
 |------|------|------|
-| `../PsyTwin-Pocket/docs/api_contract.md` | `../PsyTwin-Sentinel/docs/api_contract.md` | Pocket 网络开发唯一 API 契约入口 |
-| `../PsyTwin-Pocket/docs/sentinel_project_analysis.md` | `../PsyTwin-Sentinel/docs/project-analysis-2026-06-15.md` | Pocket 侧查看 Sentinel 分析与联动状态 |
+| `../../PsyTwin-Pocket/docs/api_contract.md` | `../../PsyTwin-Sentinel/docs/api_contract.md` | Pocket 网络开发唯一 API 契约入口 |
+| `../../PsyTwin-Pocket/docs/sentinel_project_analysis.md` | `../../PsyTwin-Sentinel/docs/project-analysis-2026-06-15.md` | Pocket 侧查看 Sentinel 分析与联动状态 |
 
 **使用规则**：
 - 修改跨端 API 前，优先更新 [`api_contract.md`](./api_contract.md)。
-- Pocket 侧不要复制契约内容，直接读取 `docs/api_contract.md` 文件链接。
+- Pocket 侧不要复制契约内容，直接读取 `docs/api_contract.md` 文档入口。
 - Sentinel 侧需要理解 Pocket 消费方式时，读取上方两个 Pocket 文档链接。
 
 ## 跨项目参考文档
