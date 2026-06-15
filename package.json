@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "TZ=Asia/Shanghai next dev --webpack --hostname 0.0.0.0",
+    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "dev:unix": "TZ=Asia/Shanghai next dev --webpack --hostname 0.0.0.0",
     "build": "next build",
-    "start": "TZ=Asia/Shanghai next start",
+    "start": "next start",
+    "start:unix": "TZ=Asia/Shanghai next start",
     "lint": "eslint .",
+    "test:pet-diary": "node --test lib/pet-diary.test.mjs",
+    "seed:pet-diary": "tsx prisma/seed-pet-diary-templates.ts",
     "changelog:generate": "auto-changelog -p --commit-limit 20 --template keepachangelog --output docs/CHANGELOG.md"
   },
   "prisma": {

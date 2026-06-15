@@ -1,0 +1,67 @@
+export const DIARY_WRITING_SCENES = ["dormitory", "library"] as const
+
+const DIARY_PROBABILITY = 0.4
+const EVENING_START_HOUR = 20
+const EVENING_END_HOUR = 23
+
+export function shouldTriggerDiary({
+  sceneId,
+  hour,
+  randomValue = Math.random(),
+  alreadyWritten = false,
+  alreadyWrittenToday = false,
+}: {
+  sceneId?: string | null
+  hour: number
+  randomValue?: number
+  alreadyWritten?: boolean
+  alreadyWrittenToday?: boolean
+}) {
+  if (alreadyWritten || alreadyWrittenToday) return false
+  if (!sceneId || !DIARY_WRITING_SCENES.includes(sceneId as (typeof DIARY_WRITING_SCENES)[number])) return false
+  if (hour < EVENING_START_HOUR || hour > EVENING_END_HOUR) return false
+
+  return randomValue < DIARY_PROBABILITY
+}
+
+export function formatDateKey(dateInput: Date | string) {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, "0")
+  const day = `${date.getDate()}`.padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
+
+export function getMissingDiaryDates({
+  lastOnlineAt,
+  now = new Date(),
+  existingDates = [],
+  maxDays = 7,
+}: {
+  lastOnlineAt?: string | Date | null
+  now?: Date
+  existingDates?: string[]
+  maxDays?: number
+}) {
+  if (!lastOnlineAt) return []
+
+  const existing = new Set(existingDates)
+  const cursor = new Date(lastOnlineAt)
+  cursor.setHours(0, 0, 0, 0)
+
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+
+  const dates: string[] = []
+
+  while (cursor < today) {
+    const key = formatDateKey(cursor)
+    if (!existing.has(key)) {
+      dates.push(key)
+    }
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return dates.slice(-maxDays)
+}

@@ -54,6 +54,7 @@ model Student {
   vrSessions          VRSession[]
   warnings            Warning[]
   workOrders          WorkOrder[]
+  pets                Pet[]
 
   @@index([className])
   @@index([facultyId])
@@ -952,6 +953,291 @@ model SilentHours {
   exceptLevel RiskLevel @default(HIGH) @map("except_level")
 
   @@map("silent_hours")
+}
+
+// ==================== PET SYSTEM ====================
+
+enum PetSpecies {
+  CAT
+  DOG
+  RABBIT
+  HAMSTER
+  BIRD
+  FISH
+  TURTLE
+  FOX
+  WOLF
+  DRAGON
+}
+
+enum Direction {
+  UP
+  DOWN
+  LEFT
+  RIGHT
+}
+
+enum ActivityType {
+  IDLE
+  WALKING
+  RUNNING
+  EATING
+  SLEEPING
+  PLAYING
+  BATHING
+  GROOMING
+  SOCIALIZING
+  EXPLORING
+  RESTING
+  WORKING
+  STUDYING
+  EXERCISING
+}
+
+enum ControlState {
+  FREE
+  AI_CONTROLLED
+  USER_CONTROLLED
+  HYBRID
+}
+
+enum EventType {
+  INTERACTION
+  MOOD_CHANGE
+  ENVIRONMENT_CHANGE
+  MILESTONE
+  HEALTH_ALERT
+  SOCIAL
+  ACTIVITY
+  SYSTEM
+}
+
+enum EventCategory {
+  BEHAVIOR
+  SOCIAL
+  HEALTH
+  ENVIRONMENTAL
+  ACHIEVEMENT
+  SYSTEM
+}
+
+enum EventStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum ItemType {
+  FOOD
+  TOY
+  FURNITURE
+  CLOTHING
+  ACCESSORY
+  DECORATION
+  TOOL
+  MEDICINE
+  GIFT
+}
+
+enum DiaryEntryType {
+  MOOD
+  HEALTH
+  MILESTONE
+  BEHAVIOR
+  SOCIAL
+  TRAINING
+  DAILY
+}
+
+enum AlertSeverity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PetAlertType {
+  HEALTH_WARNING
+  MOOD_ANOMALY
+  SOCIAL_ISOLATION
+  NEGLECT_ALERT
+  EMERGENCY
+}
+
+enum AlertStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+// ==================== PET MODELS ====================
+
+model Pet {
+  id                  String       @id @default(cuid())
+  ownerId             String       @map("owner_id")
+  name                String
+  species             PetSpecies
+  color               String?
+  accessories         String[]     @default([])
+  expression          String?
+  openness           Int          @default(50)
+  conscientiousness  Int          @default(50)
+  extraversion        Int          @default(50)
+  agreeableness      Int          @default(50)
+  neuroticism         Int          @default(50)
+  mood                Int          @default(60)
+  energy              Int          @default(75)
+  sociability         Int          @default(20)
+  currentScene        String?      @map("current_scene")
+  positionX           Float?        @map("position_x")
+  positionY           Float?        @map("position_y")
+  direction           Direction?
+  currentActivityType ActivityType @default(IDLE) @map("current_activity_type")
+  currentActivityName String?      @map("current_activity_name")
+  activityStartTime   DateTime?    @map("activity_start_time")
+  activityDuration   Int?         @map("activity_duration")
+  activityProgress   Int?         @map("activity_progress")
+  isOnline            Boolean      @default(false) @map("is_online")
+  isSleeping          Boolean      @default(false) @map("is_sleeping")
+  isInteracting       Boolean      @default(false) @map("is_interacting")
+  interactingWithId   String?      @map("interacting_with_id")
+  controlState        ControlState @default(FREE) @map("control_state")
+  controlledBy        String?      @map("controlled_by")
+  controlledAt        DateTime?    @map("controlled_at")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  lastActionAt        DateTime?    @map("last_action_at")
+  owner               Student      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  inventory           PetItem[]
+  events              PetEvent[]
+  diaryEntries        PetDiaryEntry[]
+  alerts              PetAlert[]
+
+  @@index([ownerId])
+  @@index([species])
+  @@index([isOnline])
+  @@map("pets")
+}
+
+model PetEvent {
+  id          String        @id @default(cuid())
+  petId       String        @map("pet_id")
+  type        EventType
+  category    EventCategory
+  name        String
+  description String?
+  status      EventStatus   @default(ACTIVE)
+  metadata    Json?
+  startedAt   DateTime      @default(now()) @map("started_at")
+  endedAt     DateTime?     @map("ended_at")
+  duration    Int?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  pet         Pet           @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+  @@index([type])
+  @@index([category])
+  @@index([status])
+  @@index([startedAt])
+  @@map("pet_events")
+}
+
+model PetItem {
+  id          String    @id @default(cuid())
+  petId       String    @map("pet_id")
+  name        String
+  type        ItemType
+  description String?
+  quantity    Int       @default(1)
+  equipped    Boolean   @default(false)
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  pet         Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+  @@index([type])
+  @@index([equipped])
+  @@map("pet_items")
+}
+
+model PetDiaryEntry {
+  id        String         @id @default(cuid())
+  petId     String         @map("pet_id")
+  type      DiaryEntryType
+  title     String
+  content   String?
+  mood      Int?
+  energy    Int?
+  metadata  Json?
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  pet       Pet            @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("pet_diary_entries")
+}
+
+model PetDiaryTemplate {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String
+  sceneHint String?  @map("scene_hint")
+  tone      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@index([sceneHint])
+  @@map("pet_diary_templates")
+}
+
+model PetAlert {
+  id         String        @id @default(cuid())
+  petId      String        @map("pet_id")
+  type       PetAlertType
+  severity   AlertSeverity
+  status     AlertStatus   @default(PENDING)
+  title      String
+  message    String?
+  metadata   Json?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  resolvedAt DateTime?      @map("resolved_at")
+  pet        Pet           @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@map("pet_alerts")
+}
+
+model SceneItem {
+  id          String   @id @default(cuid())
+  sceneId     String   @map("scene_id")
+  name        String
+  type        String
+  positionX   Float    @map("position_x")
+  positionY   Float    @map("position_y")
+  scale       Float    @default(1.0)
+  rotation    Float    @default(0.0)
+  properties  Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([sceneId])
+  @@index([type])
+  @@map("scene_items")
 }
 
 enum RiskLevel {

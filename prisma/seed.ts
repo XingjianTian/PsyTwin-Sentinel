@@ -91,6 +91,33 @@ async function main() {
     },
   })
 
+  // 创建教师数据
+  const teachers = [
+    { id: 'teacher-001', teacherId: 'T001', name: '刘芳', phone: '13800000001', password: 'teacher123', role: 'COUNSELOR', department: '心理咨询中心', title: '高级心理咨询师' },
+    { id: 'teacher-002', teacherId: 'T002', name: '张伟', phone: '13800000002', password: 'teacher123', role: 'COUNSELOR', department: '心理咨询中心', title: '心理咨询师' },
+    { id: 'teacher-003', teacherId: 'T003', name: '王丽', phone: '13800000003', password: 'teacher123', role: 'COUNSELOR', department: '学生工作处', title: '心理辅导员' },
+  ]
+
+  for (const t of teachers) {
+    await prisma.teacher.upsert({
+      where: { id: t.id },
+      update: {},
+      create: {
+        id: t.id,
+        teacherId: t.teacherId,
+        name: t.name,
+        phone: t.phone,
+        passwordHash: await hashPassword(t.password),
+        role: t.role as any,
+        department: t.department,
+        title: t.title,
+        status: 'ACTIVE',
+      },
+    })
+  }
+
+  console.log(`- ${teachers.length}个教师账号（咨询师）`)
+
   // 20个学生数据
   const students = [
     { id: 'stu-zhangyu', name: '张宇', studentNo: '2025030218', className: '大数据2502', facultyId: 'fac-data', riskLevel: RiskLevel.LOW, mbti: 'INTJ' },

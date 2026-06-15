@@ -2,6 +2,10 @@
 
 import { prisma } from "@/lib/prisma"
 import { cacheAside } from "@/lib/cache"
+import {
+  getStudentPetSnapshots,
+  type StudentPetSnapshot,
+} from "@/app/actions/pet-snapshot"
 
 export interface PocketKPI {
   postCount: number
@@ -16,6 +20,7 @@ export interface PocketKPI {
 
 export interface PocketPost {
   id: string
+  studentId: string
   studentName: string
   studentClass: string
   content: string
@@ -30,17 +35,11 @@ export interface HourlyDistribution {
   count: number
 }
 
-export interface ContentTypeDistribution {
-  type: string
-  count: number
-  color: string
-}
-
 export interface PocketDataRecord {
   kpis: PocketKPI
   posts: PocketPost[]
+  petsByStudentId: Record<string, StudentPetSnapshot>
   hourlyDist: HourlyDistribution[]
-  contentDist: ContentTypeDistribution[]
 }
 
 /**
@@ -48,7 +47,7 @@ export interface PocketDataRecord {
  */
 export async function getPocketDataRecords(): Promise<PocketDataRecord> {
   return cacheAside(
-    "pocket:records:v1",
+    "pocket:records:v3",
     async () => {
       // 模拟 KPI 数据（实际应从数据库聚合查询）
       const kpis: PocketKPI = {
@@ -65,7 +64,7 @@ export async function getPocketDataRecords(): Promise<PocketDataRecord> {
       // 获取心墙帖子
       const posts = await prisma.post.findMany({
         include: {
-          author: { select: { name: true, className: true } },
+          author: { select: { id: true, name: true, className: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 10,
@@ -82,6 +81,7 @@ export async function getPocketDataRecords(): Promise<PocketDataRecord> {
 
         return {
           id: post.id,
+          studentId: post.author.id,
           studentName: post.author.name,
           studentClass: post.author.className,
           content: post.content,
@@ -91,6 +91,9 @@ export async function getPocketDataRecords(): Promise<PocketDataRecord> {
           timeAgo,
         }
       })
+      const petsByStudentId = await getStudentPetSnapshots(
+        pocketPosts.map((post) => post.studentId),
+      )
 
       // 模拟时段分布数据（实际应从数据库聚合）
       const hourlyDist: HourlyDistribution[] = [
@@ -100,19 +103,11 @@ export async function getPocketDataRecords(): Promise<PocketDataRecord> {
         { hour: "22时", count: 280 },
       ]
 
-      // 内容类型分布
-      const contentDist: ContentTypeDistribution[] = [
-        { type: "倾诉帖", count: 520, color: "#7C3AED" },
-        { type: "咨询帖", count: 280, color: "#F59E0B" },
-        { type: "活动帖", count: 180, color: "#10B981" },
-        { type: "分享帖", count: 120, color: "#3B82F6" },
-      ]
-
       return {
         kpis,
         posts: pocketPosts,
+        petsByStudentId,
         hourlyDist,
-        contentDist,
       }
     },
     300 // 5 分钟 TTL

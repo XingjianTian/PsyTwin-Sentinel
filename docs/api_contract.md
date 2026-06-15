@@ -339,7 +339,125 @@ GET /api/pocket/user/collections?page=1&limit=20
 
 ---
 
-## 7. 枚举定义
+## 7. 心宠日记模块
+
+### 7.1 获取指定日期日记
+```http
+GET /api/pocket/pet/diary?date=2026-06-13
+```
+
+**Response**:
+```json
+{
+  "code": 0,
+  "message": "操作成功",
+  "data": {
+    "dateKey": "2026-06-13",
+    "entries": [
+      {
+        "id": "cuid",
+        "time": "21:00",
+        "type": "DB_DIARY",
+        "title": "今天的小发现",
+        "content": "今天我在角落里待了一会儿...",
+        "sceneId": "dormitory",
+        "dateKey": "2026-06-13",
+        "mood": 60,
+        "energy": 75,
+        "source": "template_library",
+        "templateSlug": "pet-diary-template-001",
+        "createdAt": "2026-06-13T13:00:00.000Z"
+      }
+    ],
+    "diaryDataMap": {
+      "2026-06-13": []
+    }
+  }
+}
+```
+
+### 7.2 按规则触发日记
+```http
+POST /api/pocket/pet/diary/trigger
+```
+
+**Request Body**:
+```json
+{
+  "sceneId": "library",
+  "date": "2026-06-13",
+  "hour": 21
+}
+```
+
+**规则**:
+- [x] 只允许 `dormitory` 和 `library` 场景触发。*(已于 2026-06-13 落地到 Sentinel 规则与 Pocket 触发前置判断)*
+- [x] 只在 20:00-23:59 时间段触发。*(已于 2026-06-13 落地到 Sentinel 规则)*
+- [x] 同一天已有模板日记时不重复自动触发。*(已于 2026-06-13 落地到 Sentinel 查询判断)*
+- [x] 满足条件后按 40% 概率生成。*(已于 2026-06-13 落地到 Sentinel 规则)*
+
+**Response**:
+```json
+{
+  "code": 0,
+  "data": {
+    "triggered": true,
+    "entry": {},
+    "entries": [],
+    "diaryDataMap": {}
+  }
+}
+```
+
+### 7.3 测试读取日记
+```http
+POST /api/pocket/pet/diary/test
+```
+
+**Request Body**:
+```json
+{
+  "sceneId": "dormitory",
+  "date": "2026-06-13"
+}
+```
+
+**说明**: 绕过时间和概率限制，直接从 `pet_diary_templates` 随机抽取一篇模板并写入 `pet_diary_entries`，用于小程序面板测试按钮。
+
+### 7.4 离线补全日记
+```http
+POST /api/pocket/pet/diary/backfill
+```
+
+**Request Body**:
+```json
+{
+  "lastOnlineAt": "2026-06-10T12:00:00.000Z",
+  "maxDays": 7
+}
+```
+
+**Response**:
+```json
+{
+  "code": 0,
+  "message": "离线心宠日记补全完成",
+  "data": {
+    "generatedDates": ["2026-06-11", "2026-06-12"],
+    "entries": [],
+    "diaryDataMap": {}
+  }
+}
+```
+
+**状态追踪**:
+- [x] `pet_diary_templates` 模板库提供 200 篇通用日记。*(已于 2026-06-13 新增 Prisma 模型、迁移与种子脚本)*
+- [x] 小程序上线后根据离线时间补齐今日之前缺失日期。*(已于 2026-06-13 接入 Pocket 同步链路)*
+- [x] 小程序日记面板提供测试读取按钮。*(已于 2026-06-13 接入 Pocket 日记面板)*
+
+---
+
+## 8. 枚举定义
 
 ### RoomStatus
 - `AVAILABLE` - 可用
@@ -365,7 +483,7 @@ GET /api/pocket/user/collections?page=1&limit=20
 
 ---
 
-## 8. 字段映射表
+## 9. 字段映射表
 
 | API 字段 | 数据库字段 | 说明 |
 |----------|-----------|------|
@@ -376,4 +494,4 @@ GET /api/pocket/user/collections?page=1&limit=20
 
 ---
 
-*文档版本: v2.0 | 更新日期: 2026-03-09*
+*文档版本: v2.1 | 更新日期: 2026-06-13*

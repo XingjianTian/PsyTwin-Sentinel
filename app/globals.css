@@ -344,3 +344,24 @@
 .animate-pulse-success {
   animation: pulse-success 2s ease-in-out infinite;
 }
+
+@keyframes pet-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-0.4deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0.4deg);
+  }
+}
+
+.pet-float {
+  animation: pet-float 3.2s ease-in-out infinite;
+  transform-origin: 50% 90%;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-float {
+    animation: none;
+  }
+}
