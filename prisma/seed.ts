@@ -167,6 +167,75 @@ async function main() {
     })
   }
 
+  const aiDocuments = [
+    { id: 'doc-1', name: '危机干预指南（第三版）', fileSize: '2.4 MB', uploadDate: '2025-11-08T00:00:00.000Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+    { id: 'doc-2', name: 'CBT疗法手册', fileSize: '1.8 MB', uploadDate: '2025-10-22T00:00:00.000Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+    { id: 'doc-3', name: '大学生心理健康评估标准', fileSize: '3.1 MB', uploadDate: '2025-12-01T00:00:00.000Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+    { id: 'doc-4', name: '校园危机事件应急预案', fileSize: '0.9 MB', uploadDate: '2026-01-15T00:00:00.000Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+    { id: 'doc-5', name: '心理咨询伦理规范', fileSize: '0.7 MB', uploadDate: '2026-02-10T00:00:00.000Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+    { id: 'doc-7', name: '心图 PsyTwin 校园心理健康数字孪生解决方案.md', fileSize: '21.17 KB', uploadDate: '2026-03-08T07:41:47.543Z', status: DocStatus.VECTORIZED, vectorStatus: 'ready' },
+  ]
+
+  for (const doc of aiDocuments) {
+    await prisma.aIDocument.upsert({
+      where: { id: doc.id },
+      update: {
+        name: doc.name,
+        fileSize: doc.fileSize,
+        uploadDate: new Date(doc.uploadDate),
+        status: doc.status,
+        vectorStatus: doc.vectorStatus,
+      },
+      create: {
+        ...doc,
+        uploadDate: new Date(doc.uploadDate),
+      },
+    })
+  }
+
+  const vrScenes = [
+    { id: 'scene-social', name: '社交焦虑脱敏', description: '降低社交焦虑', usageCount: 2340 },
+    { id: 'scene-exam', name: '考试压力释放', description: '缓解考前压力', usageCount: 1980 },
+    { id: 'scene-mindfulness', name: '正念冥想空间', description: '冥想放松', usageCount: 2680 },
+    { id: 'scene-release', name: '情绪宣泄训练', description: '情绪管理训练', usageCount: 1432 },
+  ]
+
+  for (const scene of vrScenes) {
+    await prisma.vRScene.upsert({
+      where: { id: scene.id },
+      update: scene,
+      create: scene,
+    })
+  }
+
+  const vrSessions = [
+    { id: 'vrs-01', studentId: 'stu-liusiyuan', sceneId: 'scene-social', duration: '28分钟', emotionBefore: '焦虑', emotionAfter: '平静', result: Sentiment.POSITIVE },
+    { id: 'vrs-02', studentId: 'stu-chenyuqing', sceneId: 'scene-exam', duration: '22分钟', emotionBefore: '紧张', emotionAfter: '放松', result: Sentiment.POSITIVE },
+    { id: 'vrs-03', studentId: 'stu-zhangmingyuan', sceneId: 'scene-mindfulness', duration: '30分钟', emotionBefore: '烦躁', emotionAfter: '安宁', result: Sentiment.POSITIVE },
+    { id: 'vrs-04', studentId: 'stu-wuzhiyuan', sceneId: 'scene-release', duration: '18分钟', emotionBefore: '压抑', emotionAfter: '舒畅', result: Sentiment.POSITIVE },
+    { id: 'vrs-05', studentId: 'stu-zhouhangyu', sceneId: 'scene-social', duration: '25分钟', emotionBefore: '回避', emotionAfter: '中性', result: Sentiment.NEUTRAL },
+    { id: 'vrs-06', studentId: 'stu-zhaotianyu', sceneId: 'scene-exam', duration: '20分钟', emotionBefore: '焦虑', emotionAfter: '放松', result: Sentiment.POSITIVE },
+    { id: 'vrs-07', studentId: 'stu-huangsimeng', sceneId: 'scene-mindfulness', duration: '35分钟', emotionBefore: '低落', emotionAfter: '平和', result: Sentiment.POSITIVE },
+    { id: 'vrs-08', studentId: 'stu-linzhihao', sceneId: 'scene-release', duration: '15分钟', emotionBefore: '愤怒', emotionAfter: '中性', result: Sentiment.NEUTRAL },
+    { id: 'vrs-09', studentId: 'stu-wangyuyan', sceneId: 'scene-social', duration: '26分钟', emotionBefore: '恐惧', emotionAfter: '平静', result: Sentiment.POSITIVE },
+    { id: 'vrs-10', studentId: 'stu-zhangyu', sceneId: 'scene-exam', duration: '19分钟', emotionBefore: '紧张', emotionAfter: '轻松', result: Sentiment.POSITIVE },
+  ]
+
+  const vrSessionAt = new Date('2026-03-18T09:11:57.912Z')
+  for (const session of vrSessions) {
+    await prisma.vRSession.upsert({
+      where: { id: session.id },
+      update: {
+        ...session,
+        sessionAt: vrSessionAt,
+      },
+      create: {
+        ...session,
+        sessionAt: vrSessionAt,
+      },
+    })
+  }
+
   // 20个学生的干预记录（每个学生至少1条，部分为进展中状态）
   const interventionRecords = [
     { id: 'ir-01', studentId: 'stu-zhangyu', date: '2026-02-15', type: InterventionType.REGULAR_INTERVIEW, counselor: '刘芳', duration: '50分钟', result: '状态良好', status: 'completed' },
@@ -1013,6 +1082,8 @@ async function main() {
   console.log(`- 约90条时间线事件（每人4-5条生命周期记录）`)
   console.log(`- 20条干预记录（每学生至少1条）`)
   console.log(`- 14个工单（含AI评估报告）`)
+  console.log(`- 6份RAG心理知识库文档`)
+  console.log(`- 4个VR场景 + 10条VR体验记录`)
   console.log(`- 10个房间（5个咨询室 + 2个VR区 + 3个减压舱）`)
   console.log(`- 26台设备（10台VR + 10条手环 + 6个脑电，脑电只在咨询室）`)
 }

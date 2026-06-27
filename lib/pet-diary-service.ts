@@ -1,7 +1,12 @@
 import { DiaryEntryType, PetSpecies, Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db"
-import { formatDateKey, getMissingDiaryDates, shouldTriggerDiary } from "@/lib/pet-diary-core"
+import {
+  buildRandomDiaryCreatedAt,
+  formatDateKey,
+  getMissingDiaryDates,
+  shouldTriggerDiary,
+} from "@/lib/pet-diary-core"
 import { petDiaryTemplates } from "@/prisma/pet-diary-templates"
 
 type DiaryMetadata = {
@@ -18,10 +23,6 @@ function getDateRange(dateKey: string) {
   end.setDate(end.getDate() + 1)
 
   return { start, end }
-}
-
-function getDiaryCreatedAt(dateKey: string, hour = 21) {
-  return new Date(`${dateKey}T${`${hour}`.padStart(2, "0")}:00:00+08:00`)
 }
 
 function getEntryDateKey(entry: { createdAt: Date }) {
@@ -212,7 +213,7 @@ export async function createPetDiaryEntry({
       content: template.content,
       mood: pet.mood,
       energy: pet.energy,
-      createdAt: getDiaryCreatedAt(dateKey),
+      createdAt: buildRandomDiaryCreatedAt({ dateKey }),
       metadata: {
         source: "template_library",
         templateSlug: template.slug,

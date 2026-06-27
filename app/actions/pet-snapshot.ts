@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { getPetVariantAppearance } from "@/lib/pet-appearance.mjs"
 
 export interface StudentPetSnapshot {
   id: string
@@ -139,6 +140,8 @@ function toSnapshot(pet: Awaited<ReturnType<typeof findPet>>, student?: StudentI
   }
 
   const seed = hashString(`${pet.id}:${pet.species}:${pet.color || ""}:${pet.name}`)
+  const variantSource = pick(petVariantSources, seed)
+  const variantAppearance = getPetVariantAppearance(variantSource)
   const activity = pet.currentActivityName || activityLabels[pet.currentActivityType] || "安静观察"
   const scene = sceneLabels[pet.currentScene || ""] || pet.currentScene || "奇幻森林"
   const schedule = pet.isSleeping ? "睡眠休息" : pet.controlState === "USER_CONTROLLED" ? "学生互动" : "自由活动"
@@ -174,9 +177,9 @@ function toSnapshot(pet: Awaited<ReturnType<typeof findPet>>, student?: StudentI
     studentClass: student?.className || pet.owner.className,
     studentNo: student?.studentNo || pet.owner.studentNo,
     name: pet.name,
-    imageSrc: `${pick(petVariantSources, seed)}?v=${petAssetVersion}`,
+    imageSrc: `${variantSource}?v=${petAssetVersion}`,
     species: pet.species,
-    color: pet.color || pick(petColors, seed, 1),
+    color: variantAppearance.color || pet.color || pick(petColors, seed, 1),
     accessory: pet.accessories[0] || pick(petAccessories, seed, 2),
     expression: pet.expression || pick(petExpressions, seed, 3),
     mood: pet.mood,

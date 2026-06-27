@@ -4,6 +4,7 @@ import { openClawEventBus, OPENCLAW_EVENTS } from "@/lib/openclaw/event-bus"
 import { prisma } from "@/lib/prisma"
 import { AGENTS } from "@/lib/openclaw/agents.config"
 import { isOpenClawDemoRequest, runOpenClawDemoWorkflow } from "@/lib/openclaw/demo-script"
+import { buildOpenClawRagPayload } from "@/lib/openclaw/rag-context"
 
 const db = prisma as any
 
@@ -152,6 +153,22 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    const ragPayload = await buildOpenClawRagPayload(message)
+    if (ragPayload.hitCount > 0) {
+      await openClawEventBus.emit(OPENCLAW_EVENTS.WORKFLOW_EVENT, {
+        id: `evt-${Date.now()}`,
+        requestId: dbRequest.id,
+        agentId: agentId,
+        agentName: agentId,
+        agentColor: "#64748b",
+        state: "in_progress",
+        message: `RAG context attached: ${ragPayload.hitCount} chunks`,
+        time: nowTime(),
+        timestamp: Date.now(),
+        type: "rag.context",
+      })
+    }
+
     const response = await fetch(`${targetUrl}/v1/responses`, {
       method: "POST",
       headers: {
@@ -161,7 +178,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: "openclaw",
-        input: message,
+        input: ragPayload.input,
         user: "psytwin",
         stream: true,
       }),
@@ -303,6 +320,11 @@ export async function POST(request: NextRequest) {
       success: true, 
       response: finalResponse || "处理完成",
       runId,
+      rag: {
+        hitCount: ragPayload.hitCount,
+        sources: ragPayload.sources,
+        error: ragPayload.error,
+      },
     })
   } catch (error) {
     console.error("SSE chat error:", error)
