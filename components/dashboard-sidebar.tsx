@@ -27,6 +27,7 @@ import {
   MessageCircle,
   ClipboardList,
   BookOpen,
+  Camera,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -64,6 +65,7 @@ const menuGroups: MenuGroup[] = [
       { icon: DoorOpen, label: "线上预约管理", href: "/consultation-room" },
       { icon: Monitor, label: "线下设备管理", href: "/device-management" },
       { icon: Workflow, label: "心图·AI助手", href: "/ai-config?tab=openclaw" },
+      { icon: Camera, label: "心图AI视窗", href: "/ai-config?tab=vision" },
     ],
   },
   {

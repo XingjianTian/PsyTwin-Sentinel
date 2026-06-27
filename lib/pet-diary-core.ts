@@ -33,6 +33,21 @@ export function formatDateKey(dateInput: Date | string) {
   return `${year}-${month}-${day}`
 }
 
+export function buildRandomDiaryCreatedAt({
+  dateKey,
+  hourRandomValue = Math.random(),
+  minuteRandomValue = Math.random(),
+}: {
+  dateKey: string
+  hourRandomValue?: number
+  minuteRandomValue?: number
+}) {
+  const hour = 20 + Math.floor(hourRandomValue * 4)
+  const minute = 7 + Math.floor(minuteRandomValue * 52)
+
+  return new Date(`${dateKey}T${`${hour}`.padStart(2, "0")}:${`${minute}`.padStart(2, "0")}:00+08:00`)
+}
+
 export function getMissingDiaryDates({
   lastOnlineAt,
   now = new Date(),

@@ -1,7 +1,7 @@
 "use client"
 
-import { Bell, Search } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Bell, BrainCircuit, Search } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
 
 export function DashboardHeader() {
@@ -11,8 +11,8 @@ export function DashboardHeader() {
     <header className="flex h-14 items-center justify-between border-b border-border bg-white px-6 shadow-sm">
       {/* Left: Logo & Title */}
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
-          <img src="/agents-icons/psytwin.jpg" alt="PsyTwin" className="h-full w-full object-cover" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 via-sky-100 to-emerald-100 text-primary">
+          <BrainCircuit className="h-5 w-5" aria-hidden="true" />
         </div>
         <h1 className="text-base font-semibold tracking-wide text-foreground">
           心图<span className="font-mono text-primary">PsyTwin</span>

@@ -1,3 +1,4 @@
+/*
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -75,4 +76,80 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
+  })
+*/
+
+import { PrismaClient } from "@prisma/client"
+
+const prismaClient = new PrismaClient()
+
+const openClawAgents = {
+  main: {
+    name: "小芙",
+    emoji: "🧠",
+    color: "#ff006e",
+    role: "总控调度",
+  },
+  Collector: {
+    name: "采集员",
+    emoji: "📡",
+    color: "#374151",
+    role: "数据采集",
+  },
+  Therapist: {
+    name: "咨询师",
+    emoji: "💬",
+    color: "#9d4edd",
+    role: "干预策略",
+  },
+  Relayer: {
+    name: "中继工程师",
+    emoji: "⚡",
+    color: "#ffbe0b",
+    role: "边缘处理",
+  },
+  DBA: {
+    name: "DBA",
+    emoji: "🛡️",
+    color: "#1e40af",
+    role: "数据管理",
+  },
+  Analyst: {
+    name: "分析师",
+    emoji: "📊",
+    color: "#15803d",
+    role: "特征提取",
+  },
+}
+
+async function seedOpenClawAgents() {
+  console.log("Seeding OpenClaw agents...\n")
+
+  for (const [id, data] of Object.entries(openClawAgents)) {
+    await prismaClient.openClawAgent.upsert({
+      where: { id },
+      update: {
+        ...data,
+        isOnline: true,
+        updatedAt: new Date(),
+      },
+      create: {
+        id,
+        ...data,
+        isOnline: true,
+      },
+    })
+    console.log(`  OK ${id}: ${data.name}`)
+  }
+
+  console.log("\nOpenClaw agents seeded successfully!")
+}
+
+seedOpenClawAgents()
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prismaClient.$disconnect()
   })
