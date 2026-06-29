@@ -10,6 +10,7 @@
     "start:unix": "TZ=Asia/Shanghai next start",
     "lint": "eslint .",
     "test:pet-diary": "node --test lib/pet-diary.test.mjs",
+    "test:pet-migration": "node --test lib/pet-system-migration.test.mjs",
     "test:seed:incremental": "node --test lib/incremental-core-data.test.mjs",
     "seed:incremental": "tsx prisma/seed/incremental-core-data.ts",
     "seed:pet-diary": "tsx prisma/seed-pet-diary-templates.ts",
