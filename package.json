@@ -10,6 +10,8 @@
     "start:unix": "TZ=Asia/Shanghai next start",
     "lint": "eslint .",
     "test:pet-diary": "node --test lib/pet-diary.test.mjs",
+    "test:seed:incremental": "node --test lib/incremental-core-data.test.mjs",
+    "seed:incremental": "tsx prisma/seed/incremental-core-data.ts",
     "seed:pet-diary": "tsx prisma/seed-pet-diary-templates.ts",
     "changelog:generate": "auto-changelog -p --commit-limit 20 --template keepachangelog --output docs/CHANGELOG.md"
   },

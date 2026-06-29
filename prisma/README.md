@@ -58,3 +58,17 @@ npx tsx prisma/seed/03-users.ts
 ## 📝 详细文档
 
 见 [docs/CLOUD_DEPLOYMENT.md](../docs/CLOUD_DEPLOYMENT.md)
+
+## Safe incremental seed
+
+For a fresh database, run migrations first and then inject required core data:
+
+```bash
+npx prisma migrate deploy
+npx prisma generate
+npm run seed:incremental
+```
+
+`npm run seed:incremental` is idempotent and does not clear existing data. It uses stable unique keys with Prisma `upsert` for OpenClaw agents and pet diary templates, so teammates can run it after pulling new database updates without losing local records.
+
+Use `npm run seed:incremental -- --dry-run` to preview the record groups without writing to the database.
