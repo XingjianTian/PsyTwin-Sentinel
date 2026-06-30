@@ -64,7 +64,7 @@ export async function createDevice(input: CreateDeviceInput) {
       },
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -93,7 +93,7 @@ export async function updateDevice(id: string, input: UpdateDeviceInput) {
       },
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -123,7 +123,7 @@ export async function deleteDevice(id: string) {
       where: { id },
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -268,7 +268,7 @@ export async function updateDeviceStatus(
       data: updateData,
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -339,7 +339,7 @@ export async function assignDeviceToRoom(deviceId: string, roomId: string) {
       data: { room: roomDevice.room.name },
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -373,7 +373,7 @@ export async function removeDeviceFromRoom(deviceId: string, roomId: string) {
       data: { room: null },
     });
 
-    revalidatePath("/device-management");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,

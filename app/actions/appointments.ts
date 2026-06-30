@@ -86,7 +86,7 @@ export async function createAppointment(input: CreateAppointmentInput) {
       },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
     revalidatePath("/interventions");
 
     return {
@@ -136,7 +136,7 @@ export async function updateAppointment(
       },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
     revalidatePath("/interventions");
 
     return {
@@ -181,7 +181,7 @@ export async function cancelAppointment(id: string, cancelReason: string) {
       },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -224,7 +224,7 @@ export async function confirmAppointment(id: string) {
       },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,
@@ -273,7 +273,7 @@ export async function completeAppointment(
       },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
     revalidatePath("/interventions");
 
     return {
@@ -540,7 +540,7 @@ export async function deleteAppointment(id: string) {
       where: { id },
     });
 
-    revalidatePath("/consultation-room");
+    revalidatePath("/device-appointments");
 
     return {
       success: true,

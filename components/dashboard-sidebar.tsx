@@ -15,7 +15,6 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
-  DoorOpen,
   Monitor,
   Activity,
   Cpu,
@@ -27,7 +26,6 @@ import {
   MessageCircle,
   ClipboardList,
   BookOpen,
-  Camera,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -53,7 +51,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Globe, label: "校园心理健康态势", href: "/dashboard" },
       { icon: Gamepad2, label: "心图·VR体验数据", href: "/vr-dashboard" },
       { icon: MessageCircle, label: "微信小程序看板", href: "/pocket-records" },
-      { icon: Activity, label: "实时多模态数据流", href: "/multimodal" },
+      { icon: Activity, label: "实时多模态直播舱", href: "/multimodal" },
     ],
   },
   {
@@ -61,11 +59,9 @@ const menuGroups: MenuGroup[] = [
     label: "心理工作业务台",
     href: "#",
     subItems: [
-      { icon: ScanSearch, label: "预警工单管理", href: "/risk-trace" },
-      { icon: DoorOpen, label: "线上预约管理", href: "/consultation-room" },
-      { icon: Monitor, label: "线下设备管理", href: "/device-management" },
       { icon: Workflow, label: "心图·AI助手", href: "/ai-config?tab=openclaw" },
-      { icon: Camera, label: "心图AI视窗", href: "/ai-config?tab=vision" },
+      { icon: ScanSearch, label: "预警工单管理", href: "/risk-trace" },
+      { icon: Monitor, label: "设备与预约管理", href: "/device-appointments" },
     ],
   },
   {
@@ -74,7 +70,7 @@ const menuGroups: MenuGroup[] = [
     href: "#",
     subItems: [
       { icon: Users, label: "学生心理档案", href: "/students" },
-      { icon: FileText, label: "评估干预档案", href: "/interventions" },
+      { icon: FileText, label: "评估干预记录", href: "/interventions" },
     ],
   },
   {
@@ -137,7 +133,7 @@ function SubMenuItemLinkInner({ item }: { item: SubMenuItem }) {
   const itemPath = item.href.split('?')[0]
   const itemSearch = item.href.includes('?') ? item.href.split('?')[1] : ''
   const currentSearch = searchParams.toString()
-  const isActive = pathname === itemPath && currentSearch === itemSearch
+  const isActive = pathname === itemPath && (itemSearch ? currentSearch === itemSearch : true)
   
   return <SubMenuItemLink item={item} isActive={isActive} />
 }
@@ -176,7 +172,7 @@ function MenuGroupItem({
     const itemPath = item.href.split('?')[0]
     const itemSearch = item.href.includes('?') ? item.href.split('?')[1] : ''
     const currentSearch = searchParams.toString()
-    return pathname === itemPath && currentSearch === itemSearch
+    return pathname === itemPath && (itemSearch ? currentSearch === itemSearch : true)
   })
   
   const handleClick = () => {

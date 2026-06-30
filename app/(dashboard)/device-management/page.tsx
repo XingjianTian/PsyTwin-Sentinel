@@ -1,5 +1,5 @@
-import { DeviceManagementView } from "@/components/views/device-management-view"
+import { redirect } from "next/navigation"
 
 export default function DeviceManagementPage() {
-  return <DeviceManagementView />
+  redirect("/device-appointments?tab=devices")
 }
