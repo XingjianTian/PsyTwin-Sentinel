@@ -6,6 +6,30 @@
 
 > 安全提醒：不要把 `.env`、API Key、`data/rag_storage` 运行态数据直接提交到公开仓库。仓库中只保存配置模板和部署说明。
 
+## 0. 必须先确认的前提
+
+如果目标是获得和当前 PsyTwin 环境一致的效果，包括：
+
+- Sentinel 管理系统内可以直接打开 LightRAG WebUI；
+- 知识图谱默认加载 `label=*`；
+- 图谱节点使用 PsyTwin 优化后的疏朗布局；
+- 文档、实体、关系、检索结果和当前心理学知识库一致；
+
+则不能只 clone 官方 `HKUDS/LightRAG` 原版仓库。部署者必须使用 PsyTwin 定制版 LightRAG 仓库：
+
+```text
+git@github.com:XingjianTian/Psytwin-RAG.git
+```
+
+官方原版 LightRAG 可以启动服务，但不会自动包含 PsyTwin 的图谱布局优化、心理学种子资料和项目约定配置。
+
+另外，Docker 只负责启动服务。知识库内容需要通过以下两种方式之一获得：
+
+1. 使用本文档的种子资料导入流程重新构建知识库。
+2. 通过私有渠道迁移 `data` 目录中的运行态知识库数据。
+
+推荐使用第 1 种方式：仓库保存可重建的种子资料和导入脚本，同事 clone 后自己配置 API Key 并执行导入，避免你手动发送运行态数据。
+
 ## 1. 目录约定
 
 推荐目录结构：
@@ -36,19 +60,21 @@ C:\Users\<你的用户名>\Desktop\PsyTwin\LightRAG
 
 Windows 用户建议使用 PowerShell 执行命令。
 
-## 3. 克隆 LightRAG
+## 3. 克隆 PsyTwin 定制版 LightRAG
 
 ```powershell
 cd C:\Users\<你的用户名>\Desktop\PsyTwin
-git clone https://github.com/HKUDS/LightRAG.git
+git clone git@github.com:XingjianTian/Psytwin-RAG.git LightRAG
 cd LightRAG
 ```
 
-如果使用 SSH：
+如果部署者没有配置 SSH，也可以使用 HTTPS：
 
 ```powershell
-git clone git@github.com:HKUDS/LightRAG.git
+git clone https://github.com/XingjianTian/Psytwin-RAG.git LightRAG
 ```
+
+官方 `HKUDS/LightRAG` 只作为上游参考，不建议直接用于 PsyTwin 部署，否则图谱布局和项目定制配置可能不一致。
 
 ## 4. 准备配置文件
 
@@ -201,7 +227,47 @@ LIGHTRAG_API_KEY
 psytwin-local-rag-key
 ```
 
-## 10. 迁移已有知识库数据
+## 10. 使用种子资料重建知识库（推荐）
+
+PsyTwin 定制版 LightRAG 仓库内置了可公开随仓库交付的心理健康知识库种子资料：
+
+```text
+LightRAG\psytwin_seed\
+├── README.md
+├── import-seed.mjs
+└── documents\
+```
+
+这些文件不会包含你的真实 `.env`、阿里云 API Key、运行态向量库或 LLM 缓存。同事 clone 后只需要配置自己的阿里云百炼 API Key，然后执行导入脚本即可重新生成知识图谱。
+
+在 LightRAG 仓库根目录执行：
+
+```powershell
+cd C:\Users\<你的用户名>\Desktop\PsyTwin\LightRAG
+$env:LIGHTRAG_URL="http://localhost:9621"
+$env:LIGHTRAG_API_KEY="psytwin-local-rag-key"
+node .\psytwin_seed\import-seed.mjs
+```
+
+如果 `.env` 中的 `LIGHTRAG_API_KEY` 改过，这里也要同步替换。
+
+脚本会完成以下事情：
+
+1. 读取 `psytwin_seed\documents` 下的 8 份 Markdown 种子资料。
+2. 调用 LightRAG `/documents/texts` 接口导入文本。
+3. 使用 `file_sources` 保留种子文档名，方便 WebUI 文档管理识别来源。
+4. 等待文档处理完成。
+5. 请求 `/graphs?label=*&max_depth=3&max_nodes=1000` 并输出节点数、边数。
+
+只检查资料而不导入：
+
+```powershell
+node .\psytwin_seed\import-seed.mjs --dry-run
+```
+
+注意：重新运行 LLM 抽取会受到模型版本、参数和网络响应影响，节点数、边数可能不会与当前机器逐个完全一致，但主题结构、图谱展示和检索效果应保持一致。如果要求完全相同的实体、关系、向量和缓存结果，才使用下一节的 `data` 运行态迁移。
+
+## 11. 迁移已有知识库数据（可选）
 
 如果你已经有一份可用知识库，需要迁移到新机器，请迁移 LightRAG 的 `data` 目录。
 
@@ -258,7 +324,7 @@ Process 1 KV load text_chunks with N records
 Process 1 doc status load doc_status with N records
 ```
 
-## 11. 验证文档和图谱
+## 12. 验证文档和图谱
 
 PowerShell 验证文档状态：
 
@@ -298,7 +364,7 @@ $r=Invoke-RestMethod -Uri 'http://localhost:9621/graphs?label=*&max_depth=3&max_
 
 节点数和边数会根据实际知识库内容变化，不要求完全一致。
 
-## 12. 接入 PsyTwin-Sentinel
+## 13. 接入 PsyTwin-Sentinel
 
 在 Sentinel 项目的 `.env` 中配置：
 
@@ -327,7 +393,7 @@ http://localhost:3000/ai-config?tab=rag
 - 检索
 - API
 
-## 13. 上传新文档
+## 14. 上传新文档
 
 1. 打开 LightRAG WebUI：`http://localhost:9621`。
 2. 进入「文档」。
@@ -336,7 +402,7 @@ http://localhost:3000/ai-config?tab=rag
 5. 进入「知识图谱」，使用 `label=*` 查看全局图谱。
 6. 进入「检索」，使用 `mix` 模式测试问答效果。
 
-## 14. 常用运维命令
+## 15. 常用运维命令
 
 启动：
 
@@ -368,7 +434,7 @@ docker logs -f lightrag-lightrag-1
 docker ps --filter "name=lightrag"
 ```
 
-## 15. 不要提交到仓库的内容
+## 16. 不要提交到仓库的内容
 
 以下内容必须加入 `.gitignore`，不要上传：
 
@@ -395,13 +461,13 @@ __pycache__/
 - `node_modules` 和 `.venv` 体积很大，应由安装命令生成。
 - `lightrag/api/webui` 是前端构建产物，应由构建命令生成。
 
-## 16. 常见问题
+## 17. 常见问题
 
-### 16.1 页面要求输入 API Key
+### 17.1 页面要求输入 API Key
 
 输入 `.env` 中的 `LIGHTRAG_API_KEY`，不是阿里云百炼 API Key。
 
-### 16.2 `403 Forbidden: API Key required`
+### 17.2 `403 Forbidden: API Key required`
 
 请求 API 时没有带 `X-API-Key` 请求头。
 
@@ -412,7 +478,7 @@ $headers=@{ 'X-API-Key'='你的 LIGHTRAG_API_KEY' }
 Invoke-RestMethod -Uri 'http://localhost:9621/documents/status_counts' -Headers $headers
 ```
 
-### 16.3 知识图谱无数据
+### 17.3 知识图谱无数据
 
 检查：
 
@@ -421,7 +487,7 @@ Invoke-RestMethod -Uri 'http://localhost:9621/documents/status_counts' -Headers 
 - `data/rag_storage` 是否迁移到正确位置。
 - 日志里是否成功加载 graphml 文件。
 
-### 16.4 阿里云模型调用失败
+### 17.4 阿里云模型调用失败
 
 检查：
 
@@ -430,11 +496,11 @@ Invoke-RestMethod -Uri 'http://localhost:9621/documents/status_counts' -Headers 
 - 模型名是否开通，例如 `qwen-plus`、`qwen-turbo`、`text-embedding-v4`。
 - 业务空间 endpoint 是否和 API Key 属于同一个空间。
 
-### 16.5 PowerShell 输出中文乱码
+### 17.5 PowerShell 输出中文乱码
 
 这是终端编码显示问题，不一定代表 LightRAG 数据乱码。优先以 WebUI 页面显示为准。
 
-### 16.6 改了前端样式但页面没变化
+### 17.6 改了前端样式但页面没变化
 
 需要重建容器：
 
@@ -444,7 +510,7 @@ docker compose up -d --build lightrag
 
 浏览器再按 `Ctrl + F5` 强制刷新缓存。
 
-## 17. 推荐交付清单
+## 18. 推荐交付清单
 
 交付给他人部署时，建议提供：
 
@@ -452,6 +518,7 @@ docker compose up -d --build lightrag
 LightRAG 源码
 .env.example
 部署说明文档
+psytwin_seed 种子资料和导入脚本
 可选：data 压缩包
 ```
 
