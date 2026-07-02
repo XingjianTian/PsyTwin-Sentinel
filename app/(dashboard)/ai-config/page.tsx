@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 import { AiConfigView } from "@/components/views/ai-config-view"
 
 export default async function AiConfigPage({
@@ -6,6 +8,10 @@ export default async function AiConfigPage({
   searchParams?: Promise<{ tab?: string }>
 }) {
   const params = await searchParams
+
+  if (params?.tab === "vision") {
+    redirect("/multimodal")
+  }
 
   return <AiConfigView tab={params?.tab} />
 }

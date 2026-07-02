@@ -1,5 +1,5 @@
-import { ConsultationRoomView } from "@/components/views/consultation-room-view"
+import { redirect } from "next/navigation"
 
 export default function ConsultationRoomPage() {
-  return <ConsultationRoomView />
+  redirect("/device-appointments?tab=appointments")
 }
