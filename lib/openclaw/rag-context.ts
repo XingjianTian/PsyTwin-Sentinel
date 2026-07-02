@@ -17,7 +17,7 @@ export type OpenClawRagPayload = {
 
 const DEFAULT_TOP_K = 5
 const MAX_CONTEXT_CHARS = 6000
-const DEFAULT_LIGHTRAG_URL = "http://localhost:9621"
+const DEFAULT_LIGHTRAG_URL = "http://42.121.14.189:9621"
 const DEFAULT_LIGHTRAG_API_KEY = "psytwin-local-rag-key"
 
 type LightRagReference = {

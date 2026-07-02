@@ -1,6 +1,6 @@
 # LightRAG 心理学知识库集成说明
 
-更新时间：2026-06-25
+更新时间：2026-07-02
 
 本文档记录 PsyTwin-Sentinel 接入 LightRAG 心理学知识库的使用方式、配置项和验证方法。
 
@@ -16,9 +16,12 @@
 默认配置：
 
 ```env
-NEXT_PUBLIC_LIGHTRAG_WEBUI_URL=http://localhost:9621
+NEXT_PUBLIC_LIGHTRAG_WEBUI_URL=http://42.121.14.189:9621
+LIGHTRAG_API_URL=http://42.121.14.189:9621
 NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT=psytwin-local-rag-key
 ```
+
+当前部署采用固定 `9621` 端口直连 LightRAG，不再通过 80 端口或 Nginx 反向代理访问。云服务器安全组只需要放行入方向 TCP `9621`。
 
 相关页面：
 
@@ -32,7 +35,7 @@ http://localhost:3000/ai-config?tab=rag
 psytwin-local-rag-key
 ```
 
-这个 Key 是本地 LightRAG API 访问密钥，不是阿里云百炼 `sk-...` 密钥。
+这个 Key 是 LightRAG API 访问密钥，不是阿里云百炼 `sk-...` 密钥。
 
 ## LightRAG 模型配置
 
@@ -80,6 +83,13 @@ $headers=@{ 'X-API-Key'='psytwin-local-rag-key' }
 Invoke-RestMethod -Uri 'http://localhost:9621/documents/status_counts' -Headers $headers
 ```
 
+云服务器部署时把地址替换为：
+
+```powershell
+$headers=@{ 'X-API-Key'='psytwin-local-rag-key' }
+Invoke-RestMethod -Uri 'http://42.121.14.189:9621/documents/status_counts' -Headers $headers
+```
+
 检查全局知识图谱规模：
 
 ```powershell
@@ -87,11 +97,18 @@ $headers=@{ 'X-API-Key'='psytwin-local-rag-key' }
 Invoke-RestMethod -Uri 'http://localhost:9621/graphs?label=*&max_depth=3&max_nodes=1000' -Headers $headers
 ```
 
+云服务器部署时把地址替换为：
+
+```powershell
+$headers=@{ 'X-API-Key'='psytwin-local-rag-key' }
+Invoke-RestMethod -Uri 'http://42.121.14.189:9621/graphs?label=*&max_depth=3&max_nodes=1000' -Headers $headers
+```
+
 当前验证结果：
 
 ```text
 documents: processed 8 / all 8, failed 0
-graph: 367 nodes, 395 edges
+graph: 203 nodes, 204 edges
 ```
 
 ## 常见问题

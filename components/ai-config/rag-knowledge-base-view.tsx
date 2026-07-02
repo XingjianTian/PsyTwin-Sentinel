@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const LIGHTRAG_URL = process.env.NEXT_PUBLIC_LIGHTRAG_WEBUI_URL ?? "http://localhost:9621"
+const LIGHTRAG_URL = process.env.NEXT_PUBLIC_LIGHTRAG_WEBUI_URL ?? "http://42.121.14.189:9621"
 const LIGHTRAG_API_KEY_HINT = process.env.NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT ?? "psytwin-local-rag-key"
 
 const statusRows = [
@@ -14,7 +14,7 @@ const statusRows = [
   ["模型服务", "阿里云百炼 OpenAI 兼容接口", "qwen-plus / qwen-turbo"],
   ["向量模型", "文档向量化与语义检索", "text-embedding-v4"],
   ["图谱入口", "默认加载全局知识图谱", "label=*"],
-  ["访问密钥", "本地 LightRAG 管理台登录", LIGHTRAG_API_KEY_HINT],
+  ["访问密钥", "LightRAG 管理台访问", LIGHTRAG_API_KEY_HINT],
 ]
 
 const featureCards = [
@@ -31,7 +31,7 @@ const featureCards = [
   {
     icon: Search,
     title: "检索问答",
-    description: "切换到 Retrieval 页，用 mix 模式测试心理健康知识库的召回效果。",
+    description: "切换到 Retrieval 页面，用 mix 模式测试心理健康知识库的召回效果。",
   },
 ]
 
@@ -66,11 +66,11 @@ export function RagKnowledgeBaseView() {
           <CardContent className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm text-muted-foreground">
               <KeyRound className="h-4 w-4 text-primary" />
-              <span>如果嵌入页提示 API Key，请输入</span>
+              <span>如果嵌入页面提示 API Key，请输入</span>
               <code className="rounded bg-background px-2 py-1 font-mono text-xs text-foreground">
                 {LIGHTRAG_API_KEY_HINT}
               </code>
-              <span>。这是本地 LightRAG 访问密钥，不是阿里云百炼密钥。</span>
+              <span>。这是 LightRAG 访问密钥，不是阿里云百炼密钥。</span>
             </div>
 
             <div className="overflow-hidden rounded-lg border border-border bg-background">
@@ -102,8 +102,11 @@ export function RagKnowledgeBaseView() {
               <CardTitle className="text-base font-semibold text-foreground">使用说明</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>在嵌入窗口顶部可以切换「文档」「知识图谱」「检索」「API」。</p>
-              <p>进入知识图谱后，默认 label 为 *，会直接加载全局图谱；也可以搜索 Depression、PsyTwin VR、危机干预闭环等节点。</p>
+              <p>嵌入窗口顶部可以切换“文档”“知识图谱”“搜索”“API”等页面。</p>
+              <p>
+                进入知识图谱后，默认 label 为 *，会直接加载全局图谱；也可以搜索 Depression、PsyTwin
+                VR、危机干预闭环等节点。
+              </p>
               <p>上传新资料后，等待状态变为 Completed，再切到知识图谱或检索页查看效果。</p>
             </CardContent>
           </Card>
