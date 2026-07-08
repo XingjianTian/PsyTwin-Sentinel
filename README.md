@@ -17,13 +17,15 @@
 ## 📋 目录
 
 - [项目简介](#项目简介)
+- [近期功能更新概览](#近期功能更新概览)
 - [项目生态](#项目生态)
 - [核心功能模块](#核心功能模块)
-  - [🎯 多模态数据流实时监控](#多模态数据流实时监控)
-  - [🧠 AI 编排中心]()
+  - [🎯 实时多模态直播舱](#实时多模态直播舱)
+  - [🧠 心图·AI助手与 LightRAG 知识库](#心图ai助手与-lightrag-知识库)
   - [👤 学生心理孪生档案](#学生心理孪生档案)
-  - [📅 线上预约系统](#线上预约系统)
+  - [📅 设备与预约管理](#设备与预约管理)
   - [📊 全周期追踪](#全周期追踪)
+  - [🛠️ 工程化与数据治理](#工程化与数据治理)
 - [技术架构](#技术架构)
 - [API 接口](#api-接口)
 - [快速开始](#快速开始)
@@ -42,6 +44,21 @@ PsyTwin Sentinel 是基于 **数字孪生** 理念构建的校园心理健康管
 - **多模态融合**: 生理+行为+环境数据交叉验证
 - **预防为主**: 早期识别风险信号，主动干预
 - **数据驱动**: AI 辅助决策，科学评估干预效果
+
+---
+
+## 近期功能更新概览
+
+本仓库近期围绕“演示可用、业务聚合、知识库真实接入、工程化可维护”做了几轮集中更新：
+
+| 更新方向 | 新增/调整能力 | 主要入口 |
+|----------|---------------|----------|
+| **导航与业务信息架构** | 精简“心理工作业务台”子栏目，将“心图·AI助手”前置；“评估干预档案”统一命名为“评估干预记录”；旧设备/预约入口保留重定向能力。 | `components/dashboard-sidebar.tsx` |
+| **设备与预约管理** | 合并“线上预约管理”和“线下设备管理”，形成统一页面；顶部提供窄长双段切换按钮，在同一业务台内切换预约排期与设备状态。 | `/device-appointments` |
+| **实时多模态直播舱** | 将原“心图·直播视窗”的摄像头直播能力并入多模态监测页；视觉、语音、生理、交互四路信号同屏展示，顶部状态卡适配 110% 演示缩放。 | `/multimodal` |
+| **LightRAG 心理学知识库** | RAG 页面接入真实 LightRAG WebUI，支持文档管理、知识图谱、检索问答和 API 调试；OpenClaw 对话可附加 LightRAG 检索上下文。 | `/ai-config?tab=rag` |
+| **数据库与种子数据** | 增加非破坏性增量种子脚本；补充宠物系统运行表迁移与测试，便于多人同步数据库结构而不清空本地业务数据。 | `npm run seed:incremental` |
+| **工程化检查** | 补齐 ESLint 9 + Next.js 规则配置，`npm run lint` 成为可执行的基础质量检查。 | `eslint.config.mjs` |
 
 ---
 
@@ -79,7 +96,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 │                              │                                           │
 │                              ▼                                           │
 │            ┌─────────────────────────────────────────┐                  │
-│            │      PsyTwin-Claw Gateway (AI 编排中心)      │                  │
+│            │      PsyTwin-OpenClaw Gateway (AI 编排中心)  │                  │
 │            │                                         │                  │
 │            │  ┌──────────┐ ┌──────────┐ ┌────────┐  │                  │
 │            │  │  main    │ │ Collector│ │Therapist│  │                  │
@@ -97,7 +114,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 │            │        共享基础设施                      │                  │
 │            │  • PostgreSQL (主数据库)                │                  │
 │            │  • Redis (缓存 / 消息队列)              │                  │
-│            │  • 百度 AI (ASR/TTS)                   │                  │
+│            │  • LightRAG / 百度 AI / 阿里云百炼       │                  │
 │            └─────────────────────────────────────────┘                  │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -107,10 +124,10 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 
 | 子项目                                                                                    | 定位       | 目标用户                   | 核心功能                                                                                                                                                                       | 技术栈                                                         |
 | -------------------------------------------------------------------------------------- | -------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **[PsyTwin-Sentinel](https://github.com/XingjianTian/PsyTwin-Sentinel)**<br>👆 本仓库     | **管理后台** | 心理教师<br>学校管理层          | • 多模态数据实时监控<br>• 风险预警与溯源<br>• 学生心理孪生档案<br>• 干预工单管理<br>• 预约调度管理                                                                                                             | Next.js 16<br>React 19<br>TypeScript<br>PostgreSQL<br>Redis |
+| **[PsyTwin-Sentinel](https://github.com/XingjianTian/PsyTwin-Sentinel)**<br>👆 本仓库     | **管理后台** | 心理教师<br>学校管理层          | • 实时多模态直播舱<br>• 风险预警与溯源<br>• 学生心理孪生档案<br>• 干预工单管理<br>• 设备与预约管理<br>• LightRAG 知识库管理                                                                                                             | Next.js 16<br>React 19<br>TypeScript<br>PostgreSQL<br>Redis |
 | **[PsyTwin-Pocket](https://github.com/XingjianTian/PsyTwin-Pocket)**<br>📱 移动端         | **学生入口** | 在校学生                   | • 心墙瀑布流社交<br>• AI 心理咨询 (Therapist)<br>• 心理画像查看<br>• 线上预约服务<br>• 消息通知中心                                                                                                     | 微信小程序<br>TDesign<br>LESS                                    |
 | **[PsyTwin-Companion](https://github.com/XingjianTian/PsyTwin-Companion)**<br>🥽 VR 终端 | **边缘网关** | 系统对接<br>(Raspberry Pi) | • 多模态数据采集 (生理/语音/脑电)<br>• 实时数据转发 (WebSocket)<br>• 百度 ASR 语音转写<br>• 百度 TTS 语音合成<br>• 设备管理                                                                                   | Node.js<br>TypeScript<br>Python<br>Docker                   |
-| **[PsyTwin-Claw](https://github.com/XingjianTian/PsyTwin-Claw)**<br>🧠 AI 编排           | **智能中枢** | AI 代理                  | • main: 首席数据官 (全链路监控)<br>• Collector: 采集员 (多模态采集)<br>• Therapist: 咨询师 (VR干预策略)<br>• Relayer: 中继工程师 (边缘处理)<br>• DBA: 数据哨兵 (数据整理)<br>• Analyst: 分析师 (特征提取)<br>• 多 Agent 协作编排 | Python<br>FastAPI<br>WebSocket                              |
+| **[PsyTwin-OpenClaw](https://github.com/XingjianTian/PsyTwin-OpenClaw)**<br>🧠 AI 编排           | **智能中枢** | AI 代理                  | • main: 首席数据官 (全链路监控)<br>• Collector: 采集员 (多模态采集)<br>• Therapist: 咨询师 (VR干预策略)<br>• Relayer: 中继工程师 (边缘处理)<br>• DBA: 数据哨兵 (数据整理)<br>• Analyst: 分析师 (特征提取)<br>• 多 Agent 协作编排 | Python<br>FastAPI<br>WebSocket                              |
 
 ### 数据流向
 
@@ -133,7 +150,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 │                                      ▲                          │
 │                                      │                          │
 │                               ┌──────┴──────┐                   │
-│                               │  PsyTwinClaw   │                   │
+│                               │  OpenClaw      │                   │
 │                               │  AI 编排    │                   │
 │                               └─────────────┘                   │
 │                                                                  │
@@ -157,7 +174,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
    - 语音转写后写入数据库
    - 通过 Redis Pub/Sub 实时推送到 Sentinel
 
-1. **Claw** 作为独立 AI 网关：
+4. **Claw** 作为独立 AI 网关：
    - 被 Sentinel 和 Pocket 共同调用
    - 提供 6 个专业 Agent 服务：
      • main (首席数据官) - 全链路监控与指挥
@@ -167,13 +184,18 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
      • DBA (数据哨兵) - 数据对齐与入库
      • Analyst (分析师) - 多模态特征提取
 
+5. **LightRAG** 作为心理学知识库服务：
+   - 在 Sentinel 的“心理学知识库”页面内嵌管理台
+   - 负责文档入库、知识图谱、语义检索与检索问答
+   - 为 OpenClaw Agent 请求补充可追溯的 RAG 上下文
+
 ---
 
 ## 核心功能模块
 
-### 🎯 多模态数据流实时监控
+### 🎯 实时多模态直播舱
 
-基于 **Server-Sent Events (SSE)** 的实时数据流架构，毫秒级同步学生生理与行为数据。
+基于 **Server-Sent Events (SSE)** 的实时数据流架构，毫秒级同步学生生理与行为数据；同时将摄像头直播视窗合并到同一页面，形成面向心理咨询现场的实时多模态直播舱。
 
 #### 系统架构
 
@@ -228,12 +250,15 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 - **自动语音转写**: VAD 检测静音 → 百度 ASR 识别 → 实时显示转写文本
 - **数据持久化**: 所有原始数据存入 PostgreSQL，支持历史回溯
 - **智能过滤**: 支持按学生 ID 订阅，只接收关注学生的数据
+- **直播融合**: 摄像头窗口优先使用 Reachy Mini 摄像头，未连接时回退到本机摄像头；状态只在视频画面内显示，避免顶部信息重复
+- **演示友好布局**: 顶部学生、咨询室、会话状态、LIVE 状态和“学生列表 / 实时测试”切换保持单行；异常长时长会被格式化为 `HH:mm:ss` / `99:59:59+`
+- **四流同屏**: 视觉流展示主要表情和焦虑/悲伤/愤怒指标，语音流展示波形与转写，生理流轮播心率/皮电/HRV/压力，交互流展示频率、反应延迟、震颤和回避行为
 
 ---
 
-### 🧠 Claw AI 编排中心
+### 🧠 心图·AI助手与 LightRAG 知识库
 
-**PsyTwin Claw** 是系统的 AI 编排中枢，负责任务调度、工具编排和多 Agent 协作。
+**心图·AI助手** 以 PsyTwin Claw 为编排中枢，负责任务调度、工具编排和多 Agent 协作；近期进一步接入 LightRAG 心理学知识库，使 Agent 回答可以携带真实知识库检索上下文。
 
 #### 架构设计
 
@@ -289,6 +314,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 1. **心理咨询 Agent**: 模拟咨询师对话，提供情绪支持和建议
 2. **数据分析师 Agent**: 自动生成学生心理健康评估报告
 3. **干预建议 Agent**: 基于风险等级推荐干预措施
+4. **知识库增强问答**: 从 LightRAG 心理学知识库检索相关片段，并附加到 OpenClaw 输入上下文中
 
 #### 集成方式
 
@@ -303,6 +329,26 @@ const response = await fetch('/api/openclaw/agent-chat', {
   })
 })
 ```
+
+#### LightRAG 心理学知识库
+
+Sentinel 的 `AI 配置 -> 心理学知识库` 页面已经从本地模拟列表升级为嵌入式 LightRAG 管理台：
+
+- **文档管理**: 上传 Markdown、TXT、PDF、Word 等资料，查看处理状态
+- **知识图谱**: 默认使用 `label=*` 加载全局心理学图谱，支持节点检索和关系展开
+- **检索测试**: 使用 mix 模式验证心理健康知识库召回效果
+- **API 调试**: 直接在 LightRAG WebUI 中验证文档状态、图谱规模和查询接口
+- **Agent 上下文注入**: `/api/openclaw/agent-chat` 会通过 LightRAG `/query` 获取上下文，并写入 `[PSYTWIN_RAG_CONTEXT]` 片段供 Agent 使用
+
+相关配置见 `.env.example`：
+
+```env
+NEXT_PUBLIC_LIGHTRAG_WEBUI_URL="http://42.121.14.189:9621"
+LIGHTRAG_API_URL="http://42.121.14.189:9621"
+NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT="psytwin-local-rag-key"
+```
+
+部署与迁移细节见 [LightRAG 集成说明](./docs/LIGHTRAG_INTEGRATION.md) 和 [LightRAG 迁移部署教程](./docs/LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md)。
 
 ---
 
@@ -367,9 +413,29 @@ const response = await fetch('/api/openclaw/agent-chat', {
 
 ---
 
-### 📅 线上预约系统
+### 📅 设备与预约管理
 
-支持学生通过 **Pocket 小程序** 在线预约心理咨询服务，全流程数字化管理。
+支持学生通过 **Pocket 小程序** 在线预约心理咨询服务，并在 Sentinel 中与线下疗愈空间、VR 设备、传感器设备状态统一管理。近期已将原“线上预约管理”和“线下设备管理”合并为 `/device-appointments` 统一页面。
+
+#### 统一工作台
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      设备与预约管理                              │
+├─────────────────────────────────────────────────────────────────┤
+│  顶部切换: [ 线上预约 ] [ 线下设备 ]                              │
+│                                                                  │
+│  线上预约视图                                                     │
+│  • 预约申请 / 咨询师确认 / 咨询室排期 / 学生通知                   │
+│                                                                  │
+│  线下设备视图                                                     │
+│  • VR 设备 / 摄像头 / 生理传感器 / 咨询室硬件状态                  │
+│                                                                  │
+│  老入口兼容                                                       │
+│  • /consultation-room -> /device-appointments?tab=appointments   │
+│  • /device-management -> /device-appointments?tab=devices        │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 #### 业务流程
 
@@ -420,6 +486,9 @@ const response = await fetch('/api/openclaw/agent-chat', {
 - **智能排班**: 自动避开咨询师已预约时段
 - **多渠道通知**: 系统消息 + 短信 + 微信推送
 - **设备联动**: 预约成功后自动预留对应疗愈空间设备
+- **统一入口**: 预约和设备两个高相似页面共用同一页面框架，减少导航层级和重复维护
+- **旧路由兼容**: 原咨询室和设备管理路由保留重定向，避免旧链接失效
+- **缓存刷新同步**: 预约和设备相关 Server Action 的 `revalidatePath` 已指向合并后的新页面
 
 ---
 
@@ -476,6 +545,42 @@ const response = await fetch('/api/openclaw/agent-chat', {
 
 ---
 
+### 🛠️ 工程化与数据治理
+
+近期更新补齐了多人协作和演示部署中的基础工程能力：
+
+#### ESLint 工程化配置
+
+- 使用 ESLint 9 flat config，并接入 `eslint-config-next/core-web-vitals` 与 TypeScript 规则
+- `npm run lint` 可直接执行，默认忽略 `.next/`、`node_modules/`、`prisma/backups/`、`uploads/` 等生成或运行目录
+- 对 `any`、`require`、React Hooks 静态规则等先降级为 warning，便于在不中断开发的前提下逐步收敛质量问题
+
+#### 非破坏性增量种子
+
+```bash
+npm run seed:incremental
+npm run seed:incremental -- --dry-run
+```
+
+- 使用稳定唯一键和 Prisma `upsert` 注入 OpenClaw Agents、宠物日记模板等核心数据
+- 不执行 `deleteMany`、`TRUNCATE`、`DROP`，不会清空本地已有业务记录
+- 适合团队成员 pull 新迁移后补齐基础数据
+
+#### 宠物系统运行表
+
+宠物运行态依赖以下表：
+
+- `pets`
+- `pet_events`
+- `pet_items`
+- `pet_diary_entries`
+- `pet_alerts`
+- `scene_items`
+
+对应迁移为 `prisma/migrations/20260629000000_add_pet_system_tables/migration.sql`。如果应用提示 `public.pets does not exist`，说明当前连接数据库尚未应用该迁移。
+
+---
+
 ## 技术架构
 
 ### 整体架构
@@ -487,18 +592,18 @@ const response = await fetch('/api/openclaw/agent-chat', {
 │                                                                  │
 │   前端层 (Next.js 16)                                           │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │  • 多模态数据流监控                                       │   │
+│   │  • 实时多模态直播舱                                       │   │
 │   │  • 学生孪生档案                                           │   │
 │   │  • 预警中心                                               │   │
-│   │  • 预约管理                                               │   │
-│   │  • 系统配置                                               │   │
+│   │  • 设备与预约管理                                         │   │
+│   │  • 心图·AI助手 / LightRAG 知识库                           │   │
 │   └──────────────────────────┬──────────────────────────────┘   │
 │                              │ REST / SSE                       │
 │   API 层 (Next.js API)       ▼                                  │
 │   ┌─────────────────────────────────────────────────────────┐   │
 │   │  /api/multimodal/*  - 多模态数据接口                      │   │
 │   │  /api/pocket/*      - 小程序接口                          │   │
-│   │  /api/openclaw/*    - AI 编排接口                         │   │
+│   │  /api/openclaw/*    - AI 编排与 RAG 增强接口                │   │
 │   │  /api/students/*    - 学生管理接口                        │   │
 │   └──────────────────────────┬──────────────────────────────┘   │
 │                              │ Prisma ORM                       │
@@ -510,8 +615,8 @@ const response = await fetch('/api/openclaw/agent-chat', {
 │                                                                  │
 │   外部服务                                                       │
 │   ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
-│   │ PsyTwin-Companion│  │   PsyTwin Claw    │  │   百度 AI      │  │
-│   │ WebSocket-Server │  │   AI 编排中心    │  │  ASR/TTS       │  │
+│   │ PsyTwin-Companion│  │   PsyTwin Claw    │  │   LightRAG     │  │
+│   │ WebSocket-Server │  │   AI 编排中心    │  │  知识库服务     │  │
 │   └─────────────────┘  └─────────────────┘  └────────────────┘  │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -530,6 +635,8 @@ const response = await fetch('/api/openclaw/agent-chat', {
 | **数据库** | PostgreSQL | 15+ | 主数据库 |
 | **缓存** | Redis | 7+ | 缓存 / PubSub |
 | **实时通信** | SSE | - | 服务端推送 |
+| **知识库** | LightRAG | 外部服务 | 文档管理、知识图谱、RAG 检索 |
+| **质量检查** | ESLint | 9.x | Next.js + TypeScript 静态检查 |
 
 ---
 
@@ -545,7 +652,12 @@ const response = await fetch('/api/openclaw/agent-chat', {
 | `/api/students/[id]/timeline` | GET/POST | 学生时间线事件 |
 | `/api/warnings` | GET/POST | 预警记录管理 |
 | `/api/interventions` | GET/POST | 干预记录管理 |
-| `/api/openclaw/agent-chat` | POST | OpenClaw AI 对话 |
+| `/api/appointments` | GET/POST | 预约管理 |
+| `/api/devices` | GET/POST | 设备管理 |
+| `/api/openclaw/agent-chat` | POST | OpenClaw AI 对话，自动附加 LightRAG 上下文 |
+| `/api/openclaw/status` | GET | OpenClaw 连接状态 |
+| `/api/openclaw/stats` | GET | OpenClaw 请求与 Agent 统计 |
+| `/api/admin/pet-alerts` | GET/POST | 宠物系统预警管理 |
 
 ### Pocket 小程序 API
 
@@ -584,7 +696,7 @@ npm install
 
 # 3. 配置环境变量
 cp .env.example .env
-# 编辑 .env 配置数据库连接
+# 编辑 .env 配置数据库连接、OpenClaw Gateway、LightRAG 服务地址等
 
 # 4. 数据库迁移
 npx prisma migrate dev
@@ -592,14 +704,32 @@ npx prisma migrate dev
 # 5. 生成 Prisma Client
 npx prisma generate
 
-# 6. 填充测试数据 (可选)
+# 6. 填充测试数据 (可选，完整重建演示数据)
 npx prisma db seed
 
-# 7. 启动开发服务器
+# 7. 非破坏性补齐核心数据 (推荐，适合 pull 新迁移后执行)
+npm run seed:incremental
+
+# 8. 运行基础质量检查
+npm run lint
+
+# 9. 启动开发服务器
 npm run dev
 ```
 
 访问 http://localhost:3000
+
+### LightRAG 知识库配置
+
+如果需要启用“心理学知识库”页面和 OpenClaw RAG 上下文增强，请确认 `.env` 中包含：
+
+```env
+NEXT_PUBLIC_LIGHTRAG_WEBUI_URL="http://42.121.14.189:9621"
+LIGHTRAG_API_URL="http://42.121.14.189:9621"
+NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT="psytwin-local-rag-key"
+```
+
+本地自建 LightRAG 时，通常将上述地址改为 `http://localhost:9621`。LightRAG 的部署、阿里云百炼模型配置和知识库迁移流程见 [LightRAG 迁移部署教程](./docs/LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md)。
 
 ### Docker 部署
 
@@ -632,16 +762,16 @@ cd ../PsyTwin-Pocket
 # 使用微信开发者工具导入项目
 # 或 npm run dev (如使用 Taro 等跨端框架)
 
-# 5. 启动 Claw (AI 网关)
+# 5. 启动 Claw / OpenClaw (AI 网关)
 cd ../PsyTwin-OpenClaw
 python -m openclaw.gateway
 ```
 
 **依赖关系**:
 - Companion 依赖: PostgreSQL, Redis
-- Sentinel 依赖: PostgreSQL, Redis, Companion (可选)
+- Sentinel 依赖: PostgreSQL, Redis, Companion (可选), LightRAG (可选)
 - Pocket 依赖: Sentinel API
-- Claw 依赖: Docker 
+- Claw / OpenClaw 依赖: Gateway 运行时；需要知识库增强时依赖 LightRAG
 
 ---
 
@@ -652,38 +782,47 @@ PsyTwin-Sentinel/
 ├── app/                          # Next.js App Router
 │   ├── (dashboard)/              # 仪表盘路由组
 │   │   ├── multimodal/           # 多模态数据流监控
+│   │   ├── device-appointments/  # 设备与预约统一管理
 │   │   ├── students/             # 学生档案管理
 │   │   ├── warnings/             # 预警中心
 │   │   ├── interventions/        # 干预记录
-│   │   └── appointments/         # 预约管理
+│   │   └── ai-config/            # 心图·AI助手与知识库配置
 │   ├── api/                      # API 路由
 │   │   ├── multimodal/           # 多模态数据 API
 │   │   ├── pocket/               # 小程序 API
 │   │   │   └── student/          # 学生端 API
 │   │   │       └── my/
 │   │   │           └── notifications/
-│   │   ├── openclaw/             # AI 编排 API
+│   │   ├── openclaw/             # AI 编排与 RAG 增强 API
+│   │   ├── appointments/         # 预约 API
+│   │   ├── devices/              # 设备 API
 │   │   └── students/             # 学生管理 API
 │   └── layout.tsx                # 根布局
 ├── components/
 │   ├── ui/                       # shadcn/ui 组件
 │   └── views/                    # 业务视图组件
 │       ├── multimodal-dataflow-view.tsx
+│       ├── device-appointment-management-view.tsx
 │       ├── student-profile-view.tsx
 │       └── ...
 ├── lib/                          # 工具函数
 │   ├── prisma.ts                 # Prisma 客户端
 │   ├── api-response.ts           # API 响应工具
+│   ├── openclaw/                 # OpenClaw Gateway 与 RAG 上下文
 │   └── pocket-auth.ts            # 小程序认证
 ├── prisma/
 │   ├── schema.prisma            # 数据库模型定义
-│   ├── seed.ts                  # 种子数据
+│   ├── seed.ts                  # 完整种子数据
+│   ├── seed/                    # 增量核心数据脚本
 │   └── migrations/              # 迁移文件
 ├── docs/                         # 项目文档
 │   ├── CHANGELOG.md             # 变更日志
 │   ├── PRD.md                   # 产品需求文档
+│   ├── LIGHTRAG_INTEGRATION.md  # LightRAG 集成说明
+│   ├── LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md
 │   ├── api_contract.md          # API 契约
 │   └── OPENCLAW_AGENT_IMPLEMENTATION.md
+├── eslint.config.mjs             # ESLint 9 flat config
 └── public/                       # 静态资源
 ```
 
@@ -696,7 +835,10 @@ PsyTwin-Sentinel/
 - **[产品需求文档 (PRD)](./docs/PRD.md)** - 系统设计和功能规格
 - **[API 契约文档](./docs/api_contract.md)** - 前后端 API 规范 (Pocket 端)
 - **[OpenClaw 集成文档](./docs/OPENCLAW_AGENT_IMPLEMENTATION.md)** - AI 编排中心集成指南
+- **[LightRAG 集成说明](./docs/LIGHTRAG_INTEGRATION.md)** - 心理学知识库页面、模型配置、验证命令和常见问题
+- **[LightRAG 迁移部署教程](./docs/LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md)** - 从零部署 PsyTwin 定制版 LightRAG 与迁移知识库
 - **[技术规范文档](./docs/PsyTwin%20Sentinel%20技术规范文档.md)** - 编码规范和架构决策
+- **[Prisma 数据库迁移说明](./prisma/README.md)** - 迁移、增量种子和宠物系统表说明
 - **[变更日志](./docs/CHANGELOG.md)** - 版本更新记录
 
 ### 子项目文档
@@ -743,6 +885,3 @@ PsyTwin-Sentinel/
 <p align="center">
   <strong>PsyTwin</strong> - 守护每一颗心灵 💚
 </p>
-
-
-
