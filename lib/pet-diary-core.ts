@@ -48,6 +48,37 @@ export function buildRandomDiaryCreatedAt({
   return new Date(`${dateKey}T${`${hour}`.padStart(2, "0")}:${`${minute}`.padStart(2, "0")}:00+08:00`)
 }
 
+export function pickRandomDiaryCount(randomValue = Math.random()) {
+  return 4 + Math.floor(Math.max(0, Math.min(0.999999, randomValue)) * 5)
+}
+
+export function buildRandomDiarySchedule({ dateKey, count, randomValues = [] }: {
+  dateKey: string
+  count: number
+  randomValues?: number[]
+}) {
+  const safeCount = Math.max(0, Math.min(8, Math.floor(count)))
+  const slots = new Set<number>()
+  const totalSlots = 16 * 60
+
+  for (let index = 0; index < safeCount; index += 1) {
+    const randomValue = randomValues[index] ?? Math.random()
+    let slot = Math.floor(Math.max(0, Math.min(0.999999, randomValue)) * totalSlots)
+    while (slots.has(slot)) {
+      slot = (slot + 1) % totalSlots
+    }
+    slots.add(slot)
+  }
+
+  return [...slots]
+    .sort((left, right) => left - right)
+    .map((slot) => {
+      const hour = 8 + Math.floor(slot / 60)
+      const minute = slot % 60
+      return new Date(`${dateKey}T${`${hour}`.padStart(2, "0")}:${`${minute}`.padStart(2, "0")}:00+08:00`)
+    })
+}
+
 export function getMissingDiaryDates({
   lastOnlineAt,
   now = new Date(),

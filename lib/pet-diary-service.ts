@@ -3,8 +3,10 @@ import { DiaryEntryType, PetSpecies, Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import {
   buildRandomDiaryCreatedAt,
+  buildRandomDiarySchedule,
   formatDateKey,
   getMissingDiaryDates,
+  pickRandomDiaryCount,
   shouldTriggerDiary,
 } from "@/lib/pet-diary-core"
 import { petDiaryTemplates } from "@/prisma/pet-diary-templates"
@@ -193,10 +195,12 @@ export async function createPetDiaryEntry({
   userId,
   dateKey = formatDateKey(new Date()),
   sceneId = "dormitory",
+  usePetState = true,
 }: {
   userId: string
   dateKey?: string
   sceneId?: string
+  usePetState?: boolean
 }) {
   const pet = await resolvePetForUser(userId)
   const template = await pickRandomDiaryTemplate(sceneId)
@@ -211,8 +215,8 @@ export async function createPetDiaryEntry({
       type: DiaryEntryType.DAILY,
       title: template.title,
       content: template.content,
-      mood: pet.mood,
-      energy: pet.energy,
+      mood: usePetState ? pet.mood : null,
+      energy: usePetState ? pet.energy : null,
       createdAt: buildRandomDiaryCreatedAt({ dateKey }),
       metadata: {
         source: "template_library",
@@ -225,6 +229,70 @@ export async function createPetDiaryEntry({
   })
 
   return mapPetDiaryEntry(entry)
+}
+
+export async function ensurePetDiarySchedule({
+  userId,
+  dateKey = formatDateKey(new Date()),
+}: {
+  userId: string
+  dateKey?: string
+}) {
+  const pet = await resolvePetForUser(userId)
+  const existingEntries = await findPetDiaryEntries(pet.id, dateKey)
+
+  if (existingEntries.length > 0) {
+    return {
+      generated: false,
+      entries: existingEntries.map(mapPetDiaryEntry),
+      diaryDataMap: buildDiaryDataMap(existingEntries),
+    }
+  }
+
+  await ensurePetDiaryTemplates()
+  const templatePool = await prisma.petDiaryTemplate.findMany({
+    where: { active: true },
+    orderBy: { slug: "asc" },
+  })
+  const count = Math.min(pickRandomDiaryCount(), templatePool.length)
+  const templates = [...templatePool]
+
+  for (let index = templates.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    const current = templates[index]
+    templates[index] = templates[swapIndex]
+    templates[swapIndex] = current
+  }
+
+  const schedule = buildRandomDiarySchedule({ dateKey, count })
+  for (let index = 0; index < count; index += 1) {
+    const template = templates[index]
+    await prisma.petDiaryEntry.create({
+      data: {
+        petId: pet.id,
+        type: DiaryEntryType.DAILY,
+        title: template.title,
+        content: template.content,
+        mood: null,
+        energy: null,
+        createdAt: schedule[index],
+        metadata: {
+          source: "template_library",
+          templateSlug: template.slug,
+          sceneId: "daily",
+          dateKey,
+          writtenBy: "server",
+        } satisfies DiaryMetadata,
+      },
+    })
+  }
+
+  const entries = await findPetDiaryEntries(pet.id, dateKey)
+  return {
+    generated: true,
+    entries: entries.map(mapPetDiaryEntry),
+    diaryDataMap: buildDiaryDataMap(entries),
+  }
 }
 
 export async function maybeCreatePetDiary({

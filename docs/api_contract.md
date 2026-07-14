@@ -346,6 +346,8 @@ GET /api/pocket/user/collections?page=1&limit=20
 GET /api/pocket/pet/diary?date=2026-06-13
 ```
 
+`GET` 默认只读取已有记录。传入 `ensure=true` 时，如果指定日期没有日记，服务端会从 `pet_diary_templates` 随机抽取 4—8 条，生成 08:00—23:59 之间的唯一时间点并持久化；已有记录不会重复生成。该批量生成不依赖心宠实时状态、场景、当前时间或触发概率。
+
 **Response**:
 ```json
 {
