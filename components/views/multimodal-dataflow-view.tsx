@@ -39,6 +39,7 @@ import {
 } from "recharts"
 
 import { localBrowserCameraAdapter } from "@/lib/vision-camera"
+import { createIdleRealtimeStudent } from "@/lib/multimodal-live-state"
 
 type CameraStatus = "idle" | "loading" | "streaming" | "error"
 type VitalMetricKey = "heartRate" | "gsr" | "hrv" | "stress"
@@ -186,7 +187,7 @@ function VoiceWaveform({ levels }: { levels?: number[] }) {
     }
 
     if (levels !== undefined) {
-      setBars(Array(40).fill(18))
+      setBars(Array(40).fill(5))
       return
     }
 
@@ -234,7 +235,7 @@ function buildVitalSeries(
   metric: VitalMetric,
   history: Array<{ time: string; 心率: number; 血氧: number; hrv: number }>
 ) {
-  const value = metric.value || metric.fallback
+  const value = metric.value ?? metric.fallback
 
   if (history.length > 0) {
     return history.slice(-24).map((point, index) => {
@@ -252,6 +253,13 @@ function buildVitalSeries(
         value: Number(Math.max(0, base).toFixed(1)),
       }
     })
+  }
+
+  if (value <= 0) {
+    return Array.from({ length: 24 }, (_, index) => ({
+      time: `${index}s`,
+      value: 0,
+    }))
   }
 
   return Array.from({ length: 24 }, (_, index) => ({
@@ -272,7 +280,7 @@ function VitalMetricPanel({
   total: number
 }) {
   const Icon = metric.icon
-  const displayValue = metric.value || metric.fallback
+  const displayValue = metric.value ?? metric.fallback
   const statusLabel =
     metric.key === "heartRate"
       ? displayValue > 90
@@ -409,33 +417,34 @@ export function MultimodalDataFlowView() {
     room: "测试咨询室 A01",
     scenario: "Reachy Mini 实时直播",
     startTime: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-    duration: 12,
+    duration: 0,
     emotion: "紧张",
-    riskLevel: "medium",
+    riskLevel: "low",
     vitals: {
-      heartRate: 92,
-      hrv: 28,
-      bloodOxygen: 98,
-      gsr: 4.6,
-      stress: 61,
+      heartRate: 0,
+      hrv: 0,
+      bloodOxygen: 0,
+      gsr: 0,
+      stress: 0,
     },
     voice: {
       sentiment: "neutral",
-      tremorIndex: 0.42,
+      tremorIndex: 0,
       emotionLabel: "紧张",
     },
     expression: {
-      primary: "nervous",
-      anxiety: 0.76,
-      sadness: 0.18,
-      anger: 0.09,
+      primary: "unknown",
+      anxiety: 0,
+      sadness: 0,
+      anger: 0,
     },
     behavior: {
-      interactionFreq: 0.8,
-      handTremor: 0.23,
-      responseDelay: 1.8,
-      avoidanceCount: 2,
+      interactionFreq: 0,
+      handTremor: 0,
+      responseDelay: 0,
+      avoidanceCount: 0,
     },
+    ...createIdleRealtimeStudent(),
   }
 
   const handleTabChange = (value: string) => {
@@ -582,7 +591,7 @@ export function MultimodalDataFlowView() {
   useEffect(() => {
     if (activeTab !== "realtime-test") return
 
-    const eventSource = new EventSource("/api/multimodal/sensors/stream")
+    const eventSource = new EventSource("/api/multimodal/sensors/stream?studentId=stu-test")
 
     eventSource.addEventListener("connected", () => {})
 
@@ -866,9 +875,11 @@ export function MultimodalDataFlowView() {
             <div className="flex min-w-0 flex-col items-start border-border sm:border-l sm:pl-4">
               <Badge className="gap-1 bg-emerald-500 text-white hover:bg-emerald-500">
                 <Radio className="h-3.5 w-3.5" />
-                LIVE
+                {hasReceivedData ? "LIVE" : "WAIT"}
               </Badge>
-              <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">直播中 {liveElapsedText}</p>
+              <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">
+                {hasReceivedData ? `直播中 ${liveElapsedText}` : "等待网关数据"}
+              </p>
             </div>
 
             <div className="flex min-w-0 items-center justify-start border-border pt-2 sm:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
