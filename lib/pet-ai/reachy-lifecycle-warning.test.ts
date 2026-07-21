@@ -40,6 +40,18 @@ test("a successful stop without warnings clears a persistent lifecycle warning",
   )
 })
 
+test("prototype and unknown warning codes are ignored", () => {
+  for (const code of ["toString", "constructor", "__proto__", "unknown_warning"]) {
+    assert.deepEqual(
+      getReachyLifecycleWarningUpdate({ action: "stop" }, {
+        warnings: [{ code, message: "must not be rendered" }],
+      }),
+      [],
+      code,
+    )
+  }
+})
+
 test("successful lifecycle commands clear warnings while unrelated commands preserve them", () => {
   assert.deepEqual(getReachyLifecycleWarningUpdate({ action: "start" }, {}), [])
   assert.deepEqual(getReachyLifecycleWarningUpdate({ action: "restart" }, {}), [])

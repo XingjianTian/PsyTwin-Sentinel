@@ -297,7 +297,7 @@ offline
 
 ### 2026-07-21 验证记录
 
-- [x] 代码与无硬件自动验证：最终重跑的 Sentinel Reachy 聚焦测试命令通过 62 项，独立的 Reachy 队列/状态测试命令通过 9 项，114 项 ClawBody 回归测试通过；Reachy 目标 TypeScript 严格检查通过；ESLint 退出码为 `0`（全仓保留 238 条既有 warning）；Next.js 生产构建退出码为 `0`。
+- [x] 代码与无硬件自动验证：最终重跑的 Sentinel Reachy 聚焦测试命令通过 63 项，独立的 Reachy 队列/状态测试命令通过 9 项，114 项 ClawBody 回归测试通过；Reachy 目标 TypeScript 严格检查通过；ESLint 退出码为 `0`（全仓保留 238 条既有 warning）；Next.js 生产构建退出码为 `0`。
 - [x] 安全只读联调：ClawBody `http://127.0.0.1:7860/health` 返回健康；Sentinel 在 `127.0.0.1:3000` 响应请求。本次未发送设备启停、动作、音频或摄像头请求，也未创建或修改 Windows 计划任务。
 - [ ] 全仓 TypeScript 验证：`npx tsc --noEmit --incremental false` 在任务前已存在的 `prisma/backups/seeds/seed-pocket-data-test.ts:1309` 遇到 `TS1128`；生产构建另外明确输出 `Skipping validation of types`。
 - [ ] 浏览器视觉验收与截图：本次没有可复用的已登录 Sentinel 会话，因此未在 1367×614 和 1440×900 下验证四种设备状态，也未保存计划中的三张截图。

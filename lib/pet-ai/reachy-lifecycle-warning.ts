@@ -13,7 +13,8 @@ export type ReachyLifecycleWarning = {
 }
 
 function isLifecycleWarningCode(value: unknown): value is ReachyLifecycleWarningCode {
-  return typeof value === "string" && value in lifecycleWarningMessages
+  return typeof value === "string"
+    && Object.prototype.hasOwnProperty.call(lifecycleWarningMessages, value)
 }
 
 export function getReachyLifecycleWarningUpdate(
