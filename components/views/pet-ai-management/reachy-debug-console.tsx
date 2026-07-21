@@ -154,7 +154,10 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     }
   }, [executeCommand])
 
-  const runCommand = useCallback(async (command: ReachyDeviceCommand) => {
+  const runCommand = useCallback(async (
+    command: ReachyDeviceCommand,
+    canExecute?: () => boolean,
+  ) => {
     setCommandError("")
     const commandQueue = commandQueueRef.current
     if (!commandQueue) {
@@ -162,7 +165,7 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
       return
     }
     try {
-      const result = await commandQueue.enqueue(command)
+      const result = await commandQueue.enqueue(command, canExecute)
       if (result === "rejected") {
         setCommandError("已有设备命令正在执行，请稍后重试")
       }

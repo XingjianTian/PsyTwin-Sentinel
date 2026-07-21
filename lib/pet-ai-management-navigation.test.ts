@@ -160,6 +160,12 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.match(readySource, /text-red-700/)
   assert.doesNotMatch(readySource, /text-destructive/)
   assert.doesNotMatch(consoleSource, /text-destructive/)
+  assert.equal(
+    readySource.match(
+      /bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700\/30/g,
+    )?.length,
+    2,
+  )
   assert.doesNotMatch(readySource, /HOST_BRIDGE|127\.0\.0\.1:7861/)
 })
 

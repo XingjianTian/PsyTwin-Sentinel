@@ -57,3 +57,41 @@ test("lifecycle command remains exclusive while it is running", async () => {
   restart.resolve()
   assert.equal(await lifecycle, "executed")
 })
+
+test("queued pose rechecks motor safety immediately before network execution", async () => {
+  const volume = deferred()
+  const executed: ReachyDeviceCommand[] = []
+  let motorsEnabled = true
+  const queue = new ReachyCommandQueue(async (command) => {
+    executed.push(command)
+    if (command.action === "volume") await volume.promise
+  })
+
+  const volumeCommand = queue.enqueue({
+    action: "volume",
+    target: "speaker",
+    volume: 20,
+  })
+  await Promise.resolve()
+  const poseCommand = queue.enqueue({
+    action: "pose",
+    headPitch: 0,
+    headRoll: 0,
+    headYaw: 20,
+    bodyYaw: 0,
+    leftAntenna: 0,
+    rightAntenna: 0,
+    duration: 0.3,
+  }, () => motorsEnabled)
+
+  motorsEnabled = false
+  volume.resolve()
+
+  assert.equal(await volumeCommand, "executed")
+  assert.equal(await poseCommand, "skipped")
+  assert.deepEqual(executed, [{
+    action: "volume",
+    target: "speaker",
+    volume: 20,
+  }])
+})

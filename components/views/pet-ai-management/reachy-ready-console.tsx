@@ -63,7 +63,10 @@ import { cn } from "@/lib/utils"
 export const VOLUME_DEBOUNCE_MS = 250
 export const POSE_THROTTLE_MS = 100
 
-type RunCommand = (command: ReachyDeviceCommand) => void | Promise<void>
+type RunCommand = (
+  command: ReachyDeviceCommand,
+  canExecute?: () => boolean,
+) => void | Promise<void>
 
 type ReachyReadyConsoleProps = {
   snapshot: ReachyDeviceSnapshot
@@ -581,7 +584,12 @@ export function ReachyReadyConsole({
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" className="sm:flex-1" disabled={commandPending}>
+              <Button
+                type="button"
+                variant="destructive"
+                className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700/30 sm:flex-1"
+                disabled={commandPending}
+              >
                 停止设备
               </Button>
             </AlertDialogTrigger>
@@ -597,7 +605,7 @@ export function ReachyReadyConsole({
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/30"
+                  className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700/30"
                   onClick={() => void runCommand({ action: "stop" })}
                 >
                   确认停止设备

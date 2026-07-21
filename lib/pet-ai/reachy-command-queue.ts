@@ -1,11 +1,14 @@
 import type { ReachyDeviceCommand } from "./reachy-device"
 
-export type ReachyCommandQueueResult = "executed" | "superseded" | "rejected"
+export type ReachyCommandQueueResult = "executed" | "superseded" | "rejected" | "skipped"
+
+export type ReachyCommandGuard = () => boolean
 
 type ControlKey = "pose" | "speaker-volume" | "microphone-volume"
 
 type PendingControl = {
   command: ReachyDeviceCommand
+  canExecute?: ReachyCommandGuard
   resolve: (result: ReachyCommandQueueResult) => void
   reject: (error: unknown) => void
 }
@@ -27,14 +30,18 @@ export class ReachyCommandQueue {
     private readonly onBusyChange: (busy: boolean) => void = () => undefined,
   ) {}
 
-  async enqueue(command: ReachyDeviceCommand): Promise<ReachyCommandQueueResult> {
+  async enqueue(
+    command: ReachyDeviceCommand,
+    canExecute?: ReachyCommandGuard,
+  ): Promise<ReachyCommandQueueResult> {
     const key = controlKey(command)
-    if (key) return this.enqueueControl(key, command)
+    if (key) return this.enqueueControl(key, command, canExecute)
     if (this.isBusy()) return "rejected"
 
     this.exclusiveRunning = true
     this.updateBusy()
     try {
+      if (canExecute && !canExecute()) return "skipped"
       await this.execute(command)
       return "executed"
     } finally {
@@ -46,12 +53,13 @@ export class ReachyCommandQueue {
   private enqueueControl(
     key: ControlKey,
     command: ReachyDeviceCommand,
+    canExecute?: ReachyCommandGuard,
   ): Promise<ReachyCommandQueueResult> {
     if (this.exclusiveRunning) return Promise.resolve("rejected")
 
     return new Promise((resolve, reject) => {
       this.pendingControls.get(key)?.resolve("superseded")
-      this.pendingControls.set(key, { command, resolve, reject })
+      this.pendingControls.set(key, { command, canExecute, resolve, reject })
       this.updateBusy()
       if (!this.controlsDraining) void this.drainControls()
     })
@@ -68,6 +76,10 @@ export class ReachyCommandQueue {
       const [key, pending] = next
       this.pendingControls.delete(key)
       try {
+        if (pending.canExecute && !pending.canExecute()) {
+          pending.resolve("skipped")
+          continue
+        }
         await this.execute(pending.command)
         pending.resolve("executed")
       } catch (error) {
