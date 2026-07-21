@@ -94,7 +94,7 @@ export function ReachyConnectionPanel({
       `code=${snapshot.error.code}`,
       `message=${snapshot.error.message}`,
       snapshot.error.detail ? `detail=${snapshot.error.detail}` : "",
-      `serial_port=${snapshot.serial_port || selectedPort || "unknown"}`,
+      `serial_port=${selectedPort || snapshot.serial_port || "unknown"}`,
     ].filter(Boolean).join("\n")
 
     try {
@@ -285,7 +285,7 @@ export function ReachyConnectionPanel({
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => onRetry(snapshot.serial_port || selectedPort || undefined)}
+                    onClick={() => onRetry(selectedPort || snapshot.serial_port || undefined)}
                     disabled={commandPending}
                   >
                     <RotateCcw />重试

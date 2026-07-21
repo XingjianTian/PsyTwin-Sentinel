@@ -156,10 +156,10 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     const generation = ++requestGenerationRef.current
     const response = await fetch(`${DEVICE_API_PATH}?after=${logCursorRef.current}`, { cache: "no-store" })
     const payload = await readPayload<ReachyDeviceSnapshot>(response)
+    if (generation !== requestGenerationRef.current) return null
     if (!response.ok || !payload.data) {
       throw new Error(payload.message || "设备状态读取失败")
     }
-    if (generation !== requestGenerationRef.current) return null
     const merged = mergeSnapshotLogs(snapshotRef.current, payload.data)
     logCursorRef.current = merged.logs.cursor
     snapshotRef.current = merged

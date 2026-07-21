@@ -84,6 +84,10 @@ test("pet AI management exposes an accessible Reachy debug workspace", async () 
   assert.match(consoleSource, /commandPending/)
   assert.match(consoleSource, /requestGenerationRef/)
   assert.match(consoleSource, /generation !== requestGenerationRef\.current/)
+  assert.ok(
+    consoleSource.indexOf("generation !== requestGenerationRef.current")
+      < consoleSource.indexOf("if (!response.ok || !payload.data)"),
+  )
   assert.match(consoleSource, /正在读取设备状态/)
   assert.match(consoleSource, /心宠设备控制桥未运行/)
   assert.match(consoleSource, /message !== "心宠设备控制桥未运行"/)
@@ -105,6 +109,7 @@ test("pet AI management exposes an accessible Reachy debug workspace", async () 
   assert.match(connectionSource, /rawPhase === "discovering" \? "starting"/)
   assert.match(connectionSource, /device\.port === selectedPortChoice/)
   assert.match(connectionSource, /commandError !== snapshot\.error\?\.message/)
+  assert.match(connectionSource, /onRetry\(selectedPort \|\| snapshot\.serial_port/)
 })
 
 test("strategy configuration page uses the renamed title", async () => {
