@@ -337,7 +337,7 @@ Proposed commit: `feat: add Reachy device controls and diagnostics`
 - Consumes: browser `mediaDevices` API and device media state.
 - Produces: implemented `reachyMiniCameraAdapter` and a preview tile with explicit unavailable/busy states.
 
-- [x] **Step 1: Write failing camera adapter tests**
+- [ ] **Step 1: Write failing camera adapter tests**
 
 Mock `enumerateDevices` and `getUserMedia` and assert:
 
@@ -346,13 +346,13 @@ Mock `enumerateDevices` and `getUserMedia` and assert:
 - `NotReadableError` maps to `Reachy Mini 摄像头正被 daemon 或其他程序占用`.
 - `stop()` stops every track.
 
-- [x] **Step 2: Run the test and confirm RED**
+- [ ] **Step 2: Run the test and confirm RED**
 
 Run: `npx tsx --test lib/vision-camera.test.ts`
 
 Expected: tests fail because `reachyMiniCameraAdapter.start()` currently throws the unimplemented message.
 
-- [x] **Step 3: Implement the adapter**
+- [ ] **Step 3: Implement the adapter**
 
 Request permission once, enumerate `videoinput` devices, select the first label matching `/reachy|mini/i`, and request:
 
@@ -362,11 +362,11 @@ Request permission once, enumerate `videoinput` devices, select the first label 
 
 Return `{ stream, deviceLabel, stop }`. Never call daemon media-release automatically because that could interrupt ClawBody audio/video.
 
-- [x] **Step 4: Add the preview tile**
+- [ ] **Step 4: Add the preview tile**
 
 Start preview only after the user clicks `打开摄像头预览`. If the camera is busy, keep the device Ready and show the mapped media warning. Closing the tile stops browser tracks. Camera preview failure must not disable motor or audio controls.
 
-- [x] **Step 5: Run tests and confirm GREEN**
+- [ ] **Step 5: Run tests and confirm GREEN**
 
 Run: `npx tsx --test lib/vision-camera.test.ts`
 

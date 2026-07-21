@@ -61,8 +61,9 @@ import {
 } from "@/lib/pet-ai/reachy-ready-console-state"
 import { cn } from "@/lib/utils"
 import {
+  createReachyCameraPreviewController,
   reachyMiniCameraAdapter,
-  type ReachyMiniCameraSession,
+  type ReachyCameraPreviewController,
 } from "@/lib/vision-camera"
 
 export const VOLUME_DEBOUNCE_MS = 250
@@ -236,6 +237,7 @@ export function ReachyReadyConsole({
   >("idle")
   const [cameraDeviceLabel, setCameraDeviceLabel] = useState("")
   const [cameraError, setCameraError] = useState("")
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const poseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const microphoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -243,8 +245,11 @@ export function ReachyReadyConsole({
   const logAreaRef = useRef<HTMLDivElement>(null)
   const nearBottomRef = useRef(true)
   const cameraVideoRef = useRef<HTMLVideoElement>(null)
-  const cameraSessionRef = useRef<ReachyMiniCameraSession | null>(null)
-  const cameraRequestRef = useRef(0)
+  const previewControllerRef = useRef<ReachyCameraPreviewController | null>(null)
+  const previewController = previewControllerRef.current ??= createReachyCameraPreviewController(
+    reachyMiniCameraAdapter,
+    setCameraStream,
+  )
   const motorControlsEnabled = isMotorControlAvailable(snapshot.phase, snapshot.motor_mode)
   const camera = mediaPresentation(snapshot.media.camera)
   const microphone = mediaPresentation(snapshot.media.microphone)
@@ -261,22 +266,18 @@ export function ReachyReadyConsole({
     if (microphoneTimerRef.current) clearTimeout(microphoneTimerRef.current)
   }, [])
 
-  const releaseCameraPreview = useCallback(() => {
-    cameraSessionRef.current?.stop()
-    cameraSessionRef.current = null
-    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null
-  }, [])
-
   useEffect(() => () => {
-    cameraRequestRef.current += 1
-    releaseCameraPreview()
-  }, [releaseCameraPreview])
+    previewController.dispose()
+  }, [previewController])
 
   useEffect(() => {
-    if (cameraVideoRef.current) {
-      cameraVideoRef.current.srcObject = cameraSessionRef.current?.stream ?? null
+    const video = cameraVideoRef.current
+    if (!video) return
+    video.srcObject = cameraStream
+    return () => {
+      video.srcObject = null
     }
-  }, [cameraPreviewState])
+  }, [cameraPreviewState, cameraStream])
 
   useEffect(() => {
     const viewport = logAreaRef.current?.querySelector<HTMLElement>(
@@ -324,32 +325,22 @@ export function ReachyReadyConsole({
   }
 
   const openCameraPreview = async () => {
-    const requestId = cameraRequestRef.current + 1
-    cameraRequestRef.current = requestId
-    releaseCameraPreview()
     setCameraDeviceLabel("")
     setCameraError("")
     setCameraPreviewState("opening")
 
-    try {
-      const session = await reachyMiniCameraAdapter.start()
-      if (cameraRequestRef.current !== requestId) {
-        session.stop()
-        return
-      }
-      cameraSessionRef.current = session
-      setCameraDeviceLabel(session.deviceLabel)
+    const result = await previewController.open()
+    if (result.status === "streaming") {
+      setCameraDeviceLabel(result.deviceLabel)
       setCameraPreviewState("streaming")
-    } catch (error) {
-      if (cameraRequestRef.current !== requestId) return
-      setCameraError(error instanceof Error ? error.message : "无法打开 Reachy Mini 摄像头")
+    } else if (result.status === "error") {
+      setCameraError(result.message)
       setCameraPreviewState("error")
     }
   }
 
   const closeCameraPreview = () => {
-    cameraRequestRef.current += 1
-    releaseCameraPreview()
+    previewController.close()
     setCameraDeviceLabel("")
     setCameraError("")
     setCameraPreviewState("idle")

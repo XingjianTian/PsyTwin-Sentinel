@@ -34,6 +34,64 @@ export interface ReachyMiniCameraAdapter {
   stop: (stream: MediaStream) => void
 }
 
+export type ReachyCameraPreviewResult =
+  | { status: "streaming"; deviceLabel: string }
+  | { status: "error"; message: string }
+  | { status: "stale" }
+
+export interface ReachyCameraPreviewController {
+  open: () => Promise<ReachyCameraPreviewResult>
+  close: () => void
+  dispose: () => void
+}
+
+export function createReachyCameraPreviewController(
+  adapter: Pick<ReachyMiniCameraAdapter, "start">,
+  setVideoStream: (stream: MediaStream | null) => void,
+): ReachyCameraPreviewController {
+  let requestGeneration = 0
+  let activeSession: ReachyMiniCameraSession | null = null
+
+  const releaseActiveSession = () => {
+    activeSession?.stop()
+    activeSession = null
+    setVideoStream(null)
+  }
+
+  const close = () => {
+    requestGeneration += 1
+    releaseActiveSession()
+  }
+
+  return {
+    async open() {
+      const requestId = requestGeneration + 1
+      requestGeneration = requestId
+      releaseActiveSession()
+
+      try {
+        const session = await adapter.start()
+        if (requestGeneration !== requestId) {
+          session.stop()
+          return { status: "stale" }
+        }
+
+        activeSession = session
+        setVideoStream(session.stream)
+        return { status: "streaming", deviceLabel: session.deviceLabel }
+      } catch (error) {
+        if (requestGeneration !== requestId) return { status: "stale" }
+        return {
+          status: "error",
+          message: error instanceof Error ? error.message : "无法打开 Reachy Mini 摄像头",
+        }
+      }
+    },
+    close,
+    dispose: close,
+  }
+}
+
 function assertMediaDevicesAvailable() {
   if (
     typeof navigator === "undefined"
@@ -56,10 +114,16 @@ function mapReachyCameraError(error: unknown): Error {
   if (errorName === "NotReadableError") {
     return new Error("Reachy Mini 摄像头正被 daemon 或其他程序占用")
   }
+  if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
+    return new Error("Reachy Mini 摄像头未被浏览器识别")
+  }
   if (errorName === "NotAllowedError" || errorName === "SecurityError") {
     return new Error("摄像头权限未授予，请在浏览器设置中允许访问")
   }
-  return error instanceof Error ? error : new Error("无法打开 Reachy Mini 摄像头")
+  if (error instanceof Error && error.message === "Reachy Mini 摄像头未被浏览器识别") {
+    return error
+  }
+  return new Error("无法打开 Reachy Mini 摄像头")
 }
 
 export const localBrowserCameraAdapter: VisionCameraAdapter = {
