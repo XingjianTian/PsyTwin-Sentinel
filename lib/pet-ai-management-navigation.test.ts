@@ -54,6 +54,13 @@ test("pet AI management route renders the native management workspace", async ()
   assert.match(viewSource, /sessionRiskLevel/)
   assert.match(viewSource, /message\.riskLevel/)
   assert.match(viewSource, /lg:grid-cols-2/)
+  assert.match(viewSource, /getReachySessionEntryPresentation/)
+  assert.match(viewSource, /aria-describedby="reachy-session-entry-reason"/)
+  assert.match(viewSource, /disabled=\{!sessionEntry\.canStart\}/)
+  assert.ok(
+    viewSource.indexOf('if (action === "start" && !sessionEntry.canStart)')
+      < viewSource.indexOf('fetch("/api/pet-ai/reachy/session"'),
+  )
   assert.doesNotMatch(viewSource, />功能规划中</)
   assert.match(pageSource, /<PetAiManagementView\s*\/>/)
 })

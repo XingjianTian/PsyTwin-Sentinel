@@ -755,7 +755,7 @@ clawbody-host status
 ```
 
 1. 启动 Docker Desktop，在 ClawBody 仓库运行 `docker compose up -d`，用 `docker compose ps` 确认 `clawbody-service` 正常。
-2. 如需确认 Host Bridge，在 ClawBody 仓库运行 `clawbody-host status`；任务未运行时使用 `clawbody-host restart`。
+2. 如需确认 Host Bridge，在 ClawBody 仓库根目录运行 `.\.venv\Scripts\clawbody-host.exe status`；任务未运行时运行 `.\.venv\Scripts\clawbody-host.exe restart`。这两条命令不依赖当前 PowerShell 已激活虚拟环境。
 3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
 
 以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
@@ -774,7 +774,7 @@ Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
 
 | 现象 | 处理 |
 |------|------|
-| “心宠设备控制桥未运行” | 在 ClawBody 仓库执行 `clawbody-host status`，必要时执行 `clawbody-host restart`，再用 `/health` 只读检查。 |
+| “心宠设备控制桥未运行” | 在 ClawBody 仓库根目录执行 `.\.venv\Scripts\clawbody-host.exe status`，必要时执行 `.\.venv\Scripts\clawbody-host.exe restart`，再用 `/health` 只读检查。 |
 | Host Bridge 返回 `401` 或 Sentinel 显示设备请求失败 | 确认 Sentinel 和 ClawBody 的 `HOST_BRIDGE_API_KEY` 完全一致，修改后重启对应服务；不要将密钥放入 URL、日志或前端变量。 |
 | 未发现 Reachy Mini Lite USB | 确认 Reachy Mini Control 已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
 | daemon 启动失败或 `8000` 端口冲突 | 退出 Reachy Mini Control 和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |

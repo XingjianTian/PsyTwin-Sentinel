@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ReachyDebugConsole } from "@/components/views/pet-ai-management/reachy-debug-console"
 import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-presentation"
 import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
+import { getReachySessionEntryPresentation, type ReachyServiceAvailability } from "@/lib/pet-ai/reachy-session-entry"
 import { getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
 import { cn } from "@/lib/utils"
 
@@ -54,6 +55,7 @@ export function PetAiManagementView() {
   const [activeTab, setActiveTab] = useState("info")
   const [reachy, setReachy] = useState<ReachyStatus>({ state: "offline" })
   const [reachyError, setReachyError] = useState("")
+  const [reachyAvailability, setReachyAvailability] = useState<ReachyServiceAvailability>("checking")
   const transcriptCursorRef = useRef(0)
   const eventCursorRef = useRef(0)
 
@@ -105,8 +107,10 @@ export function PetAiManagementView() {
         events: { cursor: payload.data.events?.cursor, items: mergeUniqueById(current.events?.items || [], payload.data.events?.items || []).slice(-100) },
       }))
       setReachyError("")
+      setReachyAvailability("available")
     } catch (error) {
       setReachyError((error as Error).message)
+      setReachyAvailability("unavailable")
     }
   }, [])
 
@@ -140,8 +144,20 @@ export function PetAiManagementView() {
     } catch (error) { toast.error((error as Error).message) } finally { setSaving(false) }
   }
 
+  const sessionEntry = getReachySessionEntryPresentation({
+    isDemoStudent: detail?.isDemoStudent === true,
+    running: reachy.running === true,
+    availability: reachyAvailability,
+    serviceState: reachy.state,
+    serviceError: reachyError,
+  })
+
   const controlSession = async (action: "start" | "stop") => {
     if (!detail || !profile) return
+    if (action === "start" && !sessionEntry.canStart) {
+      toast.error(sessionEntry.reason)
+      return
+    }
     try {
       const response = await fetch("/api/pet-ai/reachy/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, studentId: detail.student.id }) })
       const payload = await readPayload(response)
@@ -259,7 +275,7 @@ export function PetAiManagementView() {
               })}</div>}
             </TabsContent>
             <TabsContent value="live" className="min-h-0 overflow-y-auto p-4">
-              <div className="rounded-lg bg-muted/70 p-3"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className={cn("size-2.5 rounded-full", reachy.running ? "bg-success" : "bg-muted-foreground/50")} /><span className="text-sm font-medium">{reachy.running ? "设备会话运行中" : "设备待机"}</span>{reachy.student_id === selectedId && <Badge variant="outline" className={cn("ml-1 gap-1.5", sessionRisk.badgeClassName)}><CircleAlert className="size-3" />实时风险 · {sessionRisk.label}</Badge>}</div><Button size="icon-sm" variant="ghost" onClick={pollReachy} aria-label="刷新设备状态"><RefreshCw /></Button></div><p className="mt-1 text-xs text-muted-foreground">{reachyError || (detail?.isDemoStudent ? "当前绑定：测试学生 · 实体 Reachy" : "当前学生仅支持文本联调")}</p><div className="mt-3 flex gap-2"><Button size="sm" onClick={() => controlSession("start")} disabled={!detail?.isDemoStudent || !!reachy.running}><Play />开始对话</Button><Button size="sm" variant="outline" onClick={() => controlSession("stop")} disabled={!reachy.running}><Square />停止</Button></div></div>
+              <div className="rounded-lg bg-muted/70 p-3"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className={cn("size-2.5 rounded-full", reachy.running ? "bg-success" : "bg-muted-foreground/50")} /><span className="text-sm font-medium">{reachy.running ? "设备会话运行中" : "设备待机"}</span>{reachy.student_id === selectedId && <Badge variant="outline" className={cn("ml-1 gap-1.5", sessionRisk.badgeClassName)}><CircleAlert className="size-3" />实时风险 · {sessionRisk.label}</Badge>}</div><Button size="icon-sm" variant="ghost" onClick={pollReachy} aria-label="刷新设备状态"><RefreshCw /></Button></div><p id="reachy-session-entry-reason" aria-live="polite" className="mt-1 text-xs text-muted-foreground">{sessionEntry.reason || (detail?.isDemoStudent ? "当前绑定：测试学生 · 实体 Reachy" : "当前学生仅支持文本联调")}</p><div className="mt-3 flex gap-2"><Button size="sm" onClick={() => controlSession("start")} disabled={!sessionEntry.canStart} aria-describedby="reachy-session-entry-reason" title={sessionEntry.reason || undefined}><Play />开始对话</Button><Button size="sm" variant="outline" onClick={() => controlSession("stop")} disabled={!reachy.running}><Square />停止</Button></div></div>
 
               <section className="mt-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-medium">实时对话</h3><span className="text-[11px] text-muted-foreground">百度 ASR / TTS</span></div>{(reachy.transcript?.items || []).length === 0 ? <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">启动设备会话后，学生语音与测试心宠回复会显示在这里。</p> : <div className="space-y-2">{reachy.transcript?.items?.map((item) => {
                 const isStudent = item.role === "user"
