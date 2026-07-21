@@ -1,0 +1,188 @@
+import assert from "node:assert/strict"
+import { readFile } from "node:fs/promises"
+import test, { type TestContext } from "node:test"
+
+import { reachyMiniCameraAdapter } from "./vision-camera"
+
+type MediaDevicesStub = Pick<MediaDevices, "enumerateDevices" | "getUserMedia">
+
+function createTrack() {
+  let stopCount = 0
+  return {
+    track: {
+      stop() {
+        stopCount += 1
+      },
+    } as MediaStreamTrack,
+    get stopCount() {
+      return stopCount
+    },
+  }
+}
+
+function createStream(tracks: MediaStreamTrack[]) {
+  return {
+    getTracks: () => tracks,
+  } as MediaStream
+}
+
+function installMediaDevices(t: TestContext, mediaDevices: MediaDevicesStub) {
+  const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator")
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: { mediaDevices },
+  })
+
+  t.after(() => {
+    if (navigatorDescriptor) {
+      Object.defineProperty(globalThis, "navigator", navigatorDescriptor)
+    } else {
+      Reflect.deleteProperty(globalThis, "navigator")
+    }
+  })
+}
+
+test("prefers a labeled Reachy Mini camera and requests the exact 640x480 stream", async (t) => {
+  const permissionTrack = createTrack()
+  const previewTrack = createTrack()
+  const permissionStream = createStream([permissionTrack.track])
+  const previewStream = createStream([previewTrack.track])
+  const requests: MediaStreamConstraints[] = []
+
+  installMediaDevices(t, {
+    async enumerateDevices() {
+      return [
+        { deviceId: "laptop", kind: "videoinput", label: "Integrated Camera" },
+        { deviceId: "reachy", kind: "videoinput", label: "Reachy Mini Camera" },
+        { deviceId: "mic", kind: "audioinput", label: "Reachy Mini Microphone" },
+      ] as MediaDeviceInfo[]
+    },
+    async getUserMedia(constraints) {
+      requests.push(constraints)
+      return requests.length === 1 ? permissionStream : previewStream
+    },
+  })
+
+  const session = await reachyMiniCameraAdapter.start()
+
+  assert.equal(session.stream, previewStream)
+  assert.equal(session.deviceLabel, "Reachy Mini Camera")
+  assert.deepEqual(requests, [
+    { audio: false, video: true },
+    {
+      audio: false,
+      video: {
+        deviceId: { exact: "reachy" },
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+    },
+  ])
+  assert.equal(permissionTrack.stopCount, 1)
+  assert.equal(previewTrack.stopCount, 0)
+})
+
+test("reports when no labeled Reachy Mini camera is available", async (t) => {
+  const permissionTrack = createTrack()
+  installMediaDevices(t, {
+    async enumerateDevices() {
+      return [
+        { deviceId: "laptop", kind: "videoinput", label: "Integrated Camera" },
+      ] as MediaDeviceInfo[]
+    },
+    async getUserMedia() {
+      return createStream([permissionTrack.track])
+    },
+  })
+
+  await assert.rejects(
+    reachyMiniCameraAdapter.start(),
+    new Error("Reachy Mini 摄像头未被浏览器识别"),
+  )
+  assert.equal(permissionTrack.stopCount, 1)
+})
+
+test("maps a busy camera error without changing device readiness", async (t) => {
+  const permissionTrack = createTrack()
+  let requestCount = 0
+  installMediaDevices(t, {
+    async enumerateDevices() {
+      return [
+        { deviceId: "reachy", kind: "videoinput", label: "Reachy Camera" },
+      ] as MediaDeviceInfo[]
+    },
+    async getUserMedia() {
+      requestCount += 1
+      if (requestCount === 1) return createStream([permissionTrack.track])
+      throw new DOMException("Could not start video source", "NotReadableError")
+    },
+  })
+
+  await assert.rejects(
+    reachyMiniCameraAdapter.start(),
+    new Error("Reachy Mini 摄像头正被 daemon 或其他程序占用"),
+  )
+  assert.equal(permissionTrack.stopCount, 1)
+})
+
+test("maps a denied browser permission to an actionable message", async (t) => {
+  installMediaDevices(t, {
+    async enumerateDevices() {
+      return []
+    },
+    async getUserMedia() {
+      throw new DOMException("Permission denied", "NotAllowedError")
+    },
+  })
+
+  await assert.rejects(
+    reachyMiniCameraAdapter.start(),
+    new Error("摄像头权限未授予，请在浏览器设置中允许访问"),
+  )
+})
+
+test("session stop closes every preview track", async (t) => {
+  const permissionTrack = createTrack()
+  const firstPreviewTrack = createTrack()
+  const secondPreviewTrack = createTrack()
+  let requestCount = 0
+  installMediaDevices(t, {
+    async enumerateDevices() {
+      return [
+        { deviceId: "mini", kind: "videoinput", label: "Mini Camera" },
+      ] as MediaDeviceInfo[]
+    },
+    async getUserMedia() {
+      requestCount += 1
+      return requestCount === 1
+        ? createStream([permissionTrack.track])
+        : createStream([firstPreviewTrack.track, secondPreviewTrack.track])
+    },
+  })
+
+  const session = await reachyMiniCameraAdapter.start()
+  session.stop()
+
+  assert.equal(firstPreviewTrack.stopCount, 1)
+  assert.equal(secondPreviewTrack.stopCount, 1)
+})
+
+test("Ready console keeps preview permission explicit and camera errors isolated", async () => {
+  const source = await readFile(
+    new URL(
+      "../components/views/pet-ai-management/reachy-ready-console.tsx",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+
+  assert.match(source, /onClick=\{openCameraPreview\}/)
+  assert.match(source, /打开摄像头预览/)
+  assert.match(source, /reachyMiniCameraAdapter\.start\(\)/)
+  assert.match(source, /cameraSessionRef\.current\?\.stop\(\)/)
+  assert.match(source, /<video[\s\S]*autoPlay[\s\S]*muted[\s\S]*playsInline/)
+  assert.match(source, /role="alert"/)
+  assert.match(source, /预览受阻/)
+  assert.match(source, /不会影响电机、扬声器或麦克风控制/)
+  assert.doesNotMatch(source, /release.*daemon|daemon.*release/i)
+})

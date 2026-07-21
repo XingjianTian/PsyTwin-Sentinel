@@ -22,6 +22,7 @@ import {
   Speaker,
   Sun,
   Volume2,
+  X,
 } from "lucide-react"
 
 import {
@@ -59,6 +60,10 @@ import {
   type ReachyPose,
 } from "@/lib/pet-ai/reachy-ready-console-state"
 import { cn } from "@/lib/utils"
+import {
+  reachyMiniCameraAdapter,
+  type ReachyMiniCameraSession,
+} from "@/lib/vision-camera"
 
 export const VOLUME_DEBOUNCE_MS = 250
 export const POSE_THROTTLE_MS = 100
@@ -226,12 +231,20 @@ export function ReachyReadyConsole({
   const [speakerVolume, setSpeakerVolume] = useState(snapshot.media.output_volume ?? 50)
   const [microphoneVolume, setMicrophoneVolume] = useState(snapshot.media.input_volume ?? 50)
   const [copied, setCopied] = useState(false)
+  const [cameraPreviewState, setCameraPreviewState] = useState<
+    "idle" | "opening" | "streaming" | "error"
+  >("idle")
+  const [cameraDeviceLabel, setCameraDeviceLabel] = useState("")
+  const [cameraError, setCameraError] = useState("")
   const poseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const microphoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapshotRef = useRef(snapshot)
   const logAreaRef = useRef<HTMLDivElement>(null)
   const nearBottomRef = useRef(true)
+  const cameraVideoRef = useRef<HTMLVideoElement>(null)
+  const cameraSessionRef = useRef<ReachyMiniCameraSession | null>(null)
+  const cameraRequestRef = useRef(0)
   const motorControlsEnabled = isMotorControlAvailable(snapshot.phase, snapshot.motor_mode)
   const camera = mediaPresentation(snapshot.media.camera)
   const microphone = mediaPresentation(snapshot.media.microphone)
@@ -247,6 +260,23 @@ export function ReachyReadyConsole({
     if (speakerTimerRef.current) clearTimeout(speakerTimerRef.current)
     if (microphoneTimerRef.current) clearTimeout(microphoneTimerRef.current)
   }, [])
+
+  const releaseCameraPreview = useCallback(() => {
+    cameraSessionRef.current?.stop()
+    cameraSessionRef.current = null
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null
+  }, [])
+
+  useEffect(() => () => {
+    cameraRequestRef.current += 1
+    releaseCameraPreview()
+  }, [releaseCameraPreview])
+
+  useEffect(() => {
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = cameraSessionRef.current?.stream ?? null
+    }
+  }, [cameraPreviewState])
 
   useEffect(() => {
     const viewport = logAreaRef.current?.querySelector<HTMLElement>(
@@ -291,6 +321,38 @@ export function ReachyReadyConsole({
 
   const performDeviceAction = (deviceAction: Extract<ReachyDeviceCommand, { action: "device_action" }>["deviceAction"]) => {
     void runCommand({ action: "device_action", deviceAction })
+  }
+
+  const openCameraPreview = async () => {
+    const requestId = cameraRequestRef.current + 1
+    cameraRequestRef.current = requestId
+    releaseCameraPreview()
+    setCameraDeviceLabel("")
+    setCameraError("")
+    setCameraPreviewState("opening")
+
+    try {
+      const session = await reachyMiniCameraAdapter.start()
+      if (cameraRequestRef.current !== requestId) {
+        session.stop()
+        return
+      }
+      cameraSessionRef.current = session
+      setCameraDeviceLabel(session.deviceLabel)
+      setCameraPreviewState("streaming")
+    } catch (error) {
+      if (cameraRequestRef.current !== requestId) return
+      setCameraError(error instanceof Error ? error.message : "无法打开 Reachy Mini 摄像头")
+      setCameraPreviewState("error")
+    }
+  }
+
+  const closeCameraPreview = () => {
+    cameraRequestRef.current += 1
+    releaseCameraPreview()
+    setCameraDeviceLabel("")
+    setCameraError("")
+    setCameraPreviewState("idle")
   }
 
   const copyLogs = async () => {
@@ -463,10 +525,103 @@ export function ReachyReadyConsole({
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Camera className="size-4 text-primary" aria-hidden="true" />摄像头
                 </CardTitle>
-                <StatusBadge healthy={camera.healthy}>{camera.label}</StatusBadge>
+                <StatusBadge
+                  healthy={
+                    cameraPreviewState === "streaming"
+                    || (cameraPreviewState !== "error" && camera.healthy)
+                  }
+                >
+                  {cameraPreviewState === "streaming"
+                    ? "预览中"
+                    : cameraPreviewState === "opening"
+                      ? "请求中"
+                      : cameraPreviewState === "error"
+                        ? "预览受阻"
+                        : camera.label}
+                </StatusBadge>
               </div>
-              <CardDescription>浏览器预览将在后续媒体诊断中提供。</CardDescription>
+              <CardDescription>仅在点击后请求浏览器权限，不会操作 daemon 媒体服务。</CardDescription>
             </CardHeader>
+            <CardContent className="space-y-3 px-5">
+              {cameraPreviewState === "streaming" ? (
+                <div className="overflow-hidden rounded-lg bg-slate-950">
+                  <video
+                    ref={cameraVideoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    aria-label={`${cameraDeviceLabel || "Reachy Mini 摄像头"}实时预览`}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted/60 px-4 text-center"
+                  aria-live="polite"
+                >
+                  <div className="max-w-52">
+                    {cameraPreviewState === "opening" ? (
+                      <LoaderCircle className="mx-auto size-6 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
+                    ) : (
+                      <Camera className="mx-auto size-6 text-muted-foreground" strokeWidth={1.5} aria-hidden="true" />
+                    )}
+                    <p className="mt-2 text-sm font-medium">
+                      {cameraPreviewState === "opening"
+                        ? "正在请求摄像头访问"
+                        : camera.healthy
+                          ? "预览尚未打开"
+                          : "摄像头当前不可用"}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      {camera.healthy
+                        ? "浏览器会在你确认后显示画面。"
+                        : "Host Bridge 未检测到可用摄像头。"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {cameraError ? (
+                <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900" role="alert">
+                  <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  <span>{cameraError}</span>
+                </div>
+              ) : null}
+
+              {cameraPreviewState === "streaming" ? (
+                <Button type="button" variant="outline" className="w-full" onClick={closeCameraPreview}>
+                  <X aria-hidden="true" />关闭摄像头预览
+                </Button>
+              ) : cameraPreviewState === "error" ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={!camera.healthy}
+                  onClick={openCameraPreview}
+                >
+                  <RefreshCw aria-hidden="true" />重新尝试摄像头预览
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={!camera.healthy || cameraPreviewState === "opening"}
+                  onClick={openCameraPreview}
+                >
+                  {cameraPreviewState === "opening" ? (
+                    <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  ) : (
+                    <Camera aria-hidden="true" />
+                  )}
+                  打开摄像头预览
+                </Button>
+              )}
+              <p className="text-xs leading-5 text-muted-foreground">
+                预览不可用或被占用时，不会影响电机、扬声器或麦克风控制。
+              </p>
+            </CardContent>
           </Card>
 
           <Card className="gap-4 py-5 shadow-none">
