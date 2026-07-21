@@ -162,7 +162,7 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.doesNotMatch(consoleSource, /text-destructive/)
   assert.equal(
     readySource.match(
-      /bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700\/30/g,
+      /bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2/g,
     )?.length,
     2,
   )
