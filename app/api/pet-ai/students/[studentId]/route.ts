@@ -49,7 +49,7 @@ export async function GET(_request: NextRequest, context: Context) {
         personality,
       },
       aiProfile,
-      conversations: isDemoStudent ? [] : buildDemoConversations(studentId, petSnapshot.name),
+      conversations: isDemoStudent ? [] : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
       isDemoStudent,
     },
   })

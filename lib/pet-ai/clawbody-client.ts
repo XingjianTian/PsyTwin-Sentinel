@@ -1,4 +1,4 @@
-const serviceUrl = () => (process.env.CLAWBODY_SERVICE_URL || "http://127.0.0.1:7862").replace(/\/$/, "")
+const serviceUrl = () => (process.env.CLAWBODY_SERVICE_URL || "http://127.0.0.1:7860").replace(/\/$/, "")
 
 export class ClawBodyUnavailableError extends Error {
   constructor(message = "心宠设备服务暂不可用") {

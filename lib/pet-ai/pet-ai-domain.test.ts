@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import { buildDemoConversations, buildRiskDemo, prioritizeDemoStudent } from "./demo-data"
-import { mergeUniqueById } from "./event-stream"
+import { mergeUniqueById, newestFirstById } from "./event-stream"
 import { buildPetRuntimeIdentity, petAiProfileInputSchema } from "./profile"
 
 test("demo conversations are stable and distinct per student", () => {
@@ -23,6 +23,40 @@ test("demo conversation shape varies across students", () => {
 
   assert.ok(new Set(counts).size > 1)
   assert.ok(Math.max(...messageLengths) - Math.min(...messageLengths) >= 25)
+})
+
+test("demo conversation wording is diverse across the student roster", () => {
+  const conversations = Array.from({ length: 60 }, (_, index) =>
+    buildDemoConversations(`stu-roster-${index + 1}`, "心宠"),
+  ).flat()
+  const studentMessages = conversations.filter((message) => message.role === "student").map((message) => message.content)
+  const petMessages = conversations.filter((message) => message.role === "pet").map((message) => message.content)
+
+  assert.ok(new Set(studentMessages).size / studentMessages.length >= 0.85)
+  assert.ok(new Set(petMessages).size / petMessages.length >= 0.8)
+})
+
+test("demo conversation replies inherit the student's sentence risk", () => {
+  const conversations = buildDemoConversations("stu-wangyuyan", "泡芙")
+
+  for (let index = 0; index < conversations.length; index += 2) {
+    assert.equal(conversations[index].role, "student")
+    assert.equal(conversations[index + 1].role, "pet")
+    assert.equal(conversations[index + 1].riskLevel, conversations[index].riskLevel)
+  }
+
+  const pressure = conversations.find((message) => message.content.includes("跟不上"))
+  if (pressure) assert.equal(pressure.riskLevel, "MEDIUM")
+})
+
+test("high-risk students receive an explicit high-risk demo exchange", () => {
+  const conversations = buildDemoConversations("stu-high-risk", "心宠", "HIGH")
+  const highRiskStudentMessage = conversations.find(
+    (message) => message.role === "student" && message.riskLevel === "HIGH",
+  )
+
+  assert.ok(highRiskStudentMessage)
+  assert.match(highRiskStudentMessage.content, /不想活|结束这一切|伤害自己|活着没意思|永远消失/)
 })
 
 test("stable OCEAN personality is bounded and distinct per student", async () => {
@@ -98,4 +132,11 @@ test("overlapping polling responses are merged without duplicate event ids", () 
     { id: 2, title: "转交" },
     { id: 3, title: "建议" },
   ])
+})
+
+test("collaboration events display newest first without mutating polling order", () => {
+  const events = [{ id: 1, title: "检测" }, { id: 2, title: "建议" }, { id: 3, title: "转述" }]
+
+  assert.deepEqual(newestFirstById(events).map((event) => event.id), [3, 2, 1])
+  assert.deepEqual(events.map((event) => event.id), [1, 2, 3])
 })

@@ -2,6 +2,12 @@ import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 import test from "node:test"
 
+test("ClawBody defaults to the single Docker service on port 7860", async () => {
+  const source = await readFile(new URL("./clawbody-client.ts", import.meta.url), "utf8")
+  assert.match(source, /http:\/\/127\.0\.0\.1:7860/)
+  assert.doesNotMatch(source, /127\.0\.0\.1:7862/)
+})
+
 test("student detail API returns the persisted OCEAN pet personality", async () => {
   const source = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/route.ts", import.meta.url), "utf8")
 
@@ -12,6 +18,7 @@ test("student detail API returns the persisted OCEAN pet personality", async () 
   assert.match(source, /buildStableOceanPersonality/)
   assert.match(source, /every\(\(value\) => value === 50\)/)
   assert.match(source, /\/pet\/pocket-main-pet\.png/)
+  assert.match(source, /buildDemoConversations\(studentId, petSnapshot\.name, student\.riskLevel\)/)
 })
 
 test("Reachy defaults to the Pocket test student", async () => {

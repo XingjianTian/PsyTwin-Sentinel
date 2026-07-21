@@ -1,3 +1,5 @@
+import { classifyMessageRisk, normalizeRiskLevel, type RiskLevel } from "./risk-presentation"
+
 export interface DemoConversationMessage {
   id: string
   role: "student" | "pet"
@@ -5,6 +7,7 @@ export interface DemoConversationMessage {
   createdAt: string
   topic: string
   demo: true
+  riskLevel: RiskLevel
 }
 
 export interface RiskDemoStage {
@@ -23,7 +26,9 @@ export function prioritizeDemoStudent<T extends { id: string }>(students: T[], d
   })
 }
 
-const topics = [
+type DemoTopic = readonly [topic: string, studentText: string, petText: string]
+
+const topics: readonly DemoTopic[] = [
   ["学习压力", "最近复习任务好多，我有点跟不上。", "先陪你把今天最重要的一件事挑出来，我们慢慢完成。"],
   ["睡眠状态", "昨晚又很晚才睡，今天脑子有点乱。", "今晚我们把节奏放慢一点，先从提前十分钟休息开始。"],
   ["同伴关系", "我不知道怎么和室友说自己的感受。", "可以先说事实，再说你的感受，我会陪你把那句话组织好。如果愿意，我们还可以一起练习第一句怎么开口。"],
@@ -34,8 +39,87 @@ const topics = [
   ["短暂休息", "我想先安静一会儿。", "好，我陪你安静待一会儿。"],
 ] as const
 
+const mediumRiskTopics: readonly DemoTopic[] = [topics[0], topics[1], topics[2], topics[6]]
+
+const highRiskTopics: readonly DemoTopic[] = [
+  [
+    "安全关怀",
+    "这几天我总觉得活着没意思，有时甚至想永远消失。",
+    "听见你这样说，我很担心你现在的安全。先不要一个人待着，我们马上联系你信任的老师、家人或心理老师，我会陪着你。",
+  ],
+  [
+    "危机求助",
+    "我现在很难受，脑子里出现过伤害自己的想法。",
+    "谢谢你把这件事告诉我。你的安全最重要，请先远离可能伤害自己的物品，我们现在就找一位可信赖的成年人陪在你身边。",
+  ],
+] as const
+
+const conversationContexts = [
+  "今天回到宿舍后",
+  "刚结束一天的课",
+  "晚自习前",
+  "午休的时候",
+  "和同学分开后",
+  "一个人安静下来时",
+  "刚才整理书包时",
+  "从教学楼出来后",
+  "吃完晚饭后",
+  "这两天",
+  "下午空下来时",
+  "刚刚想到这件事时",
+] as const
+
+const studentReflections = [
+  "我想把这件事记下来。",
+  "所以想先和你说说。",
+  "不知道你会怎么看。",
+  "我想听听你的想法。",
+  "这会儿最想先说这件事。",
+  "我还在慢慢理清自己的感受。",
+  "说出来以后，心里好像清楚了一点。",
+  "我想先从这件事开始聊。",
+] as const
+
+const petFollowUps = [
+  "如果你愿意，我们可以再聊一点。",
+  "你想从哪一小步开始？",
+  "我先陪你把这件事放稳。",
+  "我们按你的节奏来。",
+  "你也可以只告诉我现在最在意的部分。",
+  "先不用急着得出答案。",
+  "我会记住你刚才说的。",
+  "等你准备好，我们再继续。",
+] as const
+
+const petAcknowledgements = [
+  "我听见了。",
+  "谢谢你愿意告诉我。",
+  "这件事对你来说很重要。",
+  "我在认真听。",
+  "你已经把感受说得很清楚了。",
+  "先让我们一起接住这个感受。",
+  "我能理解你为什么会在意。",
+  "你愿意说出来，本身就是一种整理。",
+  "我们可以从你刚才说的地方开始。",
+  "我会陪你慢慢梳理。",
+  "不用急，我在这里。",
+  "我记住你现在的感受了。",
+] as const
+
 function hash(value: string) {
   return [...value].reduce((total, character) => (total * 33 + character.charCodeAt(0)) >>> 0, 17)
+}
+
+function createStablePicker(seed: number) {
+  let state = seed || 1
+
+  return (length: number) => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let value = state
+    value = Math.imul(value ^ (value >>> 15), value | 1)
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61)
+    return ((value ^ (value >>> 14)) >>> 0) % length
+  }
 }
 
 export function buildStableOceanPersonality(studentId: string) {
@@ -49,18 +133,37 @@ export function buildStableOceanPersonality(studentId: string) {
   }
 }
 
-export function buildDemoConversations(studentId: string, petName: string): DemoConversationMessage[] {
+export function buildDemoConversations(studentId: string, petName: string, studentRiskLevel?: string | null): DemoConversationMessage[] {
   const seed = hash(studentId)
+  const pick = createStablePicker(seed)
+  const normalizedStudentRisk = normalizeRiskLevel(studentRiskLevel)
   const baseTime = Date.UTC(2026, 6, 20, 6 + (seed % 6), 10)
   const result: DemoConversationMessage[] = []
 
   const topicCount = 2 + (seed % 3)
+  const topicStart = pick(topics.length)
+  const topicStep = [1, 3, 5, 7][pick(4)]
+  const requiredRiskTopic = normalizedStudentRisk === "HIGH" || normalizedStudentRisk === "CRITICAL"
+    ? highRiskTopics[pick(highRiskTopics.length)]
+    : normalizedStudentRisk === "MEDIUM"
+      ? mediumRiskTopics[pick(mediumRiskTopics.length)]
+      : null
   for (let index = 0; index < topicCount; index += 1) {
-    const [topic, studentText, petText] = topics[(seed + index * 3) % topics.length]
+    const [topic, studentText, petText] = index === 0 && requiredRiskTopic
+      ? requiredRiskTopic
+      : topics[(topicStart + index * topicStep) % topics.length]
     const time = baseTime - index * 86_400_000
+    const context = conversationContexts[pick(conversationContexts.length)]
+    const reflection = studentReflections[pick(studentReflections.length)]
+    const acknowledgement = petAcknowledgements[pick(petAcknowledgements.length)]
+    const followUp = petFollowUps[pick(petFollowUps.length)]
+    const personalizedStudentText = `${context}，${studentText}${reflection}`
+    const personalizedPetText = `${acknowledgement}${petText}${followUp}`
+    const classifiedRiskLevel = classifyMessageRisk(personalizedStudentText)
+    const riskLevel = index === 0 && normalizedStudentRisk === "CRITICAL" ? "CRITICAL" : classifiedRiskLevel
     result.push(
-      { id: `${studentId}-${index}-student`, role: "student", content: studentText, createdAt: new Date(time).toISOString(), topic, demo: true },
-      { id: `${studentId}-${index}-pet`, role: "pet", content: `${petName}：${petText}`, createdAt: new Date(time + 45_000).toISOString(), topic, demo: true },
+      { id: `${studentId}-${index}-student`, role: "student", content: personalizedStudentText, createdAt: new Date(time).toISOString(), topic, demo: true, riskLevel },
+      { id: `${studentId}-${index}-pet`, role: "pet", content: `${petName}：${personalizedPetText}`, createdAt: new Date(time + 45_000).toISOString(), topic, demo: true, riskLevel },
     )
   }
 

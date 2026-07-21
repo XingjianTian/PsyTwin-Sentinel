@@ -47,11 +47,10 @@
 
 ## 验收清单
 
-- [ ] 仅存在一个 ClawBody 容器 `clawbody-reachy`。
-- [ ] 容器运行 `clawbody-service`，不运行 Gradio。
-- [ ] 宿主机只为 ClawBody 监听 `127.0.0.1:7860`，`7862` 未监听。
-- [ ] `GET http://127.0.0.1:7860/health` 返回成功。
-- [ ] Sentinel 使用 `7860` 代理并能读取设备状态。
-- [ ] Reachy Mini Control 的 `8000` 连接保持不变。
-- [ ] ClawBody Python 测试与 Sentinel 生产构建通过。
-
+- [x] 仅存在一个 ClawBody 容器 `clawbody-reachy`。*(已于 2026-07-21 验证)*
+- [x] 容器运行 `clawbody-service`，不运行 Gradio。*(已于 2026-07-21 验证)*
+- [x] 宿主机只为 ClawBody 监听 `127.0.0.1:7860`，`7862` 未监听。*(已于 2026-07-21 验证)*
+- [x] `GET http://127.0.0.1:7860/health` 返回成功。*(已于 2026-07-21 验证返回 `ok: true`)*
+- [x] Sentinel 使用 `7860` 代理并能读取设备状态。*(已于 2026-07-21 通过服务端客户端读取 `idle` 状态)*
+- [x] Reachy Mini Control 的 `8000` 连接保持不变。*(已于 2026-07-21 验证宿主机监听)*
+- [x] ClawBody Python 测试与 Sentinel 生产构建通过。*(已于 2026-07-21 验证 12 项 Python 测试、6 项 Sentinel 测试及生产构建)*

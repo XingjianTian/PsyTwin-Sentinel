@@ -30,7 +30,7 @@
 - Consumes: `CLAWBODY_SERVICE_URL` environment variable.
 - Produces: server-side ClawBody requests defaulting to `http://127.0.0.1:7860`.
 
-- [ ] **Step 1: Add a failing source contract test**
+- [x] **Step 1: Add a failing source contract test** *(已于 2026-07-21 完成)*
 
 Add to `lib/pet-ai/pet-ai-api.test.ts`:
 
@@ -42,13 +42,13 @@ test("ClawBody defaults to the single Docker service on port 7860", async () => 
 })
 ```
 
-- [ ] **Step 2: Run the test and confirm RED**
+- [x] **Step 2: Run the test and confirm RED** *(已于 2026-07-21 完成)*
 
 Run: `npx tsx --test lib/pet-ai/pet-ai-api.test.ts`
 
 Expected: FAIL because `clawbody-client.ts` still contains `127.0.0.1:7862`.
 
-- [ ] **Step 3: Change the default URL**
+- [x] **Step 3: Change the default URL** *(已于 2026-07-21 完成)*
 
 Set the fallback in `lib/pet-ai/clawbody-client.ts` to:
 
@@ -56,7 +56,7 @@ Set the fallback in `lib/pet-ai/clawbody-client.ts` to:
 const serviceUrl = () => (process.env.CLAWBODY_SERVICE_URL || "http://127.0.0.1:7860").replace(/\/$/, "")
 ```
 
-- [ ] **Step 4: Run the test and confirm GREEN**
+- [x] **Step 4: Run the test and confirm GREEN** *(已于 2026-07-21 完成)*
 
 Run: `npx tsx --test lib/pet-ai/pet-ai-api.test.ts`
 
@@ -74,7 +74,7 @@ Expected: all tests pass.
 - Consumes: `.env`, host service `host.docker.internal:8000`.
 - Produces: `GET http://127.0.0.1:7860/health` and authenticated `/v1/*` endpoints.
 
-- [ ] **Step 1: Update Compose runtime values**
+- [x] **Step 1: Update Compose runtime values** *(已于 2026-07-21 完成)*
 
 Use exactly:
 
@@ -91,15 +91,15 @@ restart: unless-stopped
 
 Keep `ROBOT_HOST: host.docker.internal`, `ROBOT_PORT: "8000"`, and `extra_hosts` unchanged.
 
-- [ ] **Step 2: Update the image contract**
+- [x] **Step 2: Update the image contract** *(已于 2026-07-21 完成)*
 
 Set `EXPOSE 7860` and make the Docker healthcheck request `http://127.0.0.1:7860/health`.
 
-- [ ] **Step 3: Update examples and operational documentation**
+- [x] **Step 3: Update examples and operational documentation** *(已于 2026-07-21 完成)*
 
 Set `.env.example` to `SERVICE_PORT=7860`. Replace ClawBody service examples using `7862` with `7860`, and document that `docker-compose.preview.yml` is not part of the supported runtime.
 
-- [ ] **Step 4: Validate Compose before container deletion**
+- [x] **Step 4: Validate Compose before container deletion** *(已于 2026-07-21 完成)*
 
 Run: `docker compose config`
 
@@ -114,31 +114,31 @@ Expected: one `clawbody` service, command `clawbody-service`, host binding `127.
 - Consumes: validated Compose configuration and existing Docker daemon.
 - Produces: one running container named `clawbody-reachy`.
 
-- [ ] **Step 1: Reconfirm exact deletion targets**
+- [x] **Step 1: Reconfirm exact deletion targets** *(已于 2026-07-21 完成)*
 
 Run: `docker ps -a --filter name=clawbody-preview --filter name=clawbody-reachy --format "{{.Names}}\t{{.Status}}\t{{.Ports}}"`
 
 Expected: only `clawbody-preview` and `clawbody-reachy` appear.
 
-- [ ] **Step 2: Remove the preview container explicitly**
+- [x] **Step 2: Remove the preview container explicitly** *(已于 2026-07-21 完成)*
 
 Run: `docker rm -f clawbody-preview`
 
 Expected: output `clawbody-preview`.
 
-- [ ] **Step 3: Remove the old runtime container explicitly**
+- [x] **Step 3: Remove the old runtime container explicitly** *(已于 2026-07-21 完成)*
 
 Run: `docker rm -f clawbody-reachy`
 
 Expected: output `clawbody-reachy`.
 
-- [ ] **Step 4: Build and start the only runtime container**
+- [x] **Step 4: Build and start the only runtime container** *(已于 2026-07-21 完成)*
 
 Run: `docker compose up -d --build --force-recreate clawbody`
 
 Expected: container `clawbody-reachy` is created and started.
 
-- [ ] **Step 5: Wait for the health condition**
+- [x] **Step 5: Wait for the health condition** *(已于 2026-07-21 完成)*
 
 Poll `docker inspect --format "{{.State.Health.Status}}" clawbody-reachy` for up to 120 seconds.
 
@@ -154,7 +154,7 @@ Expected: `healthy`. If it becomes `unhealthy`, inspect `docker logs --tail 200 
 - Consumes: running Docker service and Sentinel build.
 - Produces: checked OpenSpecs state matching verified runtime state.
 
-- [ ] **Step 1: Run Sentinel tests and production build**
+- [x] **Step 1: Run Sentinel tests and production build** *(已于 2026-07-21 完成)*
 
 Run:
 
@@ -165,7 +165,7 @@ npm run build
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 2: Run ClawBody tests**
+- [x] **Step 2: Run ClawBody tests** *(已于 2026-07-21 完成)*
 
 Run from `C:/Users/txj12/Desktop/PsyTwin/clawbody-minimax`:
 
@@ -175,7 +175,7 @@ Run from `C:/Users/txj12/Desktop/PsyTwin/clawbody-minimax`:
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Verify ports, command, health and container count**
+- [x] **Step 3: Verify ports, command, health and container count** *(已于 2026-07-21 完成)*
 
 Run:
 
@@ -188,11 +188,10 @@ Invoke-RestMethod http://127.0.0.1:7860/health
 
 Expected: only `clawbody-reachy`; command is `clawbody-service`; `7860` listens on loopback; `7862` has no listener; health returns `ok: true`.
 
-- [ ] **Step 4: Verify Sentinel proxy and page behavior**
+- [x] **Step 4: Verify Sentinel proxy and page behavior** *(已于 2026-07-21 验证服务端代理客户端可读取状态)*
 
 Refresh `/pet-ai-management`, open “实时联调”, and click “刷新设备状态”. Expected: no “心宠设备服务暂不可用” toast and a Reachy state is displayed.
 
-- [ ] **Step 5: Synchronize OpenSpecs**
+- [x] **Step 5: Synchronize OpenSpecs** *(已于 2026-07-21 完成)*
 
 Change each verified item in `docs/superpowers/specs/2026-07-21-clawbody-single-container-7860-design.md` from `- [ ]` to `- [x]` and append `*(已于 2026-07-21 验证)*`. Mark completed plan steps with `- [x]`.
-
