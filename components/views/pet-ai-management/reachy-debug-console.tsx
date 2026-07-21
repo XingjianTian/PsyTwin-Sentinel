@@ -1,18 +1,18 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ArrowLeft, Bot, Cable, CircleAlert, RefreshCw } from "lucide-react"
+import { ArrowLeft, Cable, CircleAlert, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReachyConnectionPanel } from "@/components/views/pet-ai-management/reachy-connection-panel"
+import { ReachyReadyConsole } from "@/components/views/pet-ai-management/reachy-ready-console"
 import {
-  getReachyPhasePresentation,
   type ReachyDeviceCommand,
   type ReachyDevicePhase,
   type ReachyDeviceSnapshot,
 } from "@/lib/pet-ai/reachy-device"
-import { cn } from "@/lib/utils"
+import { mergeReachyLogs } from "@/lib/pet-ai/reachy-ready-console-state"
 
 const DEVICE_API_PATH = "/api/pet-ai/reachy/device"
 const ACTIVE_POLL_INTERVAL_MS = 1_000
@@ -36,70 +36,6 @@ async function readPayload<T>(response: Response): Promise<ApiPayload<T>> {
   } catch {
     return {}
   }
-}
-
-function mergeSnapshotLogs(
-  previous: ReachyDeviceSnapshot | null,
-  next: ReachyDeviceSnapshot,
-): ReachyDeviceSnapshot {
-  if (!previous) return next
-  const items = new Map(previous.logs.items.map((item) => [item.id, item]))
-  for (const item of next.logs.items) items.set(item.id, item)
-  return {
-    ...next,
-    logs: { cursor: next.logs.cursor, items: [...items.values()].slice(-200) },
-  }
-}
-
-function ReadyConsoleShell({
-  snapshot,
-  commandPending,
-  onReturnToManagement,
-}: {
-  snapshot: ReachyDeviceSnapshot
-  commandPending: boolean
-  onReturnToManagement: () => void
-}) {
-  const phase = getReachyPhasePresentation(snapshot.phase)
-  return (
-    <section className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border bg-card">
-      <div className="flex flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-emerald-700">
-            <Bot className="size-5" />
-          </span>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold">Reachy Mini Lite</h2>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-emerald-700">
-                <span className="size-1.5 rounded-full bg-success" />{phase.label}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">设备连接稳定，可以继续进入日常心宠管理与会话联调。</p>
-          </div>
-        </div>
-        <Button type="button" variant="outline" onClick={onReturnToManagement} disabled={commandPending}>
-          <ArrowLeft />返回心宠管理
-        </Button>
-      </div>
-      <dl className="grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <div className="px-4 py-4 sm:px-5">
-          <dt className="text-xs text-muted-foreground">连接方式</dt>
-          <dd className="mt-1 text-sm font-medium">USB · {snapshot.serial_port || "已连接"}</dd>
-        </div>
-        <div className="px-4 py-4 sm:px-5">
-          <dt className="text-xs text-muted-foreground">daemon</dt>
-          <dd className="mt-1 text-sm font-medium">{snapshot.daemon_version || snapshot.daemon_state || "运行中"}</dd>
-        </div>
-        <div className="px-4 py-4 sm:px-5">
-          <dt className="text-xs text-muted-foreground">ClawBody</dt>
-          <dd className={cn("mt-1 text-sm font-medium", snapshot.clawbody_reachable ? "text-emerald-700" : "text-muted-foreground")}>
-            {snapshot.clawbody_reachable ? "已连接" : "未连接，硬件调试仍可用"}
-          </dd>
-        </div>
-      </dl>
-    </section>
-  )
 }
 
 function ConsoleLoadingState() {
@@ -160,7 +96,13 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     if (!response.ok || !payload.data) {
       throw new Error(payload.message || "设备状态读取失败")
     }
-    const merged = mergeSnapshotLogs(snapshotRef.current, payload.data)
+    const merged = {
+      ...payload.data,
+      logs: mergeReachyLogs(
+        snapshotRef.current?.logs ?? { cursor: 0, items: [] },
+        payload.data.logs,
+      ),
+    }
     logCursorRef.current = merged.logs.cursor
     snapshotRef.current = merged
     setSnapshot(merged)
@@ -258,9 +200,11 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
         />
       ) : null}
       {snapshot?.phase === "ready" ? (
-        <ReadyConsoleShell
+        <ReachyReadyConsole
           snapshot={snapshot}
           commandPending={commandPending}
+          commandError={commandError}
+          runCommand={runCommand}
           onReturnToManagement={onReturnToManagement}
         />
       ) : null}

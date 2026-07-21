@@ -112,6 +112,49 @@ test("pet AI management exposes an accessible Reachy debug workspace", async () 
   assert.match(connectionSource, /onRetry\(selectedPort \|\| snapshot\.serial_port/)
 })
 
+test("Reachy ready console exposes lifecycle, media, controls, and diagnostics", async () => {
+  const consoleSource = await readSource(
+    "../components/views/pet-ai-management/reachy-debug-console.tsx",
+  )
+  const readySource = await readSource(
+    "../components/views/pet-ai-management/reachy-ready-console.tsx",
+  )
+
+  assert.match(consoleSource, /<ReachyReadyConsole/)
+  assert.match(consoleSource, /mergeReachyLogs/)
+
+  for (const label of [
+    "Ready",
+    "ClawBody",
+    "表情与动作",
+    "机器人控制器",
+    "扬声器",
+    "麦克风",
+    "实时日志",
+    "唤醒",
+    "休眠",
+    "头部归中",
+    "天线测试",
+    "重启服务",
+    "停止设备",
+  ]) {
+    assert.match(readySource, new RegExp(label))
+  }
+
+  assert.match(readySource, /action: "device_action"/)
+  assert.match(readySource, /action: "volume"/)
+  assert.match(readySource, /action: "pose"/)
+  assert.match(readySource, /VOLUME_DEBOUNCE_MS = 250/)
+  assert.match(readySource, /POSE_THROTTLE_MS = 100/)
+  assert.match(readySource, /navigator\.clipboard\.writeText/)
+  assert.match(readySource, /AlertDialog/)
+  assert.match(readySource, /学生对话将先停止/)
+  assert.match(readySource, /onReturnToManagement/)
+  assert.match(readySource, /aria-live="polite"/)
+  assert.match(readySource, /nearBottom/)
+  assert.doesNotMatch(readySource, /HOST_BRIDGE|127\.0\.0\.1:7861/)
+})
+
 test("strategy configuration page uses the renamed title", async () => {
   const source = await readSource("../components/ai-config/strategy-center-view.tsx")
 
