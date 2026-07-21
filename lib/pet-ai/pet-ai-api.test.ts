@@ -163,7 +163,9 @@ test("Reachy device API exposes only the protected typed proxy surface", async (
   assert.match(routeSource, /Cache-Control.*no-store/)
   assert.doesNotMatch(routeSource, /HOST_BRIDGE_(?:URL|API_KEY)/)
   assert.doesNotMatch(routeSource, /NEXT_PUBLIC_HOST_BRIDGE/)
-  assert.doesNotMatch(middlewareSource, /publicRoutes[\s\S]*["']\/api\/pet-ai/)
+  const publicRoutesSource = middlewareSource.match(/const publicRoutes = \[([\s\S]*?)\];/)?.[1]
+  assert.ok(publicRoutesSource)
+  assert.doesNotMatch(publicRoutesSource, /["']\/api\/pet-ai/)
 })
 
 test("Reachy device GET aggregates hardware, discovery, logs, and ClawBody status", async () => {

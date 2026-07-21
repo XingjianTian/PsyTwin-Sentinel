@@ -11,6 +11,11 @@ const TEST_SECRET = "test-only-jwt-secret-that-is-at-least-32-characters"
 const TEST_ISSUER = "psytwin-sentinel"
 const TEST_AUDIENCE = "psytwin-sentinel"
 const PLACEHOLDER_SECRET = "your-secret-key-change-in-production-min-32-characters-long"
+const ONE_BYTE_SECRET = "x"
+const ASCII_31_BYTE_SECRET = "x".repeat(31)
+const ASCII_32_BYTE_SECRET = "x".repeat(32)
+const MULTIBYTE_31_BYTE_SECRET = `${"密".repeat(10)}x`
+const MULTIBYTE_32_BYTE_SECRET = `${"密".repeat(10)}xy`
 const originalJwtEnvironment = {
   NODE_ENV: process.env.NODE_ENV,
   JWT_SECRET: process.env.JWT_SECRET,
@@ -68,6 +73,41 @@ function reachyRequest(token?: string, transport: "bearer" | "cookie" = "bearer"
   if (token && transport === "bearer") headers.set("Authorization", `Bearer ${token}`)
   if (token && transport === "cookie") headers.set("Cookie", `token=${token}`)
   return new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", { headers })
+}
+
+function issueToken(role: string): string {
+  return generateToken({
+    userId: `${role.toLowerCase()}-1`,
+    email: `${role.toLowerCase()}@example.com`,
+    role,
+    name: `${role} User`,
+  })
+}
+
+async function secretRejectionResult(secret: string) {
+  process.env.JWT_SECRET = secret
+  let issuanceRejected = false
+  try {
+    issueToken("TEACHER")
+  } catch {
+    issuanceRejected = true
+  }
+
+  const signedToken = signToken({}, {}, secret)
+  return {
+    issuanceRejected,
+    nodeVerificationRejected: verifyToken(signedToken) === null,
+    middlewareStatus: (await middleware(reachyRequest(signedToken))).status,
+  }
+}
+
+async function secretAcceptanceResult(secret: string) {
+  process.env.JWT_SECRET = secret
+  const issuedToken = issueToken("TEACHER")
+  return {
+    nodeVerificationAccepted: verifyToken(issuedToken)?.role === "TEACHER",
+    middlewareStatus: (await middleware(reachyRequest(issuedToken))).status,
+  }
 }
 
 test.beforeEach(configureTestJwt)
@@ -165,6 +205,43 @@ test("middleware accepts a valid JWT from the session cookie", async () => {
   assert.equal(response.headers.get("x-middleware-request-x-user-role"), "TEACHER")
 })
 
+test("JWT boundaries reject an explicitly configured one-byte secret", async () => {
+  assert.deepEqual(await secretRejectionResult(ONE_BYTE_SECRET), {
+    issuanceRejected: true,
+    nodeVerificationRejected: true,
+    middlewareStatus: 401,
+  })
+})
+
+test("JWT boundaries reject an explicitly configured 31-byte ASCII secret", async () => {
+  assert.deepEqual(await secretRejectionResult(ASCII_31_BYTE_SECRET), {
+    issuanceRejected: true,
+    nodeVerificationRejected: true,
+    middlewareStatus: 401,
+  })
+})
+
+test("JWT boundaries measure multibyte secrets by UTF-8 bytes", async () => {
+  assert.equal(Buffer.byteLength(MULTIBYTE_31_BYTE_SECRET, "utf8"), 31)
+  assert.equal(Buffer.byteLength(MULTIBYTE_32_BYTE_SECRET, "utf8"), 32)
+  assert.deepEqual(await secretRejectionResult(MULTIBYTE_31_BYTE_SECRET), {
+    issuanceRejected: true,
+    nodeVerificationRejected: true,
+    middlewareStatus: 401,
+  })
+  assert.deepEqual(await secretAcceptanceResult(MULTIBYTE_32_BYTE_SECRET), {
+    nodeVerificationAccepted: true,
+    middlewareStatus: 200,
+  })
+})
+
+test("JWT boundaries accept an explicitly configured 32-byte ASCII secret", async () => {
+  assert.deepEqual(await secretAcceptanceResult(ASCII_32_BYTE_SECRET), {
+    nodeVerificationAccepted: true,
+    middlewareStatus: 200,
+  })
+})
+
 test("tokens issued by the login auth utility use the middleware JWT policy", async () => {
   const token = generateToken({
     userId: "teacher-1",
@@ -181,6 +258,56 @@ test("tokens issued by the login auth utility use the middleware JWT policy", as
   assert.equal(payload.aud, TEST_AUDIENCE)
   assert.equal((await middleware(reachyRequest(token))).status, 200)
   assert.equal(verifyToken(token)?.userId, "teacher-1")
+})
+
+test("physical Reachy controls accept real issued operator roles", async () => {
+  for (const role of ["ADMIN", "COUNSELOR", "TEACHER"]) {
+    assert.equal((await middleware(reachyRequest(issueToken(role)))).status, 200, role)
+  }
+})
+
+test("physical Reachy controls reject student and assistant roles before route dispatch", async () => {
+  for (const role of ["student", "ASSISTANT"]) {
+    let routeDispatches = 0
+    const response = await middleware(reachyRequest(issueToken(role)))
+    if (response.headers.get("x-middleware-next") === "1") routeDispatches += 1
+
+    assert.equal(response.status, 403, role)
+    assert.equal(routeDispatches, 0, role)
+  }
+})
+
+test("physical Reachy controls reject unknown roles before route dispatch", async () => {
+  let routeDispatches = 0
+  const response = await middleware(reachyRequest(issueToken("ROBOT_OWNER")))
+  if (response.headers.get("x-middleware-next") === "1") routeDispatches += 1
+
+  assert.equal(response.status, 403)
+  assert.equal(routeDispatches, 0)
+})
+
+test("physical Reachy controls enforce operator roles on the trailing-slash path", async () => {
+  const token = issueToken("student")
+  const response = await middleware(
+    new NextRequest("http://sentinel.local/api/pet-ai/reachy/device/", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  )
+
+  assert.equal(response.status, 403)
+  assert.equal(response.headers.get("x-middleware-next"), null)
+})
+
+test("student JWTs remain valid on other authenticated API routes", async () => {
+  const token = issueToken("student")
+  const response = await middleware(
+    new NextRequest("http://sentinel.local/api/students", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get("x-middleware-request-x-user-role"), "student")
 })
 
 test("middleware fails closed when the production JWT secret is missing", async () => {

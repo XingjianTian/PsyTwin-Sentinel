@@ -347,7 +347,9 @@ interface ApiResponse<T> {
 PET_PORT=3001
 DATABASE_URL="postgresql://user:pass@localhost:5432/psytwin"
 REDIS_URL="redis://localhost:6379"
-JWT_SECRET="xxx"
+JWT_SECRET="replace-with-a-random-secret-of-at-least-32-characters"
+JWT_ISSUER="psytwin-sentinel"
+JWT_AUDIENCE="psytwin-sentinel"
 SENTINEL_API_URL="http://sentinel:3000"
 
 # 同步配置

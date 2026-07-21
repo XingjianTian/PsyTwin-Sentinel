@@ -14,9 +14,16 @@ const publicRoutes = [
   "/api/multimodal/sensors/stream",
 ];
 
+const reachyDeviceRoute = "/api/pet-ai/reachy/device";
+const reachyOperatorRoles = new Set(["ADMIN", "COUNSELOR", "TEACHER"]);
+
 // 检查是否是公开路由
 function isPublicRoute(pathname: string): boolean {
   return publicRoutes.some((route) => pathname.startsWith(route));
+}
+
+function isReachyDeviceRoute(pathname: string): boolean {
+  return pathname === reachyDeviceRoute || pathname.startsWith(`${reachyDeviceRoute}/`);
 }
 
 export async function middleware(request: NextRequest) {
@@ -52,6 +59,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json(
         { code: 401, message: "登录已过期，请重新登录", data: null },
         { status: 401 }
+      );
+    }
+
+    if (isReachyDeviceRoute(pathname) && !reachyOperatorRoles.has(payload.role)) {
+      return NextResponse.json(
+        { code: 403, message: "无权操作 Reachy 设备", data: null },
+        { status: 403 }
       );
     }
 
