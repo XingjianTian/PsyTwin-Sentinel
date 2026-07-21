@@ -115,7 +115,7 @@ export function ReachyConnectionPanel({
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium",
-                phasePresentation.tone === "danger" && "bg-destructive/10 text-destructive",
+                phasePresentation.tone === "danger" && "bg-destructive/10 text-red-700",
                 phasePresentation.tone === "progress" && "bg-primary/10 text-primary",
                 phasePresentation.tone === "success" && "bg-success/10 text-emerald-700",
                 phasePresentation.tone === "neutral" && "bg-muted text-muted-foreground",
@@ -162,7 +162,7 @@ export function ReachyConnectionPanel({
                     state === "pending" && "border-border text-muted-foreground",
                     state === "running" && "border-primary bg-primary/10 text-primary",
                     state === "success" && "border-success/30 bg-success/10 text-emerald-700",
-                    state === "error" && "border-destructive/30 bg-destructive/10 text-destructive",
+                    state === "error" && "border-destructive/30 bg-destructive/10 text-red-700",
                   )}
                 >
                   {state === "success" ? <Check className="size-3.5" /> : null}
@@ -273,12 +273,12 @@ export function ReachyConnectionPanel({
         </div>
 
         {snapshot.phase === "error" && snapshot.error ? (
-          <div className="mt-4 rounded-lg bg-destructive/8 px-4 py-3 text-destructive" role="alert">
+          <div className="mt-4 rounded-lg bg-destructive/8 px-4 py-3 text-red-700" role="alert">
             <div className="flex items-start gap-3">
               <CircleAlert className="mt-0.5 size-4 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{snapshot.error.message}</p>
-                <p className="mt-1 text-xs leading-5 text-destructive/80">
+                <p className="mt-1 text-xs leading-5 text-red-700">
                   {snapshot.error.detail || `诊断代码：${snapshot.error.code}`}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -310,7 +310,7 @@ export function ReachyConnectionPanel({
         {commandError
           && commandError !== snapshot.error?.message
           && commandError !== snapshot.error?.detail ? (
-          <p className="mt-3 text-sm text-destructive" role="alert">{commandError}</p>
+          <p className="mt-3 text-sm text-red-700" role="alert">{commandError}</p>
         ) : null}
 
         <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">

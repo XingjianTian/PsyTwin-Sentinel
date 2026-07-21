@@ -278,14 +278,33 @@ export async function GET(request: NextRequest) {
 }
 
 async function stopDevice() {
-  const session = publicClawBodyStatus(await requestClawBody<unknown>("/v1/status"))
   let sessionStopped = false
-  if (session.running === true) {
-    await requestClawBody("/v1/session/stop", { method: "POST" })
-    sessionStopped = true
+  const warnings: Array<{ code: string; message: string }> = []
+  let session: ClawBodyStatus | null = null
+
+  try {
+    session = publicClawBodyStatus(await requestClawBody<unknown>("/v1/status"))
+  } catch {
+    warnings.push({
+      code: "clawbody_status_unavailable",
+      message: "未能确认当前 ClawBody 会话状态；已继续停止设备",
+    })
   }
+
+  if (session?.running === true) {
+    try {
+      await requestClawBody("/v1/session/stop", { method: "POST" })
+      sessionStopped = true
+    } catch {
+      warnings.push({
+        code: "clawbody_session_stop_failed",
+        message: "学生会话停止请求失败；已继续停止设备",
+      })
+    }
+  }
+
   const device = publicDeviceStatus(await requestHostBridge("/v1/device/stop", { method: "POST" }))
-  return { sessionStopped, device }
+  return { sessionStopped, warnings, device }
 }
 
 async function runCommand(command: ReachyDeviceCommand) {

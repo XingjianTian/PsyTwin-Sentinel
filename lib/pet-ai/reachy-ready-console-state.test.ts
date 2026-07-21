@@ -5,8 +5,10 @@ import {
   MAX_LOG_ITEMS,
   clampPose,
   clampVolume,
+  isDeviceActionAvailable,
   isMotorControlAvailable,
   mergeReachyLogs,
+  scheduleSafePoseCommand,
   type ReachyPose,
 } from "./reachy-ready-console-state"
 
@@ -50,6 +52,49 @@ test("movement is available only for a ready device with enabled motors", () => 
   assert.equal(isMotorControlAvailable("ready", "disabled"), false)
   assert.equal(isMotorControlAvailable("healthchecking", "enabled"), false)
   assert.equal(isMotorControlAvailable("ready", null), false)
+})
+
+test("wake remains available for a ready sleeping device while movement stays gated", () => {
+  assert.equal(isDeviceActionAvailable("wake_up", "ready", "disabled"), true)
+  assert.equal(isDeviceActionAvailable("center", "ready", "disabled"), false)
+  assert.equal(isDeviceActionAvailable("goto_sleep", "ready", "enabled"), true)
+  assert.equal(isDeviceActionAvailable("wake_up", "healthchecking", "disabled"), false)
+})
+
+test("delayed pose rechecks the latest device safety state before sending", (context) => {
+  context.mock.timers.enable({ apis: ["setTimeout"] })
+  let latest = { phase: "ready" as const, motor_mode: "enabled" as string | null }
+  const sent: unknown[] = []
+
+  scheduleSafePoseCommand(neutralPose, () => latest, (command) => {
+    sent.push(command)
+  }, 100)
+  latest = { phase: "ready", motor_mode: "disabled" }
+  context.mock.timers.tick(100)
+
+  assert.deepEqual(sent, [])
+})
+
+test("delayed pose sends the bounded command when the latest state stays safe", (context) => {
+  context.mock.timers.enable({ apis: ["setTimeout"] })
+  const sent: unknown[] = []
+
+  scheduleSafePoseCommand(
+    { ...neutralPose, headYaw: 100 },
+    () => ({ phase: "ready", motor_mode: "enabled" }),
+    (command) => {
+      sent.push(command)
+    },
+    100,
+  )
+  context.mock.timers.tick(100)
+
+  assert.deepEqual(sent, [{
+    action: "pose",
+    ...neutralPose,
+    headYaw: 65,
+    duration: 0.3,
+  }])
 })
 
 test("incremental logs append newer ids only and retain the newest 300 entries", () => {

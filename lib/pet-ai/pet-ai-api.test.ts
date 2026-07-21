@@ -621,6 +621,64 @@ test("Reachy stop skips session stop when no ClawBody session is running", async
   assert.equal(body.data.device.phase, "offline")
 })
 
+test("Reachy stop still stops hardware exactly once when ClawBody status fails", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(({ path }) => {
+    if (path === "/v1/status") throw new Error("Authorization: Bearer status-secret")
+    if (path === "/v1/device/stop") return { ...upstreamDeviceStatus(), phase: "offline" }
+    throw new Error(`unexpected path: ${path}`)
+  })
+
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: SAME_ORIGIN_JSON_HEADERS,
+    body: JSON.stringify({ action: "stop" }),
+  }))
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(calls.map(({ service, path }) => `${service}:${path}`), [
+    "clawbody:/v1/status",
+    "host:/v1/device/stop",
+  ])
+  assert.equal(calls.filter(({ path }) => path === "/v1/device/stop").length, 1)
+  assert.equal(body.data.sessionStopped, false)
+  assert.deepEqual(body.data.warnings, [{
+    code: "clawbody_status_unavailable",
+    message: "未能确认当前 ClawBody 会话状态；已继续停止设备",
+  }])
+  assert.doesNotMatch(JSON.stringify(body), /status-secret|Bearer|Authorization/)
+})
+
+test("Reachy stop still stops hardware exactly once when session stop fails", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(({ path }) => {
+    if (path === "/v1/status") return { running: true, student_id: "stu-test", state: "running" }
+    if (path === "/v1/session/stop") throw new Error("X-Service-Key: session-secret")
+    if (path === "/v1/device/stop") return { ...upstreamDeviceStatus(), phase: "offline" }
+    throw new Error(`unexpected path: ${path}`)
+  })
+
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: SAME_ORIGIN_JSON_HEADERS,
+    body: JSON.stringify({ action: "stop" }),
+  }))
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(calls.map(({ service, path }) => `${service}:${path}`), [
+    "clawbody:/v1/status",
+    "clawbody:/v1/session/stop",
+    "host:/v1/device/stop",
+  ])
+  assert.equal(calls.filter(({ path }) => path === "/v1/device/stop").length, 1)
+  assert.equal(body.data.sessionStopped, false)
+  assert.deepEqual(body.data.warnings, [{
+    code: "clawbody_session_stop_failed",
+    message: "学生会话停止请求失败；已继续停止设备",
+  }])
+  assert.doesNotMatch(JSON.stringify(body), /session-secret|X-Service-Key/)
+})
+
 test("Reachy device POST returns bounded upstream errors without exposing secrets", async () => {
   const { route, NextRequest } = await loadDeviceRoute(() => {
     throw new Error("Authorization: Bearer top-secret")

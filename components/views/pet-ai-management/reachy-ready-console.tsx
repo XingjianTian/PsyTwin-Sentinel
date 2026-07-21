@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   Activity,
   ArrowLeft,
@@ -53,7 +53,9 @@ import type {
 import {
   clampPose,
   clampVolume,
+  isDeviceActionAvailable,
   isMotorControlAvailable,
+  scheduleSafePoseCommand,
   type ReachyPose,
 } from "@/lib/pet-ai/reachy-ready-console-state"
 import { cn } from "@/lib/utils"
@@ -200,7 +202,7 @@ function ApplicationCard({
           </div>
         </dl>
         {snapshot.session.error ? (
-          <p className="text-sm text-destructive" role="alert">{snapshot.session.error}</p>
+          <p className="text-sm text-red-700" role="alert">{snapshot.session.error}</p>
         ) : null}
         <Button type="button" variant="outline" className="w-full" onClick={onReturnToManagement}>
           <ArrowLeft aria-hidden="true" />返回实时联调
@@ -224,6 +226,7 @@ export function ReachyReadyConsole({
   const poseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const microphoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const snapshotRef = useRef(snapshot)
   const logAreaRef = useRef<HTMLDivElement>(null)
   const nearBottomRef = useRef(true)
   const motorControlsEnabled = isMotorControlAvailable(snapshot.phase, snapshot.motor_mode)
@@ -231,6 +234,10 @@ export function ReachyReadyConsole({
   const microphone = mediaPresentation(snapshot.media.microphone)
   const speaker = mediaPresentation(snapshot.media.speaker)
   const sessionRunning = snapshot.session.running === true
+
+  useLayoutEffect(() => {
+    snapshotRef.current = snapshot
+  }, [snapshot])
 
   useEffect(() => () => {
     if (poseTimerRef.current) clearTimeout(poseTimerRef.current)
@@ -271,9 +278,12 @@ export function ReachyReadyConsole({
     const clamped = clampPose(nextPose)
     setPose(clamped)
     if (poseTimerRef.current) clearTimeout(poseTimerRef.current)
-    poseTimerRef.current = setTimeout(() => {
-      void runCommand({ action: "pose", ...clamped, duration: 0.3 })
-    }, POSE_THROTTLE_MS)
+    poseTimerRef.current = scheduleSafePoseCommand(
+      clamped,
+      () => snapshotRef.current,
+      runCommand,
+      POSE_THROTTLE_MS,
+    )
   }, [runCommand])
 
   const performDeviceAction = (deviceAction: Extract<ReachyDeviceCommand, { action: "device_action" }>["deviceAction"]) => {
@@ -326,7 +336,7 @@ export function ReachyReadyConsole({
           </div>
           <div className="px-4 py-3 sm:px-5">
             <dt className="text-xs text-muted-foreground">电机</dt>
-            <dd className={cn("mt-1 text-sm font-medium", motorControlsEnabled ? "text-emerald-700" : "text-destructive")}>
+            <dd className={cn("mt-1 text-sm font-medium", motorControlsEnabled ? "text-emerald-700" : "text-red-700")}>
               {snapshot.motor_mode || "未知"}
             </dd>
           </div>
@@ -340,7 +350,7 @@ export function ReachyReadyConsole({
       </Card>
 
       {commandError ? (
-        <div className="flex items-start gap-2 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-destructive" role="alert">
+        <div className="flex items-start gap-2 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-red-700" role="alert">
           <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>{commandError}</span>
         </div>
@@ -367,21 +377,28 @@ export function ReachyReadyConsole({
                 { label: "休眠", action: "goto_sleep" as const, icon: Moon },
                 { label: "头部归中", action: "center" as const, icon: Crosshair },
                 { label: "天线测试", action: "antenna_test" as const, icon: Radio },
-              ].map(({ label, action, icon: Icon }) => (
-                <Button
-                  key={action}
-                  type="button"
-                  variant="outline"
-                  className="justify-start"
-                  disabled={!motorControlsEnabled || commandPending}
-                  onClick={() => performDeviceAction(action)}
-                >
-                  <Icon aria-hidden="true" />{label}
-                </Button>
-              ))}
+              ].map(({ label, action, icon: Icon }) => {
+                const actionAvailable = isDeviceActionAvailable(
+                  action,
+                  snapshot.phase,
+                  snapshot.motor_mode,
+                )
+                return (
+                  <Button
+                    key={action}
+                    type="button"
+                    variant="outline"
+                    className="justify-start"
+                    disabled={!actionAvailable || commandPending}
+                    onClick={() => performDeviceAction(action)}
+                  >
+                    <Icon aria-hidden="true" />{label}
+                  </Button>
+                )
+              })}
               {!motorControlsEnabled ? (
                 <p className="col-span-2 mt-1 text-xs leading-5 text-muted-foreground">
-                  电机模式不是 enabled，动作已安全禁用。
+                  电机未启用，仅保留唤醒；其余动作和姿态控制已安全禁用。
                 </p>
               ) : null}
             </CardContent>
@@ -532,7 +549,7 @@ export function ReachyReadyConsole({
                 <time className="text-muted-foreground" dateTime={entry.created_at}>{formatLogTime(entry.created_at)}</time>
                 <span className={cn(
                   "font-semibold uppercase",
-                  entry.level === "error" && "text-destructive",
+                  entry.level === "error" && "text-red-700",
                   entry.level === "warning" && "text-amber-700",
                   entry.level === "info" && "text-primary",
                   entry.level === "debug" && "text-muted-foreground",

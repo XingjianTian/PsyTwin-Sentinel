@@ -119,9 +119,12 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   const readySource = await readSource(
     "../components/views/pet-ai-management/reachy-ready-console.tsx",
   )
+  const readyStateSource = await readSource("./pet-ai/reachy-ready-console-state.ts")
 
   assert.match(consoleSource, /<ReachyReadyConsole/)
   assert.match(consoleSource, /mergeReachyLogs/)
+  assert.match(consoleSource, /ReachyCommandQueue/)
+  assert.doesNotMatch(consoleSource, /if \(commandLockRef\.current\) return/)
 
   for (const label of [
     "Ready",
@@ -143,7 +146,7 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
 
   assert.match(readySource, /action: "device_action"/)
   assert.match(readySource, /action: "volume"/)
-  assert.match(readySource, /action: "pose"/)
+  assert.match(readyStateSource, /action: "pose"/)
   assert.match(readySource, /VOLUME_DEBOUNCE_MS = 250/)
   assert.match(readySource, /POSE_THROTTLE_MS = 100/)
   assert.match(readySource, /navigator\.clipboard\.writeText/)
@@ -152,6 +155,11 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.match(readySource, /onReturnToManagement/)
   assert.match(readySource, /aria-live="polite"/)
   assert.match(readySource, /nearBottom/)
+  assert.match(readySource, /snapshotRef\.current/)
+  assert.match(readySource, /isDeviceActionAvailable/)
+  assert.match(readySource, /text-red-700/)
+  assert.doesNotMatch(readySource, /text-destructive/)
+  assert.doesNotMatch(consoleSource, /text-destructive/)
   assert.doesNotMatch(readySource, /HOST_BRIDGE|127\.0\.0\.1:7861/)
 })
 

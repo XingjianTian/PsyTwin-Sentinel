@@ -12,6 +12,7 @@ import {
   type ReachyDevicePhase,
   type ReachyDeviceSnapshot,
 } from "@/lib/pet-ai/reachy-device"
+import { ReachyCommandQueue } from "@/lib/pet-ai/reachy-command-queue"
 import { mergeReachyLogs } from "@/lib/pet-ai/reachy-ready-console-state"
 
 const DEVICE_API_PATH = "/api/pet-ai/reachy/device"
@@ -85,7 +86,6 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
   const [commandPending, setCommandPending] = useState(false)
   const snapshotRef = useRef<ReachyDeviceSnapshot | null>(null)
   const logCursorRef = useRef(0)
-  const commandLockRef = useRef(false)
   const requestGenerationRef = useRef(0)
 
   const fetchSnapshot = useCallback(async () => {
@@ -135,27 +135,41 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     }
   }, [fetchSnapshot])
 
+  const executeCommand = useCallback(async (command: ReachyDeviceCommand) => {
+    const response = await fetch(DEVICE_API_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(command),
+    })
+    const payload = await readPayload<unknown>(response)
+    if (!response.ok) throw new Error(payload.message || "设备命令执行失败")
+    await fetchSnapshot()
+  }, [fetchSnapshot])
+
+  const commandQueueRef = useRef<ReachyCommandQueue | null>(null)
+  useEffect(() => {
+    commandQueueRef.current = new ReachyCommandQueue(executeCommand, setCommandPending)
+    return () => {
+      commandQueueRef.current = null
+    }
+  }, [executeCommand])
+
   const runCommand = useCallback(async (command: ReachyDeviceCommand) => {
-    if (commandLockRef.current) return
-    commandLockRef.current = true
-    setCommandPending(true)
     setCommandError("")
+    const commandQueue = commandQueueRef.current
+    if (!commandQueue) {
+      setCommandError("设备命令队列尚未就绪，请稍后重试")
+      return
+    }
     try {
-      const response = await fetch(DEVICE_API_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(command),
-      })
-      const payload = await readPayload<unknown>(response)
-      if (!response.ok) throw new Error(payload.message || "设备命令执行失败")
-      await fetchSnapshot()
+      const result = await commandQueue.enqueue(command)
+      if (result === "rejected") {
+        setCommandError("已有设备命令正在执行，请稍后重试")
+      }
     } catch (error) {
       setCommandError((error as Error).message)
-    } finally {
-      commandLockRef.current = false
-      setCommandPending(false)
     }
-  }, [fetchSnapshot])
+  }, [])
 
   const retryPoll = () => {
     setPollError("")
@@ -178,10 +192,10 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
       </div>
 
       {pollError && snapshot ? (
-        <div className="mx-auto mb-3 flex w-full max-w-5xl items-start gap-2 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-destructive" role="status">
+        <div className="mx-auto mb-3 flex w-full max-w-5xl items-start gap-2 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-red-700" role="status">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
           <p className="min-w-0 flex-1">状态暂时未更新，继续显示最近一次成功结果：{pollError}</p>
-          <Button type="button" variant="ghost" size="sm" className="h-7 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={retryPoll}>
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-red-700 hover:bg-destructive/10 hover:text-red-800" onClick={retryPoll}>
             重试
           </Button>
         </div>

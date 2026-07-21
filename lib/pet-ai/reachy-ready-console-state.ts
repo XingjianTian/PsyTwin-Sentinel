@@ -1,4 +1,8 @@
-import type { ReachyDevicePhase, ReachyDeviceSnapshot } from "./reachy-device"
+import type {
+  ReachyDeviceCommand,
+  ReachyDevicePhase,
+  ReachyDeviceSnapshot,
+} from "./reachy-device"
 
 export const MAX_LOG_ITEMS = 300
 
@@ -36,6 +40,35 @@ export function isMotorControlAvailable(
   motorMode: string | null,
 ) {
   return phase === "ready" && motorMode?.toLowerCase() === "enabled"
+}
+
+type DeviceAction = Extract<
+  ReachyDeviceCommand,
+  { action: "device_action" }
+>["deviceAction"]
+
+export function isDeviceActionAvailable(
+  action: DeviceAction,
+  phase: ReachyDevicePhase,
+  motorMode: string | null,
+) {
+  if (phase !== "ready") return false
+  if (action === "wake_up" || action === "test_sound") return true
+  return isMotorControlAvailable(phase, motorMode)
+}
+
+export function scheduleSafePoseCommand(
+  pose: ReachyPose,
+  getSnapshot: () => Pick<ReachyDeviceSnapshot, "phase" | "motor_mode">,
+  send: (command: Extract<ReachyDeviceCommand, { action: "pose" }>) => void | Promise<void>,
+  delay = 100,
+) {
+  const clamped = clampPose(pose)
+  return setTimeout(() => {
+    const latest = getSnapshot()
+    if (!isMotorControlAvailable(latest.phase, latest.motor_mode)) return
+    void send({ action: "pose", ...clamped, duration: 0.3 })
+  }, delay)
 }
 
 export function mergeReachyLogs(
