@@ -1,3 +1,5 @@
+import "server-only"
+
 const hostBridgeUrl = () => (process.env.HOST_BRIDGE_URL || "http://127.0.0.1:7861").replace(/\/$/, "")
 
 const hostBridgePaths = [
