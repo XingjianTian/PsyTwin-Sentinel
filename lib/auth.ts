@@ -1,3 +1,6 @@
+import { JWT_ALGORITHM, readJwtConfig, requireJwtConfig } from "./jwt-config";
+import { validateJwtClaims } from "./jwt-claims";
+
 // 仅在 Node.js 环境中导入 crypto
 let crypto: typeof import("crypto");
 
@@ -6,13 +9,14 @@ if (typeof window === "undefined") {
   crypto = require("crypto");
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production-min-32-characters-long";
-
 export interface JWTPayload {
   userId: string;
   email: string;
   role: string;
   name: string;
+  iss?: string;
+  aud?: string;
+  nbf?: number;
   exp?: number;
   iat?: number;
 }
@@ -34,16 +38,23 @@ function base64UrlDecode(str: string): string {
   return Buffer.from(base64, "base64").toString();
 }
 
+function isBase64UrlSegment(value: string): boolean {
+  return /^[A-Za-z0-9_-]+$/.test(value) && value.length % 4 !== 1;
+}
+
 /**
  * 生成 JWT Token
  */
 export function generateToken(payload: JWTPayload): string {
-  const header = { alg: "HS256", typ: "JWT" };
+  const jwtConfig = requireJwtConfig();
+  const header = { alg: JWT_ALGORITHM, typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
   const exp = now + 7 * 24 * 60 * 60; // 7天过期
 
   const fullPayload = {
     ...payload,
+    iss: jwtConfig.issuer,
+    aud: jwtConfig.audience,
     iat: now,
     exp,
   };
@@ -56,7 +67,7 @@ export function generateToken(payload: JWTPayload): string {
   }
   
   const signature = crypto
-    .createHmac("sha256", JWT_SECRET)
+    .createHmac("sha256", jwtConfig.secret)
     .update(`${encodedHeader}.${encodedPayload}`)
     .digest("base64url");
 
@@ -68,30 +79,39 @@ export function generateToken(payload: JWTPayload): string {
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const [header, payload, signature] = token.split(".");
-    if (!header || !payload || !signature) return null;
+    const jwtConfig = readJwtConfig();
+    if (!jwtConfig) return null;
+
+    const parts = token.split(".");
+    if (parts.length !== 3 || parts.some((part) => !isBase64UrlSegment(part))) return null;
+    const [header, payload, signature] = parts;
 
     if (!crypto) {
       throw new Error("Crypto module not available");
     }
 
+    const decodedHeader = JSON.parse(base64UrlDecode(header)) as { alg?: unknown; typ?: unknown };
+    if (decodedHeader.alg !== JWT_ALGORITHM || decodedHeader.typ !== "JWT") return null;
+
     // 验证签名
     const expectedSignature = crypto
-      .createHmac("sha256", JWT_SECRET)
+      .createHmac("sha256", jwtConfig.secret)
       .update(`${header}.${payload}`)
-      .digest("base64url");
+      .digest();
+    const providedSignature = Buffer.from(signature, "base64url");
 
-    if (signature !== expectedSignature) return null;
-
-    // 解析 payload
-    const decodedPayload = JSON.parse(base64UrlDecode(payload)) as JWTPayload;
-
-    // 检查过期时间
-    if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
+    if (
+      providedSignature.length !== expectedSignature.length ||
+      !crypto.timingSafeEqual(providedSignature, expectedSignature)
+    ) {
       return null;
     }
 
-    return decodedPayload;
+    // 解析 payload
+    const decodedPayload = validateJwtClaims(JSON.parse(base64UrlDecode(payload)), jwtConfig);
+    if (!decodedPayload) return null;
+
+    return decodedPayload as unknown as JWTPayload;
   } catch {
     return null;
   }

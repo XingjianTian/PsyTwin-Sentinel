@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { verifyMiddlewareJwt } from "./lib/edge-jwt";
+
 // 公开路由（不需要认证）
 const publicRoutes = [
   "/login",
@@ -17,29 +19,7 @@ function isPublicRoute(pathname: string): boolean {
   return publicRoutes.some((route) => pathname.startsWith(route));
 }
 
-// 简单的 JWT 验证（不依赖 crypto 模块，适用于 Edge Runtime）
-function verifyTokenSimple(token: string): { userId: string; role: string } | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    
-    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
-    
-    // 检查过期时间
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      return null;
-    }
-    
-    return {
-      userId: payload.userId,
-      role: payload.role,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 公开路由直接放行
@@ -67,7 +47,7 @@ export function middleware(request: NextRequest) {
       );
     }
 
-    const payload = verifyTokenSimple(token);
+    const payload = await verifyMiddlewareJwt(token);
     if (!payload) {
       return NextResponse.json(
         { code: 401, message: "登录已过期，请重新登录", data: null },
@@ -94,7 +74,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const payload = verifyTokenSimple(token);
+  const payload = await verifyMiddlewareJwt(token);
   if (!payload) {
     // Token 无效，清除 cookie 并重定向到登录页
     const response = NextResponse.redirect(new URL("/login", request.url));
