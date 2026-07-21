@@ -587,7 +587,7 @@ export function ReachyReadyConsole({
               <Button
                 type="button"
                 variant="destructive"
-                className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700/30 sm:flex-1"
+                className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2 sm:flex-1"
                 disabled={commandPending}
               >
                 停止设备
@@ -605,7 +605,7 @@ export function ReachyReadyConsole({
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-700 focus-visible:ring-red-700/30"
+                  className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2"
                   onClick={() => void runCommand({ action: "stop" })}
                 >
                   确认停止设备
