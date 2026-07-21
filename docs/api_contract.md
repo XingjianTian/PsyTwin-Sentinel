@@ -459,7 +459,87 @@ POST /api/pocket/pet/diary/backfill
 
 ---
 
-## 8. 枚举定义
+## 8. 心宠权威状态同步
+
+心宠服务是 `sceneId`、活动和三维状态的唯一事实源。Pocket 与 Unity 使用相同的 `userId` 消费状态，
+不得根据客户端本地时间重新计算位置，也不得把玩家观察视角作为心宠所在地回写。
+
+### 8.1 获取完整状态
+
+```http
+GET http://{pet-sync-host}:13002/api/pet/status?userId=demo_pet
+```
+
+```json
+{
+  "code": 0,
+  "data": {
+    "state": {
+      "userId": "demo_pet",
+      "mood": 60,
+      "energy": 75,
+      "social": 45,
+      "sceneId": "teaching_building",
+      "activity": "正在上课",
+      "activityStartTime": 1710000000000,
+      "activityDuration": 45,
+      "stateVersion": 123,
+      "updatedAt": 1710000005000
+    },
+    "serverTime": 1710000005000,
+    "updatedAt": 1710000005000,
+    "stateVersion": 123
+  }
+}
+```
+
+`state.sceneId` 是原始场景 ID。小程序将它写入 `petSceneId`，但不得覆盖表示玩家观察视角的
+`currentSceneId`；Unity 当前只显示该原始字符串，不切换实际 Unity Scene。
+
+部署迁移期间，Pocket 与 Unity 可以兼容旧版接口将状态字段直接放在 `data` 下的响应；服务端目标结构
+仍必须升级为上述 `data.state`，并提供 `stateVersion`、`updatedAt` 与 `serverTime`。
+
+### 8.2 WebSocket 实时状态
+
+```text
+ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=pocket
+ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
+```
+
+服务端通过 `pet_status` 下发完整状态：
+
+```json
+{
+  "type": "pet_status",
+  "payload": {
+    "status": {
+      "userId": "demo_pet",
+      "sceneId": "teaching_building",
+      "activity": "正在上课",
+      "stateVersion": 123,
+      "updatedAt": 1710000005000
+    },
+    "serverTime": 1710000005000,
+    "updatedAt": 1710000005000,
+    "stateVersion": 123
+  }
+}
+```
+
+客户端必须忽略 `stateVersion` 小于当前已显示版本的响应。WebSocket 断线时保留最后一次状态，
+并使用 HTTP 状态接口完成首次加载和轮询兜底。
+
+**状态追踪**:
+- [x] Pocket 区分服务端权威 `petSceneId` 与玩家观察 `currentSceneId`。*(已于 2026-07-20 完成代码与自动化测试)*
+- [x] Pocket HTTP 与 WebSocket 共用权威位置应用逻辑。*(已于 2026-07-20 完成代码与自动化测试)*
+- [x] Unity HUD 消费并显示原始 `sceneId`。*(已于 2026-07-20 完成代码与 Unity EditMode 测试)*
+- [x] Pocket 兼容旧版状态直接位于 `data` 下的响应。*(已于 2026-07-20 根据线上接口完成回归测试)*
+- [ ] 线上心宠服务部署 `data.state`、`stateVersion`、`updatedAt` 与 `serverTime`。*(2026-07-20 核对线上接口仍为旧结构)*
+- [ ] Pocket、Unity 与心宠服务完成同一 `userId` 的端到端运行联调。*(等待线上契约升级与运行环境联调)*
+
+---
+
+## 9. 枚举定义
 
 ### RoomStatus
 - `AVAILABLE` - 可用
@@ -485,7 +565,7 @@ POST /api/pocket/pet/diary/backfill
 
 ---
 
-## 9. 字段映射表
+## 10. 字段映射表
 
 | API 字段 | 数据库字段 | 说明 |
 |----------|-----------|------|
@@ -496,4 +576,4 @@ POST /api/pocket/pet/diary/backfill
 
 ---
 
-*文档版本: v2.1 | 更新日期: 2026-06-13*
+*文档版本: v2.2 | 更新日期: 2026-07-20*

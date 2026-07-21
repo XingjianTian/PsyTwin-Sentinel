@@ -255,11 +255,7 @@ export function PocketRecordsView() {
             重点关注
           </span>
         </CardHeader>
-        <CardContent
-          className={dynamicContentClass}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        <CardContent className={dynamicContentClass}>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {rotatedPosts.map((post, idx) => {

@@ -41,7 +41,38 @@ export interface StudentPetSnapshot {
   }>
 }
 
-const petNames = ["小芯", "小安", "可乐", "奶茶", "球球", "墨墨"]
+const petNames = [
+  "小芯",
+  "小安",
+  "可乐",
+  "奶茶",
+  "球球",
+  "墨墨",
+  "团团",
+  "糯米",
+  "豆包",
+  "布丁",
+  "糖糖",
+  "星星",
+  "月饼",
+  "芝麻",
+  "栗子",
+  "桃桃",
+  "柚子",
+  "泡芙",
+  "云朵",
+  "雪球",
+  "橘子",
+  "年糕",
+  "元宝",
+  "麦芽",
+  "椰椰",
+  "莓莓",
+  "花卷",
+  "松饼",
+  "棉花",
+  "晴晴",
+]
 const petColors = ["雪白", "浅蓝", "奶油白", "薄荷绿", "月光银"]
 const petAccessories = ["蓝色水手帽", "星星领巾", "圆框护目镜", "轻便背包", "铃铛挂饰"]
 const petExpressions = ["平静", "好奇", "开心", "专注", "有点困"]
@@ -83,6 +114,18 @@ function hashString(value: string) {
 
 function pick<T>(items: T[], seed: number, offset = 0) {
   return items[(seed + offset) % items.length]
+}
+
+function pickUniquePetName(preferredName: string, ownerId: string, unavailableNames: Set<string>) {
+  if (!unavailableNames.has(preferredName)) return preferredName
+
+  const seed = hashString(ownerId)
+  for (let offset = 0; offset < petNames.length; offset += 1) {
+    const candidate = pick(petNames, seed, offset)
+    if (!unavailableNames.has(candidate)) return candidate
+  }
+
+  return `心宠-${ownerId}`
 }
 
 function bounded(seed: number, offset: number, min: number, max: number) {
@@ -233,6 +276,37 @@ async function findPet(studentId: string) {
   })
 }
 
+async function ensureUniquePetNames() {
+  const pets = await prisma.pet.findMany({
+    select: { id: true, ownerId: true, name: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  })
+  const unavailableNames = new Set(pets.map((pet) => pet.name))
+  const retainedNames = new Set<string>()
+  const updates: Array<{ id: string; name: string }> = []
+
+  for (const pet of pets) {
+    if (!retainedNames.has(pet.name)) {
+      retainedNames.add(pet.name)
+      continue
+    }
+
+    const name = pickUniquePetName(pet.name, pet.ownerId, unavailableNames)
+    unavailableNames.add(name)
+    retainedNames.add(name)
+    updates.push({ id: pet.id, name })
+  }
+
+  if (updates.length > 0) {
+    await prisma.$transaction(
+      updates.map((pet) => prisma.pet.update({
+        where: { id: pet.id },
+        data: { name: pet.name },
+      })),
+    )
+  }
+}
+
 async function ensurePetHistory(pet: NonNullable<Awaited<ReturnType<typeof findPet>>>) {
   if (pet.diaryEntries.length === 0) {
     const seed = hashString(`${pet.id}:diary`)
@@ -309,11 +383,17 @@ async function ensurePet(student: StudentInfo) {
   if (existing) return existing
 
   const seed = hashString(`${student.id}:${student.studentNo}:${student.name}`)
+  const existingNames = await prisma.pet.findMany({ select: { name: true } })
+  const name = pickUniquePetName(
+    pick(petNames, seed),
+    student.id,
+    new Set(existingNames.map((pet) => pet.name)),
+  )
   return prisma.pet.create({
     data: {
       id: `pet-${student.id}`,
       ownerId: student.id,
-      name: pick(petNames, seed),
+      name,
       species: "DOG",
       color: pick(petColors, seed, 1),
       accessories: [pick(petAccessories, seed, 2)],
@@ -342,6 +422,7 @@ async function ensurePet(student: StudentInfo) {
 const activityLabelsList = Object.values(activityLabels)
 
 export async function getStudentPetSnapshot(studentId: string): Promise<StudentPetSnapshot> {
+  await ensureUniquePetNames()
   const student = await prisma.student.findUnique({
     where: { id: studentId },
     select: {
@@ -366,6 +447,7 @@ export async function getStudentPetSnapshots(studentIds: string[]): Promise<Reco
   const uniqueIds = Array.from(new Set(studentIds)).filter(Boolean)
   if (uniqueIds.length === 0) return {}
 
+  await ensureUniquePetNames()
   const students = await prisma.student.findMany({
     where: { id: { in: uniqueIds } },
     select: {

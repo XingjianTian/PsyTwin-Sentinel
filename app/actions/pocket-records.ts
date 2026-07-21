@@ -47,7 +47,7 @@ export interface PocketDataRecord {
  */
 export async function getPocketDataRecords(): Promise<PocketDataRecord> {
   return cacheAside(
-    "pocket:records:v3",
+    "pocket:records:v4",
     async () => {
       // 模拟 KPI 数据（实际应从数据库聚合查询）
       const kpis: PocketKPI = {

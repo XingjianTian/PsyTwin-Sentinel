@@ -18,7 +18,7 @@
 ```env
 NEXT_PUBLIC_LIGHTRAG_WEBUI_URL=http://42.121.14.189:9621
 LIGHTRAG_API_URL=http://42.121.14.189:9621
-NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT=psytwin-local-rag-key
+LIGHTRAG_API_KEY=psytwin-local-rag-key
 ```
 
 当前部署采用固定 `9621` 端口直连 LightRAG，不再通过 80 端口或 Nginx 反向代理访问。云服务器安全组只需要放行入方向 TCP `9621`。
@@ -29,13 +29,7 @@ NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT=psytwin-local-rag-key
 http://localhost:3000/ai-config?tab=rag
 ```
 
-如果 LightRAG 嵌入页提示 API Key，请输入：
-
-```text
-psytwin-local-rag-key
-```
-
-这个 Key 是 LightRAG API 访问密钥，不是阿里云百炼 `sk-...` 密钥。
+Sentinel 会通过同源 `/api/lightrag-proxy` 代理为嵌入页附加 `LIGHTRAG_API_KEY`，教师无需在 LightRAG WebUI 重复输入访问密钥。该密钥仅保存在 Sentinel 服务端环境变量中，不应使用 `NEXT_PUBLIC_` 前缀。
 
 ## LightRAG 模型配置
 

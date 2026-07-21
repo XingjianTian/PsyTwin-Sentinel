@@ -350,7 +350,7 @@ export function StrategyCenterView() {
       <Card className="flex flex-col border-border bg-card shadow-sm">
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
           <BrainCircuit className="h-5 w-5 text-primary" />
-          <CardTitle className="text-base font-semibold text-foreground">模型与策略中心</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">后台智能体配置中心</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-4">
           <div className="flex items-center gap-2">

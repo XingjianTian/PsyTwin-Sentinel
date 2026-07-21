@@ -1115,11 +1115,27 @@ model Pet {
   events              PetEvent[]
   diaryEntries        PetDiaryEntry[]
   alerts              PetAlert[]
+  aiProfile           PetAiProfile?
 
   @@index([ownerId])
   @@index([species])
   @@index([isOnline])
   @@map("pets")
+}
+
+model PetAiProfile {
+  id              String   @id @default(cuid())
+  petId           String   @unique @map("pet_id")
+  tone            String   @default("温暖陪伴")
+  responseStyle   String   @default("简短自然") @map("response_style")
+  initiative      Int      @default(60)
+  systemPrompt    String   @map("system_prompt")
+  knowledgeScope  Json     @map("knowledge_scope")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  pet             Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@map("pet_ai_profiles")
 }
 
 model PetEvent {
