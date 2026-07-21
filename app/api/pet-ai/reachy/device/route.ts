@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-import { isClawBodyUnavailable, requestClawBody } from "@/lib/pet-ai/clawbody-client"
+import { requestClawBody } from "@/lib/pet-ai/clawbody-client"
 import { isHostBridgeUnavailable, requestHostBridge } from "@/lib/pet-ai/host-bridge-client"
 import type { ReachyDeviceCommand, ReachyDeviceSnapshot } from "@/lib/pet-ai/reachy-device"
 
@@ -41,10 +41,149 @@ const commandSchema: z.ZodType<ReachyDeviceCommand> = z.discriminatedUnion("acti
     .strict(),
 ])
 
-type ClawBodyStatus = ReachyDeviceSnapshot["session"] & { running?: boolean }
-type DeviceStatus = Omit<ReachyDeviceSnapshot, "clawbody_reachable" | "session" | "devices" | "logs">
-type DeviceList = ReachyDeviceSnapshot["devices"]
-type DeviceLogs = ReachyDeviceSnapshot["logs"]
+const phaseSchema = z.enum([
+  "offline",
+  "discovering",
+  "starting",
+  "connecting",
+  "healthchecking",
+  "loading_apps",
+  "ready",
+  "stopping",
+  "error",
+])
+
+const mediaSchema = z.object({
+  camera: z.string(),
+  microphone: z.string(),
+  speaker: z.string(),
+  input_volume: z.number().nullable(),
+  output_volume: z.number().nullable(),
+})
+
+const deviceErrorSchema = z.object({
+  code: z.string(),
+  phase: phaseSchema,
+  message: z.string(),
+  detail: z.string().nullable().optional(),
+})
+
+const deviceStatusSchema = z.object({
+  phase: phaseSchema,
+  operation_id: z.string().nullable(),
+  serial_port: z.string().nullable(),
+  daemon_owned: z.boolean(),
+  daemon_pid: z.number().int().nullable(),
+  daemon_version: z.string().nullable(),
+  daemon_state: z.string().nullable(),
+  motor_mode: z.string().nullable(),
+  media: mediaSchema,
+  clawbody_reachable: z.boolean(),
+  error: deviceErrorSchema.nullable(),
+})
+
+const serialDeviceSchema = z.object({
+  port: z.string(),
+  label: z.string(),
+  vid: z.string(),
+  pid: z.string(),
+})
+
+const deviceLogsSchema = z.object({
+  cursor: z.number().int().nonnegative(),
+  items: z.array(z.object({
+    id: z.number().int().nonnegative(),
+    level: z.string(),
+    message: z.string(),
+    created_at: z.string(),
+  })),
+})
+
+const clawBodyStatusSchema = z.object({
+  running: z.boolean().optional(),
+  student_id: z.string().nullable().optional(),
+  state: z.string().optional(),
+  error: z.string().nullable().optional(),
+})
+
+type DeviceStatus = z.infer<typeof deviceStatusSchema>
+type DeviceList = z.infer<typeof serialDeviceSchema>[]
+type DeviceLogs = z.infer<typeof deviceLogsSchema>
+type ClawBodyStatus = z.infer<typeof clawBodyStatusSchema>
+
+const SECRET_PATTERNS = [
+  /(authorization\s*:\s*bearer\s+)[^\s,;]+/gi,
+  /((?:x-host-bridge-key|x-service-key|host_bridge_api_key|clawbody_service_key|api[_-]?key|password|access[_-]?token|refresh[_-]?token|token)\s*[:=]\s*)[^\s,;]+/gi,
+]
+
+function safeText(value: string, limit = 2_000) {
+  return SECRET_PATTERNS.reduce(
+    (text, pattern) => text.replace(pattern, "$1[REDACTED]"),
+    value.slice(0, limit),
+  )
+}
+
+function publicDeviceStatus(payload: unknown): DeviceStatus {
+  const status = deviceStatusSchema.parse(payload)
+  return {
+    phase: status.phase,
+    operation_id: status.operation_id === null ? null : safeText(status.operation_id, 200),
+    serial_port: status.serial_port === null ? null : safeText(status.serial_port, 100),
+    daemon_owned: status.daemon_owned,
+    daemon_pid: status.daemon_pid,
+    daemon_version: status.daemon_version === null ? null : safeText(status.daemon_version, 100),
+    daemon_state: status.daemon_state === null ? null : safeText(status.daemon_state, 100),
+    motor_mode: status.motor_mode === null ? null : safeText(status.motor_mode, 100),
+    media: {
+      camera: safeText(status.media.camera, 100),
+      microphone: safeText(status.media.microphone, 100),
+      speaker: safeText(status.media.speaker, 100),
+      input_volume: status.media.input_volume,
+      output_volume: status.media.output_volume,
+    },
+    clawbody_reachable: status.clawbody_reachable,
+    error: status.error
+      ? {
+          code: safeText(status.error.code, 200),
+          phase: status.error.phase,
+          message: safeText(status.error.message),
+          detail: status.error.detail == null ? status.error.detail : safeText(status.error.detail),
+        }
+      : null,
+  }
+}
+
+function publicDeviceList(payload: unknown): DeviceList {
+  return z.array(serialDeviceSchema).parse(payload).map((device) => ({
+    port: safeText(device.port, 100),
+    label: safeText(device.label, 500),
+    vid: safeText(device.vid, 100),
+    pid: safeText(device.pid, 100),
+  }))
+}
+
+function publicDeviceLogs(payload: unknown): DeviceLogs {
+  const logs = deviceLogsSchema.parse(payload)
+  return {
+    cursor: logs.cursor,
+    items: logs.items.map((item) => ({
+      id: item.id,
+      level: safeText(item.level, 100),
+      message: safeText(item.message),
+      created_at: safeText(item.created_at, 200),
+    })),
+  }
+}
+
+function publicClawBodyStatus(payload: unknown): ClawBodyStatus {
+  const status = clawBodyStatusSchema.parse(payload)
+  return {
+    running: status.running,
+    student_id: status.student_id == null ? status.student_id : safeText(status.student_id, 200),
+    state: status.state === undefined ? undefined : safeText(status.state, 100),
+    error: status.error == null ? status.error : safeText(status.error),
+  }
+}
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status, headers: NO_STORE_HEADERS })
@@ -61,10 +200,9 @@ async function getClawBodyStatus() {
   try {
     return {
       clawbody_reachable: true,
-      session: await requestClawBody<ClawBodyStatus>("/v1/status"),
+      session: publicClawBodyStatus(await requestClawBody<unknown>("/v1/status")),
     }
-  } catch (error) {
-    if (!isClawBodyUnavailable(error)) throw error
+  } catch {
     return {
       clawbody_reachable: false,
       session: { state: "offline" } satisfies ClawBodyStatus,
@@ -87,13 +225,7 @@ function deviceSnapshot(
     daemon_version: status.daemon_version,
     daemon_state: status.daemon_state,
     motor_mode: status.motor_mode,
-    media: {
-      camera: status.media.camera,
-      microphone: status.media.microphone,
-      speaker: status.media.speaker,
-      input_volume: status.media.input_volume,
-      output_volume: status.media.output_volume,
-    },
+    media: status.media,
     clawbody_reachable: clawbody.clawbody_reachable,
     session: {
       running: clawbody.session.running,
@@ -101,29 +233,9 @@ function deviceSnapshot(
       state: clawbody.session.state,
       error: clawbody.session.error,
     },
-    devices: devices.map((device) => ({
-      port: device.port,
-      label: device.label,
-      vid: device.vid,
-      pid: device.pid,
-    })),
-    logs: {
-      cursor: logs.cursor,
-      items: logs.items.map((item) => ({
-        id: item.id,
-        level: item.level,
-        message: item.message,
-        created_at: item.created_at,
-      })),
-    },
-    error: status.error
-      ? {
-          code: status.error.code,
-          phase: status.error.phase,
-          message: status.error.message,
-          detail: status.error.detail,
-        }
-      : null,
+    devices,
+    logs,
+    error: status.error,
   }
 }
 
@@ -132,13 +244,31 @@ function upstreamError(error: unknown) {
   return json({ message: "心宠设备控制请求失败" }, 502)
 }
 
+function mutationRequestError(request: NextRequest) {
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase()
+  if (contentType !== "application/json") return json({ message: "仅支持 JSON 设备命令" }, 415)
+
+  if (request.headers.get("authorization")?.startsWith("Bearer ")) return null
+
+  const origin = request.headers.get("origin")
+  if (!origin) return json({ message: "设备命令来源无效" }, 403)
+  try {
+    if (new URL(origin).origin !== request.nextUrl.origin) {
+      return json({ message: "设备命令来源无效" }, 403)
+    }
+  } catch {
+    return json({ message: "设备命令来源无效" }, 403)
+  }
+  return null
+}
+
 export async function GET(request: NextRequest) {
   const after = readCursor(request)
   try {
     const [status, devices, logs, clawbody] = await Promise.all([
-      requestHostBridge<DeviceStatus>("/v1/device/status"),
-      requestHostBridge<DeviceList>("/v1/device/discover"),
-      requestHostBridge<DeviceLogs>(`/v1/device/logs?after=${after}`),
+      requestHostBridge<unknown>("/v1/device/status").then(publicDeviceStatus),
+      requestHostBridge<unknown>("/v1/device/discover").then(publicDeviceList),
+      requestHostBridge<unknown>(`/v1/device/logs?after=${after}`).then(publicDeviceLogs),
       getClawBodyStatus(),
     ])
     return json({ data: deviceSnapshot(status, devices, logs, clawbody) })
@@ -148,41 +278,41 @@ export async function GET(request: NextRequest) {
 }
 
 async function stopDevice() {
-  const session = await requestClawBody<ClawBodyStatus>("/v1/status")
+  const session = publicClawBodyStatus(await requestClawBody<unknown>("/v1/status"))
   let sessionStopped = false
   if (session.running === true) {
     await requestClawBody("/v1/session/stop", { method: "POST" })
     sessionStopped = true
   }
-  const device = await requestHostBridge("/v1/device/stop", { method: "POST" })
+  const device = publicDeviceStatus(await requestHostBridge("/v1/device/stop", { method: "POST" }))
   return { sessionStopped, device }
 }
 
 async function runCommand(command: ReachyDeviceCommand) {
   switch (command.action) {
     case "discover":
-      return requestHostBridge("/v1/device/discover")
+      return publicDeviceList(await requestHostBridge("/v1/device/discover"))
     case "start":
-      return requestHostBridge("/v1/device/start", {
+      return publicDeviceStatus(await requestHostBridge("/v1/device/start", {
         method: "POST",
         body: JSON.stringify({ serial_port: command.serialPort }),
         longRunning: true,
-      })
+      }))
     case "stop":
       return stopDevice()
     case "restart":
-      return requestHostBridge("/v1/device/restart", {
+      return publicDeviceStatus(await requestHostBridge("/v1/device/restart", {
         method: "POST",
         body: JSON.stringify({}),
         longRunning: true,
-      })
+      }))
     case "device_action":
-      return requestHostBridge("/v1/device/action", {
+      return publicDeviceStatus(await requestHostBridge("/v1/device/action", {
         method: "POST",
         body: JSON.stringify({ action: command.deviceAction }),
-      })
+      }))
     case "pose":
-      return requestHostBridge("/v1/device/pose", {
+      return publicDeviceStatus(await requestHostBridge("/v1/device/pose", {
         method: "POST",
         body: JSON.stringify({
           head_pitch: command.headPitch,
@@ -193,16 +323,19 @@ async function runCommand(command: ReachyDeviceCommand) {
           right_antenna: command.rightAntenna,
           duration: command.duration,
         }),
-      })
+      }))
     case "volume":
-      return requestHostBridge("/v1/device/volume", {
+      return publicDeviceStatus(await requestHostBridge("/v1/device/volume", {
         method: "POST",
         body: JSON.stringify({ target: command.target, volume: command.volume }),
-      })
+      }))
   }
 }
 
 export async function POST(request: NextRequest) {
+  const requestError = mutationRequestError(request)
+  if (requestError) return requestError
+
   const parsed = commandSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return json({ message: "设备命令参数无效" }, 400)
 

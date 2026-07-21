@@ -14,6 +14,27 @@ type DeviceRouteHarness = {
 class HostUnavailable extends Error {}
 class ClawBodyUnavailable extends Error {}
 
+const SAME_ORIGIN_JSON_HEADERS = {
+  "Content-Type": "application/json",
+  Origin: "http://sentinel.local",
+}
+
+function upstreamDeviceStatus() {
+  return {
+    phase: "ready",
+    operation_id: "op-7",
+    serial_port: "COM5",
+    daemon_owned: true,
+    daemon_pid: 123,
+    daemon_version: "1.2.3",
+    daemon_state: "running",
+    motor_mode: "stiff",
+    media: { camera: "ready", microphone: "ready", speaker: "ready", input_volume: 50, output_volume: 60 },
+    clawbody_reachable: true,
+    error: null,
+  }
+}
+
 async function loadDeviceRoute(
   responder: (call: UpstreamCall) => unknown | Promise<unknown>,
 ): Promise<{ route: DeviceRouteHarness; NextRequest: new (input: string | URL, init?: RequestInit) => unknown; calls: UpstreamCall[] }> {
@@ -210,6 +231,35 @@ test("Reachy device GET keeps hardware available when ClawBody is offline", asyn
   assert.doesNotMatch(JSON.stringify(body), /service key must not leak/)
 })
 
+test("Reachy device GET keeps hardware available when ClawBody returns an HTTP error", async () => {
+  const { route, NextRequest } = await loadDeviceRoute(({ service, path }) => {
+    if (service === "clawbody") {
+      const error = new Error("ClawBody 500 password=top-secret") as Error & { status?: number }
+      error.status = 500
+      throw error
+    }
+    if (path === "/v1/device/status") {
+      return {
+        phase: "offline", operation_id: null, serial_port: null, daemon_owned: false, daemon_pid: null,
+        daemon_version: null, daemon_state: null, motor_mode: null,
+        media: { camera: "unknown", microphone: "unknown", speaker: "unknown", input_volume: null, output_volume: null },
+        clawbody_reachable: false, error: null,
+      }
+    }
+    if (path === "/v1/device/discover") return []
+    if (path === "/v1/device/logs?after=0") return { cursor: 0, items: [] }
+    throw new Error(`unexpected path: ${path}`)
+  })
+
+  const response = await route.GET(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device"))
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.equal(body.data.clawbody_reachable, false)
+  assert.deepEqual(body.data.session, { state: "offline" })
+  assert.doesNotMatch(JSON.stringify(body), /top-secret|password/)
+})
+
 test("Reachy device GET strips unexpected nested upstream fields", async () => {
   const { route, NextRequest } = await loadDeviceRoute(({ path }) => {
     if (path === "/v1/device/status") {
@@ -221,17 +271,32 @@ test("Reachy device GET strips unexpected nested upstream fields", async () => {
           device_key: "media-secret",
         },
         clawbody_reachable: true,
-        error: { code: "none", phase: "ready", message: "ok", detail: null, traceback: "error-secret" },
+        error: {
+          code: "none",
+          phase: "ready",
+          message: "Authorization: Bearer status-message-secret",
+          detail: "HOST_BRIDGE_API_KEY=status-detail-secret",
+          traceback: "error-secret",
+        },
       }
     }
     if (path === "/v1/device/discover") {
       return [{ port: "COM5", label: "Reachy", vid: "1A86", pid: "55D3", executable: "device-secret" }]
     }
     if (path === "/v1/device/logs?after=0") {
-      return { cursor: 1, items: [{ id: 1, level: "info", message: "ready", created_at: "now", context: "log-secret" }] }
+      return {
+        cursor: 1,
+        items: [{ id: 1, level: "info", message: "password=log-message-secret", created_at: "now", context: "log-secret" }],
+      }
     }
     if (path === "/v1/status") {
-      return { running: true, student_id: "stu-test", state: "running", error: null, service_key: "session-secret" }
+      return {
+        running: true,
+        student_id: "stu-test",
+        state: "running",
+        error: "X-Service-Key: session-error-secret",
+        service_key: "session-secret",
+      }
     }
     throw new Error(`unexpected path: ${path}`)
   })
@@ -240,7 +305,103 @@ test("Reachy device GET strips unexpected nested upstream fields", async () => {
   const body = await response.json()
 
   assert.equal(response.status, 200)
-  assert.doesNotMatch(JSON.stringify(body), /media-secret|error-secret|device-secret|log-secret|session-secret/)
+  assert.doesNotMatch(
+    JSON.stringify(body),
+    /media-secret|error-secret|device-secret|log-secret|session-secret|status-message-secret|status-detail-secret|log-message-secret|session-error-secret/,
+  )
+})
+
+test("Reachy device POST projects and redacts successful Host Bridge status payloads", async () => {
+  const { route, NextRequest } = await loadDeviceRoute(() => ({
+    ...upstreamDeviceStatus(),
+    host_bridge_key: "post-top-secret",
+    media: { ...upstreamDeviceStatus().media, api_key: "post-media-secret" },
+    error: {
+      code: "daemon_warning",
+      phase: "ready",
+      message: "Authorization: Bearer post-message-secret",
+      detail: "password=post-detail-secret",
+      traceback: "post-traceback-secret",
+    },
+  }))
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: SAME_ORIGIN_JSON_HEADERS,
+    body: JSON.stringify({ action: "start", serialPort: "COM5" }),
+  }))
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(Object.keys(body.data).sort(), [
+    "clawbody_reachable", "daemon_owned", "daemon_pid", "daemon_state", "daemon_version", "error", "media",
+    "motor_mode", "operation_id", "phase", "serial_port",
+  ])
+  assert.deepEqual(Object.keys(body.data.media).sort(), [
+    "camera", "input_volume", "microphone", "output_volume", "speaker",
+  ])
+  assert.deepEqual(Object.keys(body.data.error).sort(), ["code", "detail", "message", "phase"])
+  assert.doesNotMatch(
+    JSON.stringify(body),
+    /post-top-secret|post-media-secret|post-message-secret|post-detail-secret|post-traceback-secret/,
+  )
+})
+
+test("Reachy device POST rejects malformed successful Host Bridge status payloads", async () => {
+  const { route, NextRequest } = await loadDeviceRoute(() => ({
+    ...upstreamDeviceStatus(),
+    phase: "shelling_out",
+    detail: "HOST_BRIDGE_API_KEY=invalid-payload-secret",
+  }))
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: SAME_ORIGIN_JSON_HEADERS,
+    body: JSON.stringify({ action: "restart" }),
+  }))
+  const body = await response.json()
+
+  assert.equal(response.status, 502)
+  assert.equal(body.message, "心宠设备控制请求失败")
+  assert.doesNotMatch(JSON.stringify(body), /invalid-payload-secret|HOST_BRIDGE_API_KEY/)
+})
+
+test("Reachy discover and stop POST results use exact safe response contracts", async () => {
+  const discoverHarness = await loadDeviceRoute(() => [
+    { port: "COM5", label: "Reachy", vid: "1A86", pid: "55D3", api_key: "discover-result-secret" },
+  ])
+  const discoverResponse = await discoverHarness.route.POST(new discoverHarness.NextRequest(
+    "http://sentinel.local/api/pet-ai/reachy/device",
+    {
+      method: "POST",
+      headers: SAME_ORIGIN_JSON_HEADERS,
+      body: JSON.stringify({ action: "discover" }),
+    },
+  ))
+  const discoverBody = await discoverResponse.json()
+  assert.deepEqual(discoverBody, {
+    data: [{ port: "COM5", label: "Reachy", vid: "1A86", pid: "55D3" }],
+  })
+
+  const stopHarness = await loadDeviceRoute(({ path }) => {
+    if (path === "/v1/status") return { running: false, state: "idle" }
+    if (path === "/v1/device/stop") {
+      return { ...upstreamDeviceStatus(), host_bridge_key: "stop-result-secret" }
+    }
+    throw new Error(`unexpected path: ${path}`)
+  })
+  const stopResponse = await stopHarness.route.POST(new stopHarness.NextRequest(
+    "http://sentinel.local/api/pet-ai/reachy/device",
+    {
+      method: "POST",
+      headers: SAME_ORIGIN_JSON_HEADERS,
+      body: JSON.stringify({ action: "stop" }),
+    },
+  ))
+  const stopBody = await stopResponse.json()
+  assert.deepEqual(Object.keys(stopBody.data.device).sort(), [
+    "clawbody_reachable", "daemon_owned", "daemon_pid", "daemon_state", "daemon_version", "error", "media",
+    "motor_mode", "operation_id", "phase", "serial_port",
+  ])
+  assert.doesNotMatch(JSON.stringify({ discoverBody, stopBody }), /result-secret/)
 })
 
 test("Reachy device GET reports an unavailable Host Bridge without leaking transport details", async () => {
@@ -271,7 +432,7 @@ test("Reachy device POST rejects unknown and extra command fields before proxyin
     })
     const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: SAME_ORIGIN_JSON_HEADERS,
       body: JSON.stringify(body),
     }))
 
@@ -281,15 +442,92 @@ test("Reachy device POST rejects unknown and extra command fields before proxyin
   }
 })
 
+test("Reachy device POST rejects cross-origin cookie mutations before proxying", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(() => {
+    throw new Error("upstream must not run")
+  })
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "token=valid-middleware-session",
+      Origin: "https://attacker.example",
+    },
+    body: JSON.stringify({ action: "discover" }),
+  }))
+
+  assert.equal(response.status, 403)
+  assert.deepEqual(calls, [])
+})
+
+test("Reachy device POST rejects non-JSON mutations before parsing or proxying", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(() => {
+    throw new Error("upstream must not run")
+  })
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain",
+      Cookie: "token=valid-middleware-session",
+      Origin: "http://sentinel.local",
+    },
+    body: JSON.stringify({ action: "discover" }),
+  }))
+
+  assert.equal(response.status, 415)
+  assert.deepEqual(calls, [])
+})
+
+test("Reachy device POST rejects a missing Origin for cookie mutations", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(() => {
+    throw new Error("upstream must not run")
+  })
+  const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: "token=valid-middleware-session" },
+    body: JSON.stringify({ action: "discover" }),
+  }))
+
+  assert.equal(response.status, 403)
+  assert.deepEqual(calls, [])
+})
+
+test("Reachy device POST accepts same-origin cookie and originless Bearer mutations", async () => {
+  const headerSets: HeadersInit[] = [
+    {
+      "Content-Type": "application/json; charset=utf-8",
+      Cookie: "token=valid-middleware-session",
+      Origin: "http://sentinel.local",
+    },
+    {
+      "Content-Type": "application/json",
+      Authorization: "Bearer validated-by-middleware",
+    },
+  ]
+  for (const headers of headerSets) {
+    const { route, NextRequest, calls } = await loadDeviceRoute(() => [
+      { port: "COM5", label: "Reachy", vid: "1A86", pid: "55D3" },
+    ])
+    const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ action: "discover" }),
+    }))
+
+    assert.equal(response.status, 200)
+    assert.deepEqual(calls.map(({ path }) => path), ["/v1/device/discover"])
+  }
+})
+
 test("Reachy start and restart use only their fixed routes and 60-second client mode", async () => {
   for (const { action, input, body } of [
     { action: "start", input: { action: "start", serialPort: "COM5" }, body: { serial_port: "COM5" } },
     { action: "restart", input: { action: "restart" }, body: {} },
   ] as const) {
-    const { route, NextRequest, calls } = await loadDeviceRoute(() => ({ phase: "starting" }))
+    const { route, NextRequest, calls } = await loadDeviceRoute(() => ({ ...upstreamDeviceStatus(), phase: "starting" }))
     const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: SAME_ORIGIN_JSON_HEADERS,
       body: JSON.stringify(input),
     }))
 
@@ -322,10 +560,10 @@ test("Reachy typed actions translate browser fields to exact Host Bridge bodies"
   ]
 
   for (const command of commands) {
-    const { route, NextRequest, calls } = await loadDeviceRoute(() => ({ phase: "ready" }))
+    const { route, NextRequest, calls } = await loadDeviceRoute(() => upstreamDeviceStatus())
     const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: SAME_ORIGIN_JSON_HEADERS,
       body: JSON.stringify(command.input),
     }))
 
@@ -342,13 +580,13 @@ test("Reachy stop ends an active ClawBody session before stopping the device", a
   const { route, NextRequest, calls } = await loadDeviceRoute(({ path }) => {
     if (path === "/v1/status") return { running: true, student_id: "stu-test", state: "running" }
     if (path === "/v1/session/stop") return { running: false, state: "idle" }
-    if (path === "/v1/device/stop") return { phase: "offline" }
+    if (path === "/v1/device/stop") return { ...upstreamDeviceStatus(), phase: "offline" }
     throw new Error(`unexpected path: ${path}`)
   })
 
   const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: SAME_ORIGIN_JSON_HEADERS,
     body: JSON.stringify({ action: "stop" }),
   }))
 
@@ -358,29 +596,29 @@ test("Reachy stop ends an active ClawBody session before stopping the device", a
     "clawbody:/v1/session/stop",
     "host:/v1/device/stop",
   ])
-  assert.deepEqual(await response.json(), {
-    data: { sessionStopped: true, device: { phase: "offline" } },
-  })
+  const body = await response.json()
+  assert.equal(body.data.sessionStopped, true)
+  assert.equal(body.data.device.phase, "offline")
 })
 
 test("Reachy stop skips session stop when no ClawBody session is running", async () => {
   const { route, NextRequest, calls } = await loadDeviceRoute(({ path }) => {
     if (path === "/v1/status") return { running: false, state: "idle" }
-    if (path === "/v1/device/stop") return { phase: "offline" }
+    if (path === "/v1/device/stop") return { ...upstreamDeviceStatus(), phase: "offline" }
     throw new Error(`unexpected path: ${path}`)
   })
 
   const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: SAME_ORIGIN_JSON_HEADERS,
     body: JSON.stringify({ action: "stop" }),
   }))
 
   assert.equal(response.status, 200)
   assert.deepEqual(calls.map(({ path }) => path), ["/v1/status", "/v1/device/stop"])
-  assert.deepEqual(await response.json(), {
-    data: { sessionStopped: false, device: { phase: "offline" } },
-  })
+  const body = await response.json()
+  assert.equal(body.data.sessionStopped, false)
+  assert.equal(body.data.device.phase, "offline")
 })
 
 test("Reachy device POST returns bounded upstream errors without exposing secrets", async () => {
@@ -389,7 +627,7 @@ test("Reachy device POST returns bounded upstream errors without exposing secret
   })
   const response = await route.POST(new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: SAME_ORIGIN_JSON_HEADERS,
     body: JSON.stringify({ action: "discover" }),
   }))
   const body = await response.json()
