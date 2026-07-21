@@ -224,6 +224,7 @@ test("only administrators can dispatch staff provisioning mutations", async () =
   const mutations = [
     { path: "/api/users", method: "POST" },
     { path: "/api/teachers", method: "POST" },
+    { path: "/api/users/user-1", method: "PUT" },
     { path: "/api/users/user-1", method: "PATCH" },
     { path: "/api/teachers/teacher-1", method: "DELETE" },
   ]
@@ -246,5 +247,23 @@ test("only administrators can dispatch staff provisioning mutations", async () =
     assert.equal(assistantResponse.headers.get("x-middleware-next"), null)
     assert.equal(adminResponse.status, 200, `${mutation.method} ${mutation.path}`)
     assert.equal(adminResponse.headers.get("x-middleware-next"), "1")
+  }
+})
+
+test("authenticated non-admin staff retain safe HEAD and OPTIONS access", async () => {
+  const assistantToken = staffToken("ASSISTANT")
+
+  for (const path of ["/api/users", "/api/teachers"]) {
+    for (const method of ["HEAD", "OPTIONS"]) {
+      const response = await middleware(
+        new NextRequest(`http://sentinel.local${path}`, {
+          method,
+          headers: { Authorization: `Bearer ${assistantToken}` },
+        }),
+      )
+
+      assert.equal(response.status, 200, `${method} ${path}`)
+      assert.equal(response.headers.get("x-middleware-next"), "1")
+    }
   }
 })

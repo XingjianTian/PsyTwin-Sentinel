@@ -17,6 +17,7 @@ const publicRoutes = [
 const reachyDeviceRoute = "/api/pet-ai/reachy/device";
 const reachyOperatorRoles = new Set(["ADMIN", "COUNSELOR", "TEACHER"]);
 const staffProvisioningRoutes = ["/api/users", "/api/teachers"];
+const staffProvisioningMutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // 检查是否是公开路由
 function isPublicRoute(pathname: string): boolean {
@@ -29,7 +30,7 @@ function isReachyDeviceRoute(pathname: string): boolean {
 
 function isStaffProvisioningMutation(pathname: string, method: string): boolean {
   return (
-    method !== "GET" &&
+    staffProvisioningMutationMethods.has(method.toUpperCase()) &&
     staffProvisioningRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
   );
 }
