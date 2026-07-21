@@ -58,6 +58,55 @@ test("pet AI management route renders the native management workspace", async ()
   assert.match(pageSource, /<PetAiManagementView\s*\/>/)
 })
 
+test("pet AI management exposes an accessible Reachy debug workspace", async () => {
+  const viewSource = await readSource("../components/views/pet-ai-management-view.tsx")
+  const consoleSource = await readSource(
+    "../components/views/pet-ai-management/reachy-debug-console.tsx",
+  )
+  const connectionSource = await readSource(
+    "../components/views/pet-ai-management/reachy-connection-panel.tsx",
+  )
+
+  assert.match(viewSource, /type WorkspaceMode = "management" \| "debug"/)
+  assert.match(viewSource, />心宠管理</)
+  assert.match(viewSource, />心宠调试</)
+  assert.match(viewSource, /aria-pressed=\{workspaceMode === "management"\}/)
+  assert.match(viewSource, /aria-pressed=\{workspaceMode === "debug"\}/)
+  assert.match(viewSource, /workspaceMode === "management"/)
+  assert.match(viewSource, /<ReachyDebugConsole/)
+  assert.match(viewSource, /学生与心宠/)
+  assert.match(viewSource, /实时联调/)
+
+  assert.match(consoleSource, /\/api\/pet-ai\/reachy\/device/)
+  assert.match(consoleSource, /ACTIVE_POLL_INTERVAL_MS = 1_000/)
+  assert.match(consoleSource, /IDLE_POLL_INTERVAL_MS = 3_000/)
+  assert.match(consoleSource, /runCommand/)
+  assert.match(consoleSource, /commandPending/)
+  assert.match(consoleSource, /requestGenerationRef/)
+  assert.match(consoleSource, /generation !== requestGenerationRef\.current/)
+  assert.match(consoleSource, /正在读取设备状态/)
+  assert.match(consoleSource, /心宠设备控制桥未运行/)
+  assert.match(consoleSource, /message !== "心宠设备控制桥未运行"/)
+  assert.doesNotMatch(consoleSource, /<main\b/)
+
+  for (const stage of ["启动", "连接", "健康检查", "应用"]) {
+    assert.match(connectionSource, new RegExp(`label: "${stage}"`))
+  }
+  assert.match(connectionSource, /"启动设备"/)
+  assert.match(connectionSource, /重试/)
+  assert.match(connectionSource, /复制诊断信息/)
+  assert.match(connectionSource, /Wi-Fi/)
+  assert.match(connectionSource, /模拟器/)
+  assert.match(connectionSource, /disabled/)
+  assert.match(connectionSource, /aria-current/)
+  assert.match(connectionSource, /state === "running" \|\| state === "error"/)
+  assert.match(connectionSource, /snapshot\.phase === "discovering"/)
+  assert.match(connectionSource, /snapshot\.phase === "stopping"/)
+  assert.match(connectionSource, /rawPhase === "discovering" \? "starting"/)
+  assert.match(connectionSource, /device\.port === selectedPortChoice/)
+  assert.match(connectionSource, /commandError !== snapshot\.error\?\.message/)
+})
+
 test("strategy configuration page uses the renamed title", async () => {
   const source = await readSource("../components/ai-config/strategy-center-view.tsx")
 

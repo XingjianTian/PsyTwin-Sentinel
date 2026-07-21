@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { ReachyDebugConsole } from "@/components/views/pet-ai-management/reachy-debug-console"
 import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-presentation"
 import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
 import { getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
@@ -29,6 +30,7 @@ type Detail = {
 type ReachyEvent = { id: number; kind: "emotion" | "handoff" | "professional" | "relay" | "tts"; status: "complete" | "fallback" | "error"; title: string; summary: string; risk_level?: string; created_at: string }
 type ReachyTranscriptItem = { id: number; role: string; content: string; risk_level?: string; created_at: string }
 type ReachyStatus = { running?: boolean; student_id?: string | null; state?: string; error?: string | null; risk_level?: string; transcript?: { cursor?: number; items?: ReachyTranscriptItem[] }; events?: { cursor?: number; items?: ReachyEvent[] } }
+type WorkspaceMode = "management" | "debug"
 const traitLabels: Array<[keyof PetPersonality, string]> = [["openness", "开放"], ["conscientiousness", "尽责"], ["extraversion", "外向"], ["agreeableness", "亲和"], ["neuroticism", "敏感"]]
 
 async function readPayload(response: Response) {
@@ -38,6 +40,7 @@ async function readPayload(response: Response) {
 }
 
 export function PetAiManagementView() {
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("management")
   const [students, setStudents] = useState<StudentSummary[]>([])
   const [classes, setClasses] = useState<string[]>([])
   const [selectedId, setSelectedId] = useState("")
@@ -162,12 +165,35 @@ export function PetAiManagementView() {
 
   return (
     <div className="flex h-[calc(100dvh-6.5rem)] min-h-[560px] flex-col gap-3 overflow-hidden">
-      <header className="flex shrink-0 items-end justify-between gap-4">
-        <div><h1 className="text-xl font-semibold">心宠AI管理中心</h1><p className="mt-1 text-sm text-muted-foreground">管理每位学生的心宠形象、性格与对话能力</p></div>
-        <Badge variant="outline" className="gap-1.5 bg-card"><span className={cn("size-2 rounded-full", reachy.running ? "bg-success" : "bg-muted-foreground/50")} />Reachy {reachy.running ? "运行中" : "待机"}</Badge>
+      <header className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div><h1 className="text-xl font-semibold">心宠AI管理中心</h1><p className="mt-1 text-sm text-muted-foreground">{workspaceMode === "management" ? "管理每位学生的心宠形象、性格与对话能力" : "连接并检查本机 Reachy Mini Lite 的运行状态"}</p></div>
+        <div role="group" aria-label="心宠工作区" className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 sm:w-auto">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-pressed={workspaceMode === "management"}
+            onClick={() => setWorkspaceMode("management")}
+            className={cn(
+              "min-w-24 shadow-none",
+              workspaceMode === "management" && "bg-card text-foreground shadow-xs hover:bg-card",
+            )}
+          >心宠管理</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-pressed={workspaceMode === "debug"}
+            onClick={() => setWorkspaceMode("debug")}
+            className={cn(
+              "min-w-24 shadow-none",
+              workspaceMode === "debug" && "bg-card text-primary shadow-xs hover:bg-card hover:text-primary",
+            )}
+          >心宠调试</Button>
+        </div>
       </header>
 
-      <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
+      {workspaceMode === "management" ? <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
         <aside className="flex min-h-[320px] min-w-0 flex-col overflow-hidden rounded-xl border bg-card lg:min-h-0">
           <div className="border-b p-3"><div className="flex items-center gap-2 font-medium"><PawPrint className="size-4 text-primary" />学生与心宠</div><div className="relative mt-3"><Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索姓名或学号" className="pl-8" /></div><div className="mt-2 grid grid-cols-2 gap-2"><select aria-label="班级筛选" value={className} onChange={(event) => setClassName(event.target.value)} className="h-9 rounded-md border bg-background px-2 text-sm"><option value="">全部班级</option>{classes.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="风险筛选" value={riskLevel} onChange={(event) => setRiskLevel(event.target.value)} className="h-9 rounded-md border bg-background px-2 text-sm"><option value="">全部风险</option><option value="LOW">低风险</option><option value="MEDIUM">中风险</option><option value="HIGH">高风险</option><option value="CRITICAL">危机</option></select></div></div>
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -262,7 +288,7 @@ export function PetAiManagementView() {
             </TabsContent>
           </Tabs>
         </section>
-      </section>
+      </section> : <ReachyDebugConsole onReturnToManagement={() => setWorkspaceMode("management")} />}
     </div>
   )
 }
