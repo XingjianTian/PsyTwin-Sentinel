@@ -16,6 +16,7 @@ const publicRoutes = [
 
 const reachyDeviceRoute = "/api/pet-ai/reachy/device";
 const reachyOperatorRoles = new Set(["ADMIN", "COUNSELOR", "TEACHER"]);
+const staffProvisioningRoutes = ["/api/users", "/api/teachers"];
 
 // 检查是否是公开路由
 function isPublicRoute(pathname: string): boolean {
@@ -24,6 +25,13 @@ function isPublicRoute(pathname: string): boolean {
 
 function isReachyDeviceRoute(pathname: string): boolean {
   return pathname === reachyDeviceRoute || pathname.startsWith(`${reachyDeviceRoute}/`);
+}
+
+function isStaffProvisioningMutation(pathname: string, method: string): boolean {
+  return (
+    method !== "GET" &&
+    staffProvisioningRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -65,6 +73,13 @@ export async function middleware(request: NextRequest) {
     if (isReachyDeviceRoute(pathname) && !reachyOperatorRoles.has(payload.role)) {
       return NextResponse.json(
         { code: 403, message: "无权操作 Reachy 设备", data: null },
+        { status: 403 }
+      );
+    }
+
+    if (isStaffProvisioningMutation(pathname, request.method) && payload.role !== "ADMIN") {
+      return NextResponse.json(
+        { code: 403, message: "仅管理员可配置教职工账号", data: null },
         { status: 403 }
       );
     }
