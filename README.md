@@ -719,6 +719,70 @@ npm run dev
 
 访问 http://localhost:3000
 
+### Reachy Mini 心宠调试（Windows Host Bridge）
+
+Sentinel 只通过服务端访问 ClawBody 和 Windows Host Bridge；浏览器只调用 Sentinel 同源 API。将下列配置分别写入两个仓库的本地 `.env`，不要提交密钥：
+
+```dotenv
+# clawbody-minimax/.env
+SERVICE_API_KEY="<clawbody-service-key>"
+HOST_BRIDGE_API_KEY="<host-bridge-key>"
+
+# PsyTwin-Sentinel/.env
+CLAWBODY_SERVICE_URL="http://127.0.0.1:7860"
+CLAWBODY_SERVICE_KEY="<clawbody-service-key>"
+HOST_BRIDGE_URL="http://127.0.0.1:7861"
+HOST_BRIDGE_API_KEY="<host-bridge-key>"
+```
+
+`CLAWBODY_SERVICE_KEY` 必须与 ClawBody 的 `SERVICE_API_KEY` 相同，Sentinel 与 ClawBody 两侧的 `HOST_BRIDGE_API_KEY` 也必须相同。这两组密钥都是服务端机密，禁止改成 `NEXT_PUBLIC_*` 变量或传入浏览器。`7860` 是 Sentinel 访问的 ClawBody 内部服务端口，`7861` 是只监听 Windows 回环地址的 Host Bridge 端口；不要将 Host Bridge 发布到局域网或公网。
+
+在 Windows 10/11 上，先按 ClawBody 仓库 README 完成 `.venv`、Reachy Mini SDK 和 `.env` 配置。然后仅需在 ClawBody 仓库根目录安装一次当前用户的隐藏登录任务：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+clawbody-host install
+clawbody-host restart
+clawbody-host status
+```
+
+`install` 创建或更新固定任务 `PsyTwin ClawBody Host Bridge`；`restart` 用于安装后立即启动，否则它会在下次登录时启动；`status` 查看任务状态。不要同时运行计划任务实例和前台 `clawbody-host-bridge`。更完整的安装、前台诊断与卸载说明以 ClawBody 仓库 README 为准。
+
+日常使用前必须完全退出 Reachy Mini Control，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
+
+```text
+启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备
+```
+
+1. 启动 Docker Desktop，在 ClawBody 仓库运行 `docker compose up -d`，用 `docker compose ps` 确认 `clawbody-service` 正常。
+2. 如需确认 Host Bridge，在 ClawBody 仓库运行 `clawbody-host status`；任务未运行时使用 `clawbody-host restart`。
+3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
+
+以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+clawbody-host status
+Invoke-RestMethod http://127.0.0.1:7861/health
+$hostBridgeKey = Read-Host "HOST_BRIDGE_API_KEY"
+$headers = @{"X-Host-Bridge-Key"=$hostBridgeKey}
+Invoke-RestMethod http://127.0.0.1:7861/v1/device/status -Headers $headers
+Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
+```
+
+摄像头预览只在用户点击“打开摄像头预览”后请求浏览器权限，并优先选择名称包含 `Reachy` 或 `Mini` 的视频设备。Sentinel 不会为了预览自动释放 daemon 媒体；权限被拒绝、设备未识别或摄像头被 daemon/其他程序占用时，页面只显示媒体警告，不会将设备标记为离线，也不影响电机、扬声器或麦克风控制。关闭预览会停止浏览器获取的所有视频轨道。
+
+| 现象 | 处理 |
+|------|------|
+| “心宠设备控制桥未运行” | 在 ClawBody 仓库执行 `clawbody-host status`，必要时执行 `clawbody-host restart`，再用 `/health` 只读检查。 |
+| Host Bridge 返回 `401` 或 Sentinel 显示设备请求失败 | 确认 Sentinel 和 ClawBody 的 `HOST_BRIDGE_API_KEY` 完全一致，修改后重启对应服务；不要将密钥放入 URL、日志或前端变量。 |
+| 未发现 Reachy Mini Lite USB | 确认 Reachy Mini Control 已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
+| daemon 启动失败或 `8000` 端口冲突 | 退出 Reachy Mini Control 和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
+| Docker/ClawBody 未连接 | USB、daemon 和基础硬件调试仍可用；学生会话入口保持不可用。检查 `docker compose ps`、`http://127.0.0.1:7860/health` 以及 `SERVICE_API_KEY`/`CLAWBODY_SERVICE_KEY` 是否匹配。 |
+| 摄像头预览受阻 | 允许浏览器摄像头权限，或关闭正在占用该摄像头的程序。这是可独立降级的媒体状态，无需停止设备。 |
+
+Sentinel 设备 API 只接受预定义的发现、启停、重启、动作、姿态和音量命令，不接收 shell 命令、可执行文件路径或任意上游 URL。设备启动链路本身不访问 Hugging Face、GitHub、OpenAI 或应用商店。
+
 ### LightRAG 知识库配置
 
 如果需要启用“心理学知识库”页面和 OpenClaw RAG 上下文增强，请确认 `.env` 中包含：
