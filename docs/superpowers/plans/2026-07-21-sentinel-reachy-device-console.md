@@ -200,7 +200,7 @@ Run: `npx tsx --test lib/pet-ai/pet-ai-api.test.ts`
 
 Expected: all API source-contract tests pass.
 
-- [x] **Step 6: Review and request commit authorization** *(2026-07-21: Task-scoped commit authorized; no push.)*
+- [ ] **Step 6: Review and request commit authorization**
 
 Proposed commit: `feat: proxy Reachy device controls through Sentinel`
 
