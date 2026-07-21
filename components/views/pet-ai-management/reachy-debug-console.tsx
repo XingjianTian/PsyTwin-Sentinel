@@ -13,6 +13,10 @@ import {
   type ReachyDeviceSnapshot,
 } from "@/lib/pet-ai/reachy-device"
 import { ReachyCommandQueue } from "@/lib/pet-ai/reachy-command-queue"
+import {
+  getReachyLifecycleWarningUpdate,
+  type ReachyLifecycleWarning,
+} from "@/lib/pet-ai/reachy-lifecycle-warning"
 import { mergeReachyLogs } from "@/lib/pet-ai/reachy-ready-console-state"
 
 const DEVICE_API_PATH = "/api/pet-ai/reachy/device"
@@ -84,6 +88,7 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
   const [pollError, setPollError] = useState("")
   const [commandError, setCommandError] = useState("")
   const [commandPending, setCommandPending] = useState(false)
+  const [lifecycleWarnings, setLifecycleWarnings] = useState<ReachyLifecycleWarning[]>([])
   const snapshotRef = useRef<ReachyDeviceSnapshot | null>(null)
   const logCursorRef = useRef(0)
   const requestGenerationRef = useRef(0)
@@ -143,6 +148,8 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     })
     const payload = await readPayload<unknown>(response)
     if (!response.ok) throw new Error(payload.message || "设备命令执行失败")
+    const warningUpdate = getReachyLifecycleWarningUpdate(command, payload.data)
+    if (warningUpdate !== null) setLifecycleWarnings(warningUpdate)
     await fetchSnapshot()
   }, [fetchSnapshot])
 
@@ -200,6 +207,33 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
           <p className="min-w-0 flex-1">状态暂时未更新，继续显示最近一次成功结果：{pollError}</p>
           <Button type="button" variant="ghost" size="sm" className="h-7 text-red-700 hover:bg-destructive/10 hover:text-red-800" onClick={retryPoll}>
             重试
+          </Button>
+        </div>
+      ) : null}
+
+      {lifecycleWarnings.length > 0 ? (
+        <div
+          className="mx-auto mb-3 flex w-full max-w-5xl items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900"
+          role="alert"
+        >
+          <CircleAlert className="mt-0.5 size-4 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">设备已停止，但会话清理需要确认</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              {lifecycleWarnings.map((warning) => (
+                <li key={warning.code}>{warning.message}</li>
+              ))}
+            </ul>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 text-amber-900 hover:bg-amber-100 hover:text-amber-950"
+            aria-label="关闭设备停止警告"
+            onClick={() => setLifecycleWarnings([])}
+          >
+            关闭
           </Button>
         </div>
       ) : null}
