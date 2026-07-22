@@ -751,12 +751,15 @@ clawbody-host status
 日常使用前必须完全退出 Reachy Mini Control，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
 
 ```text
-启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备
+启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备 → 返回实时联调 → 开始对话
 ```
 
 1. 启动 Docker Desktop，在 ClawBody 仓库运行 `docker compose up -d`，用 `docker compose ps` 确认 `clawbody-service` 正常。
 2. 如需确认 Host Bridge，在 ClawBody 仓库根目录运行 `.\.venv\Scripts\clawbody-host.exe status`；任务未运行时运行 `.\.venv\Scripts\clawbody-host.exe restart`。这两条命令不依赖当前 PowerShell 已激活虚拟环境。
 3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
+4. 设备显示 `Ready` 后点击“返回实时联调”；页面会自动回到“心宠管理”并打开“实时联调”页签。
+5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体 Reachy 对话；其他学生只能使用文本联调。
+6. 学生对着 Reachy 说话后，“实时对话”会显示百度 ASR 转写与心宠 TTS 回复，“协作过程”会显示风险识别和双层 AI 摘要。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
 
 以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
 
@@ -770,8 +773,6 @@ Invoke-RestMethod http://127.0.0.1:7861/v1/device/status -Headers $headers
 Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
 ```
 
-摄像头预览只在用户点击“打开摄像头预览”后请求浏览器权限，并优先选择名称包含 `Reachy` 或 `Mini` 的视频设备。Sentinel 不会为了预览自动释放 daemon 媒体；权限被拒绝、设备未识别或摄像头被 daemon/其他程序占用时，页面只显示媒体警告，不会将设备标记为离线，也不影响电机、扬声器或麦克风控制。关闭预览会停止浏览器获取的所有视频轨道。
-
 | 现象 | 处理 |
 |------|------|
 | “心宠设备控制桥未运行” | 在 ClawBody 仓库根目录执行 `.\.venv\Scripts\clawbody-host.exe status`，必要时执行 `.\.venv\Scripts\clawbody-host.exe restart`，再用 `/health` 只读检查。 |
@@ -779,7 +780,6 @@ Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
 | 未发现 Reachy Mini Lite USB | 确认 Reachy Mini Control 已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
 | daemon 启动失败或 `8000` 端口冲突 | 退出 Reachy Mini Control 和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
 | Docker/ClawBody 未连接 | USB、daemon 和基础硬件调试仍可用；学生会话入口保持不可用。检查 `docker compose ps`、`http://127.0.0.1:7860/health` 以及 `SERVICE_API_KEY`/`CLAWBODY_SERVICE_KEY` 是否匹配。 |
-| 摄像头预览受阻 | 允许浏览器摄像头权限，或关闭正在占用该摄像头的程序。这是可独立降级的媒体状态，无需停止设备。 |
 
 Sentinel 设备 API 只接受预定义的发现、启停、重启、动作、姿态和音量命令，不接收 shell 命令、可执行文件路径或任意上游 URL。设备启动链路本身不访问 Hugging Face、GitHub、OpenAI 或应用商店。
 

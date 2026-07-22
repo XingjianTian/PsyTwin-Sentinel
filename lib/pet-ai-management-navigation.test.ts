@@ -67,8 +67,20 @@ test("pet AI management route renders the native management workspace", async ()
     viewSource.indexOf('if (action === "start" && !sessionEntry.canStart)')
       < viewSource.indexOf('fetch("/api/pet-ai/reachy/session"'),
   )
+  assert.match(
+    viewSource,
+    /onReturnToManagement=\{\(\) => \{\s*setWorkspaceMode\("management"\)\s*setActiveTab\("live"\)\s*\}\}/,
+  )
   assert.doesNotMatch(viewSource, />功能规划中</)
   assert.match(pageSource, /<PetAiManagementView\s*\/>/)
+})
+
+test("README documents the complete Reachy debug to live-session workflow", async () => {
+  const readme = await readSource("../README.md")
+
+  assert.match(readme, /心宠调试[\s\S]*启动设备[\s\S]*返回实时联调[\s\S]*开始对话/)
+  assert.match(readme, /首版仅允许测试学生启动实体 Reachy 对话/)
+  assert.doesNotMatch(readme, /打开摄像头预览|摄像头预览受阻/)
 })
 
 test("pet AI management exposes an accessible Reachy debug workspace", async () => {

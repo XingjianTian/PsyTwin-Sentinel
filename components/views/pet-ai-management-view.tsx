@@ -304,7 +304,10 @@ export function PetAiManagementView() {
             </TabsContent>
           </Tabs>
         </section>
-      </section> : <ReachyDebugConsole onReturnToManagement={() => setWorkspaceMode("management")} />}
+      </section> : <ReachyDebugConsole onReturnToManagement={() => {
+        setWorkspaceMode("management")
+        setActiveTab("live")
+      }} />}
     </div>
   )
 }
