@@ -61,7 +61,6 @@ const menuGroups: MenuGroup[] = [
     href: "#",
     subItems: [
       { icon: Workflow, label: "心图·AI助手", href: "/ai-config?tab=openclaw" },
-      { icon: PawPrint, label: "心宠AI管理中心", href: "/pet-ai-management" },
       { icon: ScanSearch, label: "预警工单管理", href: "/risk-trace" },
       { icon: Monitor, label: "设备与预约管理", href: "/device-appointments" },
     ],
@@ -80,6 +79,7 @@ const menuGroups: MenuGroup[] = [
     label: "心图·AI配置",
     href: "#",
     subItems: [
+      { icon: PawPrint, label: "心宠AI管理中心", href: "/pet-ai-management" },
       { icon: Database, label: "心理学知识库", href: "/ai-config?tab=rag" },
       { icon: BrainCircuit, label: "后台智能体配置中心", href: "/ai-config?tab=strategy" },
     ],

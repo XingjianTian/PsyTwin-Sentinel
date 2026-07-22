@@ -5,13 +5,19 @@ import test from "node:test"
 const readSource = async (relativePath: string) =>
   readFile(new URL(relativePath, import.meta.url), "utf8").catch(() => "")
 
-test("sidebar exposes pet AI management after the AI assistant and renames strategy configuration", async () => {
+test("sidebar nests pet AI management directly under the AI configuration group", async () => {
   const source = await readSource("../components/dashboard-sidebar.tsx")
-  const assistantIndex = source.indexOf('label: "心图·AI助手"')
+  const workbenchIndex = source.indexOf('label: "心理工作业务台"')
+  const archiveIndex = source.indexOf('label: "数字孪生档案"')
+  const aiConfigIndex = source.indexOf('label: "心图·AI配置"')
   const petAiIndex = source.indexOf('label: "心宠AI管理中心"')
+  const knowledgeBaseIndex = source.indexOf('label: "心理学知识库"')
+  const systemIndex = source.indexOf('label: "系统管理"')
 
-  assert.notEqual(assistantIndex, -1)
-  assert.ok(petAiIndex > assistantIndex)
+  assert.ok(workbenchIndex >= 0 && archiveIndex > workbenchIndex)
+  assert.ok(!(petAiIndex > workbenchIndex && petAiIndex < archiveIndex))
+  assert.ok(aiConfigIndex >= 0 && petAiIndex > aiConfigIndex)
+  assert.ok(petAiIndex < knowledgeBaseIndex && knowledgeBaseIndex < systemIndex)
   assert.match(source, /label: "心宠AI管理中心", href: "\/pet-ai-management"/)
   assert.match(source, /label: "后台智能体配置中心", href: "\/ai-config\?tab=strategy"/)
   assert.doesNotMatch(source, /模型与策略中心/)
