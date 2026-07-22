@@ -144,27 +144,28 @@ function StatusBadge({ healthy, children }: { healthy: boolean; children: React.
 function RobotStage({ snapshot }: { snapshot: ReachyDeviceSnapshot }) {
   return (
     <Card className="gap-0 overflow-hidden py-0 shadow-none">
-      <div className="relative flex min-h-64 items-center justify-center overflow-hidden bg-primary/7 px-6 py-8 sm:min-h-72">
-        <div className="absolute inset-x-10 bottom-8 h-10 rounded-[50%] bg-primary/10 blur-xl" aria-hidden="true" />
-        <div className="relative flex flex-col items-center text-center">
-          <span className="flex size-28 items-center justify-center rounded-[2.25rem] border border-primary/15 bg-white/90 text-primary shadow-sm">
-            <Bot className="size-14" strokeWidth={1.35} aria-hidden="true" />
+      <div className="flex items-center gap-3 bg-primary/7 px-4 py-3.5">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-white/90 text-primary shadow-sm">
+            <Bot className="size-7" strokeWidth={1.5} aria-hidden="true" />
           </span>
-          <p className="mt-5 text-base font-semibold">Reachy Mini Lite</p>
-          <p className="mt-1 text-sm text-muted-foreground">静态设备视图</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">Reachy Mini Lite</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">设备连接概览</p>
+          </div>
         </div>
       </div>
       <dl className="grid grid-cols-2 divide-x border-t bg-card">
-        <div className="px-4 py-3.5">
+        <div className="px-4 py-2.5">
           <dt className="text-xs text-muted-foreground">USB 连接</dt>
-          <dd className="mt-1 flex items-center gap-1.5 text-sm font-medium">
+          <dd className="mt-0.5 flex items-center gap-1.5 text-sm font-medium">
             <Cable className="size-3.5 text-primary" aria-hidden="true" />
             {snapshot.serial_port || "已连接"}
           </dd>
         </div>
-        <div className="px-4 py-3.5">
+        <div className="px-4 py-2.5">
           <dt className="text-xs text-muted-foreground">电机模式</dt>
-          <dd className="mt-1 text-sm font-medium">{snapshot.motor_mode || "未知"}</dd>
+          <dd className="mt-0.5 text-sm font-medium">{snapshot.motor_mode || "未知"}</dd>
         </div>
       </dl>
     </Card>
@@ -180,8 +181,8 @@ function ApplicationCard({
 }) {
   const sessionRunning = snapshot.session.running === true
   return (
-    <Card className="gap-4 py-5 shadow-none">
-      <CardHeader className="gap-1 px-5">
+    <Card className="gap-3 py-4 shadow-none">
+      <CardHeader className="gap-1 px-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -195,8 +196,8 @@ function ApplicationCard({
           </StatusBadge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 px-5">
-        <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/60 p-3">
+      <CardContent className="space-y-3 px-4">
+        <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/60 px-3 py-2.5">
           <div>
             <dt className="text-xs text-muted-foreground">会话状态</dt>
             <dd className="mt-1 text-sm font-medium">
@@ -360,43 +361,43 @@ export function ReachyReadyConsole({
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
+    <div className="mx-auto w-full max-w-5xl space-y-3">
       <Card className="gap-0 overflow-hidden py-0 shadow-none">
-        <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-emerald-700">
-              <Check className="size-5" aria-hidden="true" />
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-emerald-700">
+              <Check className="size-4.5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-base font-semibold">Reachy Mini Lite</h3>
                 <StatusBadge healthy>Ready</StatusBadge>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">设备已通过启动、连接与健康检查。</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">设备已通过启动、连接与健康检查。</p>
             </div>
           </div>
           <Button type="button" variant="outline" onClick={onReturnToManagement}>
             <ArrowLeft aria-hidden="true" />返回心宠管理
           </Button>
         </div>
-        <dl className="grid divide-y border-t sm:grid-cols-4 sm:divide-x sm:divide-y-0">
-          <div className="px-4 py-3 sm:px-5">
+        <dl className="grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
+          <div className="px-4 py-2.5">
             <dt className="text-xs text-muted-foreground">连接</dt>
             <dd className="mt-1 text-sm font-medium">USB · {snapshot.serial_port || "已连接"}</dd>
           </div>
-          <div className="px-4 py-3 sm:px-5">
+          <div className="px-4 py-2.5">
             <dt className="text-xs text-muted-foreground">daemon</dt>
             <dd className="mt-1 text-sm font-medium">
               {snapshot.daemon_version || snapshot.daemon_state || "运行中"}
             </dd>
           </div>
-          <div className="px-4 py-3 sm:px-5">
+          <div className="px-4 py-2.5">
             <dt className="text-xs text-muted-foreground">电机</dt>
             <dd className={cn("mt-1 text-sm font-medium", motorControlsEnabled ? "text-emerald-700" : "text-red-700")}>
               {snapshot.motor_mode || "未知"}
             </dd>
           </div>
-          <div className="px-4 py-3 sm:px-5">
+          <div className="px-4 py-2.5">
             <dt className="text-xs text-muted-foreground">ClawBody</dt>
             <dd className={cn("mt-1 text-sm font-medium", snapshot.clawbody_reachable ? "text-emerald-700" : "text-muted-foreground")}>
               {snapshot.clawbody_reachable ? "已连接" : "未连接"}
@@ -415,19 +416,24 @@ export function ReachyReadyConsole({
         {commandPending ? "正在执行设备命令" : copied ? "日志已复制" : "设备控制台就绪"}
       </p>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)]">
-        <RobotStage snapshot={snapshot} />
-        <div className="space-y-4">
+      <div
+        data-layout="reachy-compact-console"
+        className="grid items-start gap-3 lg:grid-cols-2"
+      >
+        <div className="space-y-3">
+          <RobotStage snapshot={snapshot} />
           <ApplicationCard snapshot={snapshot} onReturnToManagement={onReturnToManagement} />
+        </div>
 
-          <Card className="gap-4 py-5 shadow-none">
-            <CardHeader className="gap-1 px-5">
+        <div className="space-y-3">
+          <Card className="gap-3 py-4 shadow-none">
+            <CardHeader className="gap-1 px-4">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Sparkles className="size-4 text-primary" aria-hidden="true" />表情与动作
               </CardTitle>
               <CardDescription>所有动作均通过 Sentinel 安全命令执行。</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 px-5">
+            <CardContent className="grid grid-cols-2 gap-2 px-4">
               {[
                 { label: "唤醒", action: "wake_up" as const, icon: Sun },
                 { label: "休眠", action: "goto_sleep" as const, icon: Moon },
@@ -460,14 +466,14 @@ export function ReachyReadyConsole({
             </CardContent>
           </Card>
 
-          <Card className="gap-4 py-5 shadow-none">
-            <CardHeader className="gap-1 px-5">
+          <Card className="gap-3 py-4 shadow-none">
+            <CardHeader className="gap-1 px-4">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />机器人控制器
               </CardTitle>
               <CardDescription>拖动后按 Host Bridge 安全范围发送姿态。</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-x-5 gap-y-4 px-5 sm:grid-cols-2">
+            <CardContent className="grid gap-x-5 gap-y-3 px-4 sm:grid-cols-2">
               {poseControls.map((control) => (
                 <div key={control.key} className="space-y-2">
                   <div className="flex items-center justify-between gap-2 text-xs">
@@ -509,9 +515,12 @@ export function ReachyReadyConsole({
             <p className="mt-1 text-xs text-muted-foreground">单个媒体异常不会影响其他硬件控制。</p>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="gap-4 py-5 shadow-none">
-            <CardHeader className="gap-1 px-5">
+        <div
+          data-layout="reachy-media-compact"
+          className="grid items-start gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]"
+        >
+          <Card className="gap-3 py-4 shadow-none">
+            <CardHeader className="gap-1 px-4">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Camera className="size-4 text-primary" aria-hidden="true" />摄像头
@@ -531,9 +540,9 @@ export function ReachyReadyConsole({
                         : camera.label}
                 </StatusBadge>
               </div>
-              <CardDescription>仅在点击后请求浏览器权限，不会操作 daemon 媒体服务。</CardDescription>
+              <CardDescription>点击后请求浏览器权限；预览异常不会影响电机、扬声器或麦克风控制。</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 px-5">
+            <CardContent className="space-y-3 px-4">
               {cameraPreviewState === "streaming" ? (
                 <div className="overflow-hidden rounded-lg bg-slate-950">
                   <video
@@ -542,12 +551,12 @@ export function ReachyReadyConsole({
                     muted
                     playsInline
                     aria-label={`${cameraDeviceLabel || "Reachy Mini 摄像头"}实时预览`}
-                    className="aspect-[4/3] w-full object-cover"
+                    className="aspect-video max-h-64 w-full object-cover"
                   />
                 </div>
               ) : (
                 <div
-                  className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted/60 px-4 text-center"
+                  className="flex h-24 items-center justify-center rounded-lg bg-muted/60 px-4 text-center"
                   aria-live="polite"
                 >
                   <div className="max-w-52">
@@ -563,11 +572,9 @@ export function ReachyReadyConsole({
                           ? "预览尚未打开"
                           : "摄像头当前不可用"}
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      {camera.healthy
-                        ? "浏览器会在你确认后显示画面。"
-                        : "Host Bridge 未检测到可用摄像头。"}
-                    </p>
+                    {!camera.healthy ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Host Bridge 未检测到可用摄像头。</p>
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -609,79 +616,78 @@ export function ReachyReadyConsole({
                   打开摄像头预览
                 </Button>
               )}
-              <p className="text-xs leading-5 text-muted-foreground">
-                预览不可用或被占用时，不会影响电机、扬声器或麦克风控制。
-              </p>
             </CardContent>
           </Card>
 
-          <Card className="gap-4 py-5 shadow-none">
-            <CardHeader className="gap-1 px-5">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
-                </CardTitle>
-                <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
-              </div>
-              <CardDescription>输出音量 {speakerVolume}%</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 px-5">
-              <Slider
-                aria-label="扬声器音量"
-                value={[speakerVolume]}
-                min={0}
-                max={100}
-                step={1}
-                disabled={!speaker.healthy || commandPending}
-                onValueChange={([value]) => {
-                  const next = clampVolume(value)
-                  setSpeakerVolume(next)
-                  queueVolume("speaker", next)
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={!speaker.healthy || commandPending}
-                onClick={() => performDeviceAction("test_sound")}
-              >
-                <Volume2 aria-hidden="true" />测试声音
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="grid items-start gap-3">
+            <Card className="gap-3 py-4 shadow-none">
+              <CardHeader className="gap-1 px-4">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
+                  </CardTitle>
+                  <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
+                </div>
+                <CardDescription>输出音量 {speakerVolume}%</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 px-4">
+                <Slider
+                  aria-label="扬声器音量"
+                  value={[speakerVolume]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={!speaker.healthy || commandPending}
+                  onValueChange={([value]) => {
+                    const next = clampVolume(value)
+                    setSpeakerVolume(next)
+                    queueVolume("speaker", next)
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={!speaker.healthy || commandPending}
+                  onClick={() => performDeviceAction("test_sound")}
+                >
+                  <Volume2 aria-hidden="true" />测试声音
+                </Button>
+              </CardContent>
+            </Card>
 
-          <Card className="gap-4 py-5 shadow-none">
-            <CardHeader className="gap-1 px-5">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
-                </CardTitle>
-                <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
-              </div>
-              <CardDescription>输入音量 {microphoneVolume}%</CardDescription>
-            </CardHeader>
-            <CardContent className="px-5">
-              <Slider
-                aria-label="麦克风音量"
-                value={[microphoneVolume]}
-                min={0}
-                max={100}
-                step={1}
-                disabled={!microphone.healthy || commandPending}
-                onValueChange={([value]) => {
-                  const next = clampVolume(value)
-                  setMicrophoneVolume(next)
-                  queueVolume("microphone", next)
-                }}
-              />
-            </CardContent>
-          </Card>
+            <Card className="gap-3 py-4 shadow-none">
+              <CardHeader className="gap-1 px-4">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
+                  </CardTitle>
+                  <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
+                </div>
+                <CardDescription>输入音量 {microphoneVolume}%</CardDescription>
+              </CardHeader>
+              <CardContent className="px-4">
+                <Slider
+                  aria-label="麦克风音量"
+                  value={[microphoneVolume]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={!microphone.healthy || commandPending}
+                  onValueChange={([value]) => {
+                    const next = clampVolume(value)
+                    setMicrophoneVolume(next)
+                    queueVolume("microphone", next)
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
       <Card className="gap-0 overflow-hidden py-0 shadow-none">
-        <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold">实时日志</h3>
             <p className="mt-1 text-xs text-muted-foreground">最多保留最近 300 条，离开底部时不会抢夺滚动位置。</p>
@@ -691,7 +697,7 @@ export function ReachyReadyConsole({
             {copied ? "已复制" : "复制日志"}
           </Button>
         </div>
-        <ScrollArea ref={logAreaRef} className="h-64 bg-muted/35" aria-label="Reachy 实时日志">
+        <ScrollArea ref={logAreaRef} className="h-44 bg-muted/35" aria-label="Reachy 实时日志">
           <ol className="min-w-max divide-y px-4 font-mono text-xs" role="log" aria-live="off">
             {snapshot.logs.items.length ? snapshot.logs.items.map((entry) => (
               <li key={entry.id} className="grid grid-cols-[5rem_4.5rem_minmax(20rem,1fr)] gap-2 py-2.5">
@@ -712,12 +718,12 @@ export function ReachyReadyConsole({
         </ScrollArea>
       </Card>
 
-      <Card className="gap-4 py-5 shadow-none">
-        <CardHeader className="gap-1 px-5">
+      <Card className="gap-3 py-4 shadow-none">
+        <CardHeader className="gap-1 px-4">
           <CardTitle className="text-sm">设备生命周期</CardTitle>
           <CardDescription>重启会短暂中断连接；停止设备会关闭 daemon。</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2 px-5 sm:flex-row">
+        <CardContent className="flex flex-col gap-2 px-4 sm:flex-row">
           <Button
             type="button"
             variant="outline"

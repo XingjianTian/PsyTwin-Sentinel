@@ -180,6 +180,18 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.doesNotMatch(readySource, /HOST_BRIDGE|127\.0\.0\.1:7861/)
 })
 
+test("Reachy ready console keeps device and media controls compact", async () => {
+  const readySource = await readSource(
+    "../components/views/pet-ai-management/reachy-ready-console.tsx",
+  )
+
+  assert.match(readySource, /data-layout="reachy-compact-console"/)
+  assert.match(readySource, /data-layout="reachy-media-compact"/)
+  assert.match(readySource, /items-start/)
+  assert.doesNotMatch(readySource, /md:grid-cols-3/)
+  assert.doesNotMatch(readySource, /min-h-64|sm:min-h-72/)
+})
+
 test("strategy configuration page uses the renamed title", async () => {
   const source = await readSource("../components/ai-config/strategy-center-view.tsx")
 
