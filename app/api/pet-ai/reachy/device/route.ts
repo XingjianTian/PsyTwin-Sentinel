@@ -253,7 +253,15 @@ function mutationRequestError(request: NextRequest) {
   const origin = request.headers.get("origin")
   if (!origin) return json({ message: "设备命令来源无效" }, 403)
   try {
-    if (new URL(origin).origin !== request.nextUrl.origin) {
+    const allowedOrigins = new Set([request.nextUrl.origin])
+    const forwardedHost = request.headers.get("x-forwarded-host")?.split(",", 1)[0]?.trim()
+    const requestHost = request.headers.get("host")?.trim() || forwardedHost
+    if (requestHost) {
+      const forwardedProtocol = request.headers.get("x-forwarded-proto")?.split(",", 1)[0]?.trim()
+      const protocol = forwardedProtocol || request.nextUrl.protocol.replace(":", "")
+      allowedOrigins.add(new URL(`${protocol}://${requestHost}`).origin)
+    }
+    if (!allowedOrigins.has(new URL(origin).origin)) {
       return json({ message: "设备命令来源无效" }, 403)
     }
   } catch {

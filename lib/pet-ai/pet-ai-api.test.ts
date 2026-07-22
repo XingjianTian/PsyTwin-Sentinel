@@ -521,6 +521,25 @@ test("Reachy device POST accepts same-origin cookie and originless Bearer mutati
   }
 })
 
+test("Reachy device POST accepts the browser host when the dev server listens on 0.0.0.0", async () => {
+  const { route, NextRequest, calls } = await loadDeviceRoute(() => [
+    { port: "COM5", label: "Reachy", vid: "1A86", pid: "55D3" },
+  ])
+  const response = await route.POST(new NextRequest("http://0.0.0.0:3000/api/pet-ai/reachy/device", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "token=valid-middleware-session",
+      Host: "localhost:3000",
+      Origin: "http://localhost:3000",
+    },
+    body: JSON.stringify({ action: "discover" }),
+  }))
+
+  assert.equal(response.status, 200)
+  assert.equal(calls.length, 1)
+})
+
 test("Reachy start and restart use only their fixed routes and 60-second client mode", async () => {
   for (const { action, input, body } of [
     { action: "start", input: { action: "start", serialPort: "COM5" }, body: { serial_port: "COM5" } },
