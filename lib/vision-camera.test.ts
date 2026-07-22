@@ -340,7 +340,7 @@ test("a preview resolved after close is stopped as stale and cannot restore vide
   assert.equal(videoSrcObject, null)
 })
 
-test("Ready console renders accessible camera states without daemon release actions", async () => {
+test("Ready console leaves camera preview to the multimodal live view", async () => {
   const source = await readFile(
     new URL(
       "../components/views/pet-ai-management/reachy-ready-console.tsx",
@@ -349,13 +349,8 @@ test("Ready console renders accessible camera states without daemon release acti
     "utf8",
   )
 
-  assert.match(source, /onClick=\{openCameraPreview\}/)
-  assert.match(source, /打开摄像头预览/)
-  assert.match(source, /createReachyCameraPreviewController/)
-  assert.match(source, /previewController\.open\(\)/)
-  assert.match(source, /<video[\s\S]*autoPlay[\s\S]*muted[\s\S]*playsInline/)
-  assert.match(source, /role="alert"/)
-  assert.match(source, /预览受阻/)
-  assert.match(source, /不会影响电机、扬声器或麦克风控制/)
-  assert.doesNotMatch(source, /release.*daemon|daemon.*release/i)
+  assert.doesNotMatch(source, /openCameraPreview|打开摄像头预览/)
+  assert.doesNotMatch(source, /createReachyCameraPreviewController/)
+  assert.doesNotMatch(source, /<video[\s\S]*playsInline/)
+  assert.doesNotMatch(source, /reachy-media-heading|媒体设备/)
 })

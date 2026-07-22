@@ -191,14 +191,19 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.doesNotMatch(readySource, /HOST_BRIDGE|127\.0\.0\.1:7861/)
 })
 
-test("Reachy ready console keeps device and media controls compact", async () => {
+test("Reachy ready console groups audio with the live-session return action", async () => {
   const readySource = await readSource(
     "../components/views/pet-ai-management/reachy-ready-console.tsx",
   )
 
   assert.match(readySource, /data-layout="reachy-compact-console"/)
-  assert.match(readySource, /data-layout="reachy-media-compact"/)
+  assert.match(readySource, /data-layout="reachy-audio-and-live-link"/)
   assert.match(readySource, /items-start/)
+  assert.equal(readySource.match(/返回实时联调/g)?.length, 1)
+  assert.doesNotMatch(readySource, /function ApplicationCard/)
+  assert.doesNotMatch(readySource, /对话、语音与动作编排服务|<dt[^>]*>会话状态<\/dt>|<dt[^>]*>当前学生<\/dt>/)
+  assert.doesNotMatch(readySource, /reachy-media-heading|data-layout="reachy-media-compact"/)
+  assert.doesNotMatch(readySource, /打开摄像头预览|createReachyCameraPreviewController/)
   assert.doesNotMatch(readySource, /md:grid-cols-3/)
   assert.doesNotMatch(readySource, /min-h-64|sm:min-h-72/)
 })

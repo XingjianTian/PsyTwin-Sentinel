@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
-  Activity,
   ArrowLeft,
   Bot,
   Cable,
-  Camera,
   Check,
   CircleAlert,
   Copy,
@@ -22,7 +20,6 @@ import {
   Speaker,
   Sun,
   Volume2,
-  X,
 } from "lucide-react"
 
 import {
@@ -60,11 +57,6 @@ import {
   type ReachyPose,
 } from "@/lib/pet-ai/reachy-ready-console-state"
 import { cn } from "@/lib/utils"
-import {
-  createReachyCameraPreviewController,
-  reachyMiniCameraAdapter,
-  type ReachyCameraPreviewController,
-} from "@/lib/vision-camera"
 
 export const VOLUME_DEBOUNCE_MS = 250
 export const POSE_THROTTLE_MS = 100
@@ -172,56 +164,6 @@ function RobotStage({ snapshot }: { snapshot: ReachyDeviceSnapshot }) {
   )
 }
 
-function ApplicationCard({
-  snapshot,
-  onReturnToManagement,
-}: {
-  snapshot: ReachyDeviceSnapshot
-  onReturnToManagement: () => void
-}) {
-  const sessionRunning = snapshot.session.running === true
-  return (
-    <Card className="gap-3 py-4 shadow-none">
-      <CardHeader className="gap-1 px-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Activity className="size-4 text-primary" aria-hidden="true" />
-              ClawBody
-            </CardTitle>
-            <CardDescription className="mt-1">对话、语音与动作编排服务</CardDescription>
-          </div>
-          <StatusBadge healthy={snapshot.clawbody_reachable}>
-            {snapshot.clawbody_reachable ? "已连接" : "未连接"}
-          </StatusBadge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 px-4">
-        <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/60 px-3 py-2.5">
-          <div>
-            <dt className="text-xs text-muted-foreground">会话状态</dt>
-            <dd className="mt-1 text-sm font-medium">
-              {sessionRunning ? "正在运行" : snapshot.session.state || "未开始"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">当前学生</dt>
-            <dd className="mt-1 truncate text-sm font-medium">
-              {snapshot.session.student_id || "暂无"}
-            </dd>
-          </div>
-        </dl>
-        {snapshot.session.error ? (
-          <p className="text-sm text-red-700" role="alert">{snapshot.session.error}</p>
-        ) : null}
-        <Button type="button" variant="outline" className="w-full" onClick={onReturnToManagement}>
-          <ArrowLeft aria-hidden="true" />返回实时联调
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
 export function ReachyReadyConsole({
   snapshot,
   commandPending,
@@ -233,26 +175,13 @@ export function ReachyReadyConsole({
   const [speakerVolume, setSpeakerVolume] = useState(snapshot.media.output_volume ?? 50)
   const [microphoneVolume, setMicrophoneVolume] = useState(snapshot.media.input_volume ?? 50)
   const [copied, setCopied] = useState(false)
-  const [cameraPreviewState, setCameraPreviewState] = useState<
-    "idle" | "opening" | "streaming" | "error"
-  >("idle")
-  const [cameraDeviceLabel, setCameraDeviceLabel] = useState("")
-  const [cameraError, setCameraError] = useState("")
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const poseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const microphoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapshotRef = useRef(snapshot)
   const logAreaRef = useRef<HTMLDivElement>(null)
   const nearBottomRef = useRef(true)
-  const cameraVideoRef = useRef<HTMLVideoElement>(null)
-  const previewControllerRef = useRef<ReachyCameraPreviewController | null>(null)
-  const previewController = previewControllerRef.current ??= createReachyCameraPreviewController(
-    reachyMiniCameraAdapter,
-    setCameraStream,
-  )
   const motorControlsEnabled = isMotorControlAvailable(snapshot.phase, snapshot.motor_mode)
-  const camera = mediaPresentation(snapshot.media.camera)
   const microphone = mediaPresentation(snapshot.media.microphone)
   const speaker = mediaPresentation(snapshot.media.speaker)
   const sessionRunning = snapshot.session.running === true
@@ -266,19 +195,6 @@ export function ReachyReadyConsole({
     if (speakerTimerRef.current) clearTimeout(speakerTimerRef.current)
     if (microphoneTimerRef.current) clearTimeout(microphoneTimerRef.current)
   }, [])
-
-  useEffect(() => () => {
-    previewController.dispose()
-  }, [previewController])
-
-  useEffect(() => {
-    const video = cameraVideoRef.current
-    if (!video) return
-    video.srcObject = cameraStream
-    return () => {
-      video.srcObject = null
-    }
-  }, [cameraPreviewState, cameraStream])
 
   useEffect(() => {
     const viewport = logAreaRef.current?.querySelector<HTMLElement>(
@@ -323,28 +239,6 @@ export function ReachyReadyConsole({
 
   const performDeviceAction = (deviceAction: Extract<ReachyDeviceCommand, { action: "device_action" }>["deviceAction"]) => {
     void runCommand({ action: "device_action", deviceAction })
-  }
-
-  const openCameraPreview = async () => {
-    setCameraDeviceLabel("")
-    setCameraError("")
-    setCameraPreviewState("opening")
-
-    const result = await previewController.open()
-    if (result.status === "streaming") {
-      setCameraDeviceLabel(result.deviceLabel)
-      setCameraPreviewState("streaming")
-    } else if (result.status === "error") {
-      setCameraError(result.message)
-      setCameraPreviewState("error")
-    }
-  }
-
-  const closeCameraPreview = () => {
-    previewController.close()
-    setCameraDeviceLabel("")
-    setCameraError("")
-    setCameraPreviewState("idle")
   }
 
   const copyLogs = async () => {
@@ -422,7 +316,84 @@ export function ReachyReadyConsole({
       >
         <div className="space-y-3">
           <RobotStage snapshot={snapshot} />
-          <ApplicationCard snapshot={snapshot} onReturnToManagement={onReturnToManagement} />
+          <Card
+            data-layout="reachy-audio-and-live-link"
+            className="gap-0 overflow-hidden py-0 shadow-none"
+          >
+            <CardHeader className="gap-1 border-b px-4 py-3">
+              <CardTitle className="text-sm">音频与联调</CardTitle>
+              <CardDescription>调整本机音频，或返回学生会话联调。</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 px-4 py-3">
+              <div className="grid gap-2 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-center">
+                <div className="flex items-center justify-between gap-2 sm:block">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
+                  </p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
+                    <span>{speakerVolume}%</span>
+                  </div>
+                </div>
+                <Slider
+                  aria-label="扬声器音量"
+                  value={[speakerVolume]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={!speaker.healthy || commandPending}
+                  onValueChange={([value]) => {
+                    const next = clampVolume(value)
+                    setSpeakerVolume(next)
+                    queueVolume("speaker", next)
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!speaker.healthy || commandPending}
+                  onClick={() => performDeviceAction("test_sound")}
+                >
+                  <Volume2 aria-hidden="true" />测试声音
+                </Button>
+              </div>
+
+              <div className="grid gap-2 border-t pt-3 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
+                <div className="flex items-center justify-between gap-2 sm:block">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
+                  </p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
+                    <span>{microphoneVolume}%</span>
+                  </div>
+                </div>
+                <Slider
+                  aria-label="麦克风音量"
+                  value={[microphoneVolume]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={!microphone.healthy || commandPending}
+                  onValueChange={([value]) => {
+                    const next = clampVolume(value)
+                    setMicrophoneVolume(next)
+                    queueVolume("microphone", next)
+                  }}
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onReturnToManagement}
+              >
+                <ArrowLeft aria-hidden="true" />返回实时联调
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-3">
@@ -507,184 +478,6 @@ export function ReachyReadyConsole({
           </Card>
         </div>
       </div>
-
-      <section aria-labelledby="reachy-media-heading">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 id="reachy-media-heading" className="text-sm font-semibold">媒体设备</h3>
-            <p className="mt-1 text-xs text-muted-foreground">单个媒体异常不会影响其他硬件控制。</p>
-          </div>
-        </div>
-        <div
-          data-layout="reachy-media-compact"
-          className="grid items-start gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(17rem,0.65fr)]"
-        >
-          <Card className="gap-3 py-4 shadow-none">
-            <CardHeader className="gap-1 px-4">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Camera className="size-4 text-primary" aria-hidden="true" />摄像头
-                </CardTitle>
-                <StatusBadge
-                  healthy={
-                    cameraPreviewState === "streaming"
-                    || (cameraPreviewState !== "error" && camera.healthy)
-                  }
-                >
-                  {cameraPreviewState === "streaming"
-                    ? "预览中"
-                    : cameraPreviewState === "opening"
-                      ? "请求中"
-                      : cameraPreviewState === "error"
-                        ? "预览受阻"
-                        : camera.label}
-                </StatusBadge>
-              </div>
-              <CardDescription>点击后请求浏览器权限；预览异常不会影响电机、扬声器或麦克风控制。</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 px-4">
-              {cameraPreviewState === "streaming" ? (
-                <div className="overflow-hidden rounded-lg bg-slate-950">
-                  <video
-                    ref={cameraVideoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    aria-label={`${cameraDeviceLabel || "Reachy Mini 摄像头"}实时预览`}
-                    className="aspect-video max-h-64 w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="flex h-24 items-center justify-center rounded-lg bg-muted/60 px-4 text-center"
-                  aria-live="polite"
-                >
-                  <div className="max-w-52">
-                    {cameraPreviewState === "opening" ? (
-                      <LoaderCircle className="mx-auto size-6 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
-                    ) : (
-                      <Camera className="mx-auto size-6 text-muted-foreground" strokeWidth={1.5} aria-hidden="true" />
-                    )}
-                    <p className="mt-2 text-sm font-medium">
-                      {cameraPreviewState === "opening"
-                        ? "正在请求摄像头访问"
-                        : camera.healthy
-                          ? "预览尚未打开"
-                          : "摄像头当前不可用"}
-                    </p>
-                    {!camera.healthy ? (
-                      <p className="mt-1 text-xs text-muted-foreground">Host Bridge 未检测到可用摄像头。</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-
-              {cameraError ? (
-                <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900" role="alert">
-                  <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <span>{cameraError}</span>
-                </div>
-              ) : null}
-
-              {cameraPreviewState === "streaming" ? (
-                <Button type="button" variant="outline" className="w-full" onClick={closeCameraPreview}>
-                  <X aria-hidden="true" />关闭摄像头预览
-                </Button>
-              ) : cameraPreviewState === "error" ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={!camera.healthy}
-                  onClick={openCameraPreview}
-                >
-                  <RefreshCw aria-hidden="true" />重新尝试摄像头预览
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={!camera.healthy || cameraPreviewState === "opening"}
-                  onClick={openCameraPreview}
-                >
-                  {cameraPreviewState === "opening" ? (
-                    <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                  ) : (
-                    <Camera aria-hidden="true" />
-                  )}
-                  打开摄像头预览
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="grid items-start gap-3">
-            <Card className="gap-3 py-4 shadow-none">
-              <CardHeader className="gap-1 px-4">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
-                  </CardTitle>
-                  <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
-                </div>
-                <CardDescription>输出音量 {speakerVolume}%</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 px-4">
-                <Slider
-                  aria-label="扬声器音量"
-                  value={[speakerVolume]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!speaker.healthy || commandPending}
-                  onValueChange={([value]) => {
-                    const next = clampVolume(value)
-                    setSpeakerVolume(next)
-                    queueVolume("speaker", next)
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={!speaker.healthy || commandPending}
-                  onClick={() => performDeviceAction("test_sound")}
-                >
-                  <Volume2 aria-hidden="true" />测试声音
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="gap-3 py-4 shadow-none">
-              <CardHeader className="gap-1 px-4">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
-                  </CardTitle>
-                  <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
-                </div>
-                <CardDescription>输入音量 {microphoneVolume}%</CardDescription>
-              </CardHeader>
-              <CardContent className="px-4">
-                <Slider
-                  aria-label="麦克风音量"
-                  value={[microphoneVolume]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!microphone.healthy || commandPending}
-                  onValueChange={([value]) => {
-                    const next = clampVolume(value)
-                    setMicrophoneVolume(next)
-                    queueVolume("microphone", next)
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
 
       <Card className="gap-0 overflow-hidden py-0 shadow-none">
         <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
