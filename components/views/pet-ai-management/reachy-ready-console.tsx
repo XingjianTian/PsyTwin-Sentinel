@@ -13,7 +13,6 @@ import {
   Mic,
   Moon,
   Radio,
-  RefreshCw,
   RotateCcw,
   SlidersHorizontal,
   Sparkles,
@@ -270,9 +269,41 @@ export function ReachyReadyConsole({
               <p className="mt-0.5 text-xs text-muted-foreground">设备已通过启动、连接与健康检查。</p>
             </div>
           </div>
-          <Button type="button" variant="outline" onClick={onReturnToManagement}>
-            <ArrowLeft aria-hidden="true" />返回心宠管理
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                data-action="reachy-power-off"
+                className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2"
+                disabled={commandPending}
+              >
+                {commandPending ? (
+                  <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                ) : null}
+                关机
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>确认关闭 Reachy 设备？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {sessionRunning
+                    ? "检测到当前学生会话，学生对话将先停止，随后机器人休眠并关闭 daemon。"
+                    : "机器人将先进入安全休眠，然后关闭 daemon。需要再次启动才能继续调试。"}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2"
+                  onClick={() => void runCommand({ action: "stop" })}
+                >
+                  确认关机
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         <dl className="grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
           <div className="px-4 py-2.5">
@@ -511,55 +542,6 @@ export function ReachyReadyConsole({
         </ScrollArea>
       </Card>
 
-      <Card className="gap-3 py-4 shadow-none">
-        <CardHeader className="gap-1 px-4">
-          <CardTitle className="text-sm">设备生命周期</CardTitle>
-          <CardDescription>重启会短暂中断连接；停止设备会关闭 daemon。</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2 px-4 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            className="sm:flex-1"
-            disabled={commandPending}
-            onClick={() => void runCommand({ action: "restart" })}
-          >
-            {commandPending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <RefreshCw aria-hidden="true" />}
-            重启服务
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="destructive"
-                className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2 sm:flex-1"
-                disabled={commandPending}
-              >
-                停止设备
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>确认停止 Reachy 设备？</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {sessionRunning
-                    ? "检测到当前学生会话，学生对话将先停止，随后机器人休眠并关闭 daemon。"
-                    : "机器人将先进入安全休眠，然后关闭 daemon。需要再次启动才能继续调试。"}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>取消</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-red-700 text-white hover:bg-red-800 focus-visible:border-red-800 focus-visible:ring-red-800 focus-visible:ring-offset-2"
-                  onClick={() => void runCommand({ action: "stop" })}
-                >
-                  确认停止设备
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
     </div>
   )
 }

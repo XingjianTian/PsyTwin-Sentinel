@@ -160,8 +160,7 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
     "休眠",
     "头部归中",
     "天线测试",
-    "重启服务",
-    "停止设备",
+    "关机",
   ]) {
     assert.match(readySource, new RegExp(label))
   }
@@ -174,6 +173,10 @@ test("Reachy ready console exposes lifecycle, media, controls, and diagnostics",
   assert.match(readySource, /navigator\.clipboard\.writeText/)
   assert.match(readySource, /AlertDialog/)
   assert.match(readySource, /学生对话将先停止/)
+  assert.match(readySource, /data-action="reachy-power-off"/)
+  assert.match(readySource, /确认关闭 Reachy 设备/)
+  assert.match(readySource, /action: "stop"/)
+  assert.doesNotMatch(readySource, /设备生命周期|重启服务|返回心宠管理/)
   assert.match(readySource, /onReturnToManagement/)
   assert.match(readySource, /aria-live="polite"/)
   assert.match(readySource, /nearBottom/)
