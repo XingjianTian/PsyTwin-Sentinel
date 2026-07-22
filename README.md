@@ -721,6 +721,8 @@ npm run dev
 
 ### Reachy Mini 心宠调试（Windows Host Bridge）
 
+首次部署或交付其他开发者时，请先阅读[《心宠调试与 Reachy Mini 实时联调完整配置教程》](./docs/REACHY_MINI_SETUP_GUIDE.md)。该教程包含两仓库拉取、Windows Host Bridge、Docker、Sentinel、首次验收、日常操作和完整故障排查步骤。
+
 Sentinel 只通过服务端访问 ClawBody 和 Windows Host Bridge；浏览器只调用 Sentinel 同源 API。将下列配置分别写入两个仓库的本地 `.env`，不要提交密钥：
 
 ```dotenv
