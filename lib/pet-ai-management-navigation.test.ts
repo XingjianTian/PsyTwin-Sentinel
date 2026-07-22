@@ -123,6 +123,17 @@ test("pet AI management exposes an accessible Reachy debug workspace", async () 
   assert.match(connectionSource, /onRetry\(selectedPort \|\| snapshot\.serial_port/)
 })
 
+test("Reachy debug workspace omits the redundant introduction toolbar", async () => {
+  const consoleSource = await readSource(
+    "../components/views/pet-ai-management/reachy-debug-console.tsx",
+  )
+
+  assert.match(consoleSource, /aria-label="Reachy 设备调试"/)
+  assert.doesNotMatch(consoleSource, /<h2 id="reachy-debug-heading"/)
+  assert.doesNotMatch(consoleSource, /发现、启动并检查本机连接的 Reachy Mini Lite。/)
+  assert.doesNotMatch(consoleSource, /<ArrowLeft \/>返回管理/)
+})
+
 test("Reachy ready console exposes lifecycle, media, controls, and diagnostics", async () => {
   const consoleSource = await readSource(
     "../components/views/pet-ai-management/reachy-debug-console.tsx",

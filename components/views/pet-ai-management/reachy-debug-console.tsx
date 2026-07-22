@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ArrowLeft, Cable, CircleAlert, RefreshCw } from "lucide-react"
+import { Cable, CircleAlert, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -188,19 +188,9 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
 
   return (
     <section
-      aria-labelledby="reachy-debug-heading"
+      aria-label="Reachy 设备调试"
       className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-muted/35 p-3 sm:p-4"
     >
-      <div className="mx-auto mb-4 flex w-full max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 id="reachy-debug-heading" className="text-lg font-semibold">Reachy 设备调试</h2>
-          <p className="mt-1 text-sm text-muted-foreground">发现、启动并检查本机连接的 Reachy Mini Lite。</p>
-        </div>
-        <Button type="button" variant="ghost" size="sm" onClick={onReturnToManagement}>
-          <ArrowLeft />返回管理
-        </Button>
-      </div>
-
       {pollError && snapshot ? (
         <div className="mx-auto mb-3 flex w-full max-w-5xl items-start gap-2 rounded-lg bg-destructive/8 px-3 py-2.5 text-sm text-red-700" role="status">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
