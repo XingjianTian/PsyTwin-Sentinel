@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getStudentPetSnapshot } from "@/app/actions/pet-snapshot"
 import { buildDemoConversations, buildStableOceanPersonality, DEMO_PET_NAME } from "@/lib/pet-ai/demo-data"
 import { DEFAULT_PET_AI_PROFILE, petAiProfileInputSchema } from "@/lib/pet-ai/profile"
+import { buildPetLiveChatSessionId } from "@/lib/pet-ai/reachy-conversation"
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
@@ -38,6 +39,14 @@ export async function GET(_request: NextRequest, context: Context) {
   const aiProfile = profile
     ? { tone: profile.tone, responseStyle: profile.responseStyle, initiative: profile.initiative, systemPrompt: profile.systemPrompt, knowledgeScope: profile.knowledgeScope }
     : DEFAULT_PET_AI_PROFILE
+  const liveMessages = isDemoStudent
+    ? (await prisma.chatMessage.findMany({
+        where: { sessionId: buildPetLiveChatSessionId(studentId, petSnapshot.id) },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: { id: true, senderId: true, content: true, emotionTag: true, createdAt: true },
+      })).reverse()
+    : []
 
   return NextResponse.json({
     data: {
@@ -49,7 +58,17 @@ export async function GET(_request: NextRequest, context: Context) {
         personality,
       },
       aiProfile,
-      conversations: isDemoStudent ? [] : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
+      conversations: isDemoStudent
+        ? liveMessages.map((message) => ({
+            id: message.id,
+            role: message.senderId === studentId ? "student" : "pet",
+            content: message.content,
+            createdAt: message.createdAt.toISOString(),
+            topic: "实体心宠联调",
+            demo: false,
+            riskLevel: message.emotionTag || "LOW",
+          }))
+        : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
       isDemoStudent,
     },
   })

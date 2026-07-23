@@ -100,7 +100,7 @@ function getCameraErrorMessage(error: unknown) {
     }
 
     if (error.name === "NotFoundError") {
-      return "未检测到可用摄像头，请检查 Reachy Mini 或本机摄像头连接。"
+      return "未检测到可用摄像头，请检查心宠或本机摄像头连接。"
     }
   }
 
@@ -395,7 +395,7 @@ export function MultimodalDataFlowView() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle")
-  const [cameraLabel, setCameraLabel] = useState("Reachy Mini 摄像头")
+  const [cameraLabel, setCameraLabel] = useState("心宠摄像头")
   const [isCameraFallback, setIsCameraFallback] = useState(false)
   const [cameraError, setCameraError] = useState("")
   const [students, setStudents] = useState<StudentData[]>([])
@@ -415,7 +415,7 @@ export function MultimodalDataFlowView() {
     name: "测试学生",
     studentId: "test-001",
     room: "测试咨询室 A01",
-    scenario: "Reachy Mini 实时直播",
+    scenario: "心宠实时直播",
     startTime: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
     duration: 0,
     emotion: "紧张",
@@ -945,7 +945,7 @@ export function MultimodalDataFlowView() {
                         {cameraStatus === "loading" ? "正在自动连接摄像头..." : "摄像头暂未连接"}
                       </p>
                       <p className="mt-2 max-w-md text-sm text-zinc-400">
-                        {cameraError || "系统将优先选择 Reachy Mini 摄像头，未连接时使用本机摄像头。"}
+                        {cameraError || "系统将优先选择心宠摄像头，未连接时使用本机摄像头。"}
                       </p>
                     </div>
                   </div>

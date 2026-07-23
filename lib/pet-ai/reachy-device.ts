@@ -19,6 +19,11 @@ export type ReachyDeviceCommand =
       deviceAction: "wake_up" | "goto_sleep" | "center" | "antenna_test" | "test_sound"
     }
   | {
+      action: "choreography"
+      kind: "emotion" | "dance" | "music"
+      move: string
+    }
+  | {
       action: "pose"
       headPitch: number
       headRoll: number

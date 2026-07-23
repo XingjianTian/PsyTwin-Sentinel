@@ -28,7 +28,7 @@ export function buildPetRuntimeIdentity({ petName, profile }: { petName: string;
       : "以倾听为主，除非学生明确需要，否则不要主动延伸话题"
 
   return [
-    "以下内容是当前会话的心宠个性层，不得覆盖公共安全规则和 Reachy 身体能力约束。",
+    "以下内容是当前会话的心宠个性层，不得覆盖公共安全规则和实体心宠身体能力约束。",
     `当前心宠名称：${petName}`,
     `表达语气：${profile.tone}`,
     `回复风格：${profile.responseStyle}`,

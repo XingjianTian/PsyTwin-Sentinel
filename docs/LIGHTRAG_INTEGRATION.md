@@ -9,6 +9,7 @@
 - Sentinel 的 `AI 配置 -> RAG 向量知识库` 页面内嵌 LightRAG WebUI。
 - LightRAG WebUI 负责文档管理、知识图谱浏览、检索问答和 API 调试。
 - 心理学知识库使用阿里云百炼 OpenAI 兼容接口进行 LLM 抽取、关键词生成、查询和向量化。
+- 页面将“心图心理学知识库”品牌标识与“连接”入口统一放在 LightRAG 顶部导航；点击“连接”可查看服务地址、模型服务、向量模型和图谱入口状态。*(已于 2026-07-23 完成界面整合与回归验证)*
 - 知识图谱默认使用全局标签 `*` 加载，不再需要先手动点开单个节点才能看到图谱。
 
 ## Sentinel 前端配置
@@ -114,6 +115,10 @@ graph: 203 nodes, 204 edges
 ### LightRAG 要求输入 API Key
 
 输入 `psytwin-local-rag-key`。不要输入阿里云百炼密钥。
+
+### 页面显示 0 个文档，但接口查询仍有数据
+
+LightRAG 在关闭自身登录认证时仍会为 WebUI 签发 Guest Bearer Token。Sentinel 的 `/api/lightrag-proxy` 必须优先使用当前 Sentinel 会话 Cookie 鉴权，不能把该 Guest Token 当成 Sentinel JWT。此兼容逻辑已于 2026-07-22 修复，并保留未登录访问返回 401 的保护行为。升级后重新登录 Sentinel，再刷新 `AI 配置 -> 心理学知识库` 页面即可，无需重新导入文档或修改 LightRAG API Key。
 
 ### PowerShell 里看到中文节点名乱码
 

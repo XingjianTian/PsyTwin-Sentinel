@@ -111,7 +111,7 @@ export function ReachyConnectionPanel({
       <div className="flex flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">连接 Reachy Mini Lite</h2>
+            <h2 className="text-base font-semibold">连接实体心宠</h2>
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium",
@@ -190,7 +190,7 @@ export function ReachyConnectionPanel({
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-lg border" role="group" aria-label="Reachy 连接方式">
+        <div className="overflow-hidden rounded-lg border" role="group" aria-label="心宠连接方式">
           {snapshot.devices.map((device) => {
             const selected = selectedPort === device.port
             return (
@@ -233,7 +233,7 @@ export function ReachyConnectionPanel({
                   <Cable className="size-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium">没有找到 USB Reachy</p>
+                  <p className="text-sm font-medium">没有找到 USB 心宠设备</p>
                   <p className="mt-1 max-w-[65ch] text-xs leading-5 text-muted-foreground">
                     请检查机器人电源、USB 数据线和 Windows 串口驱动，并在设备管理器中确认 COM 端口已出现。
                   </p>

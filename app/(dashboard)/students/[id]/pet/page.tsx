@@ -12,18 +12,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PocketPetStage } from "@/components/pet/pocket-pet-stage"
+import {
+  PetLogCarousel,
+  type PetLogCarouselItem,
+} from "@/components/pet/pet-log-carousel"
+import { usePetLiveSync, type PetLiveSyncConnectionStatus } from "@/hooks/use-pet-live-sync"
+import { DEFAULT_POCKET_SCENE_ID, getPocketScenePresentation } from "@/lib/pet-live-sync"
 import {
   Activity,
   Battery,
-  BookOpen,
-  Gamepad2,
   Heart,
   MapPin,
   Moon,
-  Puzzle,
-  ShoppingBag,
   Sparkles,
   Users,
+  Wifi,
+  WifiOff,
 } from "lucide-react"
 
 interface StudentSummary {
@@ -47,13 +52,7 @@ interface PetProfile {
   logs: PetLog[]
 }
 
-interface PetLog {
-  time: string
-  source: "小程序" | "Unity"
-  title: string
-  detail: string
-  tone: "pocket" | "unity" | "diary" | "shop" | "calm"
-}
+type PetLog = PetLogCarouselItem
 
 const petNames = ["小芯", "小安", "可乐", "奶茶", "球球", "墨墨"]
 const colors = ["雪白", "浅蓝", "奶油白", "薄荷灰", "月光银"]
@@ -191,28 +190,14 @@ function petStatusTrackClass(value: number, palette: StatusPalette = "default") 
   return ""
 }
 
-function logToneClass(tone: PetLog["tone"]) {
-  if (tone === "unity") return "border-violet-200 bg-violet-50 text-violet-700"
-  if (tone === "shop") return "border-amber-200 bg-amber-50 text-amber-700"
-  if (tone === "diary") return "border-indigo-200 bg-indigo-50 text-indigo-700"
-  if (tone === "pocket") return "border-sky-200 bg-sky-50 text-sky-700"
-  return "border-emerald-200 bg-emerald-50 text-emerald-700"
-}
-
-function LogIcon({ tone }: { tone: PetLog["tone"] }) {
-  if (tone === "unity") return <Puzzle className="h-4 w-4" />
-  if (tone === "shop") return <ShoppingBag className="h-4 w-4" />
-  if (tone === "diary") return <BookOpen className="h-4 w-4" />
-  if (tone === "pocket") return <MapPin className="h-4 w-4" />
-  return <Gamepad2 className="h-4 w-4" />
-}
-
 export default function StudentPetPage() {
   const params = useParams()
   const studentId = params.id as string
   const [student, setStudent] = useState<StudentSummary | null>(null)
   const [pet, setPet] = useState<StudentPetSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
+  const isDemoPetObserver = studentId === "stu-test"
+  const liveSync = usePetLiveSync({ enabled: isDemoPetObserver, userId: "demo_pet" })
 
   useEffect(() => {
     async function fetchPetData() {
@@ -239,6 +224,29 @@ export default function StudentPetPage() {
     return <PetSkeleton />
   }
 
+  const defaultPocketScene = getPocketScenePresentation(DEFAULT_POCKET_SCENE_ID)
+  const displayedMood = liveSync.update?.mood ?? pet.mood
+  const displayedEnergy = liveSync.update?.energy ?? pet.energy
+  const displayedSociability = liveSync.update?.sociability ?? pet.sociability
+  const displayedActivity = liveSync.update?.activity ?? pet.activity
+  const displayedSceneName = liveSync.update?.sceneName ?? defaultPocketScene.sceneName
+  const displayedSceneBackground =
+    liveSync.update?.sceneBackgroundSrc ?? defaultPocketScene.sceneBackgroundSrc
+  const displayedLogs: PetLog[] =
+    isDemoPetObserver && liveSync.update?.logs?.length
+      ? liveSync.update.logs.map((log) => ({
+          id: log.id,
+          time: formatServerLogTime(log.date, log.time),
+          source: "心宠服务",
+          title: log.title,
+          detail: log.detail,
+          tone: "server",
+          mood: log.mood,
+          energy: log.energy,
+          sociability: log.sociability,
+        }))
+      : pet.logs
+
   return (
     <div className="flex flex-col gap-4">
       <Card className="overflow-hidden border-border bg-card shadow-sm">
@@ -252,6 +260,12 @@ export default function StudentPetPage() {
           </Badge>
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-[minmax(260px,0.9fr)_1fr]">
+          {isDemoPetObserver ? (
+            <PocketPetStage
+              sceneName={displayedSceneName}
+              sceneBackgroundSrc={displayedSceneBackground}
+            />
+          ) : (
           <div className="relative flex min-h-[360px] items-end justify-center overflow-hidden rounded-lg border border-border bg-[linear-gradient(180deg,#eef7ff_0%,#f7fbf2_62%,#e4f5dc_100%)] p-6">
             <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
               <MapPin className="h-3.5 w-3.5 text-primary" />
@@ -270,6 +284,7 @@ export default function StudentPetPage() {
               style={{ imageRendering: "pixelated", width: "auto" }}
             />
           </div>
+          )}
 
           <div className="flex flex-col justify-between gap-5">
             <div>
@@ -280,7 +295,15 @@ export default function StudentPetPage() {
                     心宠 · {student?.studentNo || studentId}
                   </p>
                 </div>
-                <Badge variant="outline">只读观察</Badge>
+                <div className="flex flex-col items-end gap-1.5">
+                  <Badge variant="outline">只读观察</Badge>
+                  {isDemoPetObserver && (
+                    <LiveSyncBadge
+                      status={liveSync.connectionStatus}
+                      lastUpdatedAt={liveSync.lastUpdatedAt}
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="mt-5 grid gap-2 sm:grid-cols-3">
@@ -293,13 +316,13 @@ export default function StudentPetPage() {
             <Separator />
 
             <div className="space-y-4">
-              <StatusRow icon={Heart} label="心情" value={pet.mood} delta={pet.metricChanges.mood} palette="mood" />
-              <StatusRow icon={Battery} label="能量" value={pet.energy} delta={pet.metricChanges.energy} palette="energy" />
-              <StatusRow icon={Users} label="社交" value={pet.sociability} delta={pet.metricChanges.sociability} palette="social" />
+              <StatusRow icon={Heart} label="心情" value={displayedMood} delta={isDemoPetObserver ? undefined : pet.metricChanges.mood} palette="mood" />
+              <StatusRow icon={Battery} label="能量" value={displayedEnergy} delta={isDemoPetObserver ? undefined : pet.metricChanges.energy} palette="energy" />
+              <StatusRow icon={Users} label="社交" value={displayedSociability} delta={isDemoPetObserver ? undefined : pet.metricChanges.sociability} palette="social" />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile icon={Activity} label="当前活动" value={pet.activity} />
+              <InfoTile icon={Activity} label="当前活动" value={displayedActivity} />
               <InfoTile icon={Moon} label="日程阶段" value={pet.schedule} />
             </div>
           </div>
@@ -314,37 +337,74 @@ export default function StudentPetPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {pet.logs.map((log) => (
-            <div
-              key={log.id}
-              className="grid gap-3 rounded-lg border border-border bg-muted/20 p-3 md:grid-cols-[82px_150px_1fr]"
-            >
-              <div className="font-mono text-xs font-semibold text-muted-foreground">
-                {log.time}
-              </div>
-              <Badge variant="outline" className={logToneClass(log.tone)}>
-                <LogIcon tone={log.tone} />
-                {log.source}
-              </Badge>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">{log.title}</p>
-                  {(log.mood || log.energy || log.sociability) && (
-                    <span className="rounded bg-primary/5 px-2 py-0.5 text-xs text-primary">
-                      心情 {log.mood ?? "-"} · 能量 {log.energy ?? "-"} · 社交 {log.sociability ?? "-"}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{log.detail}</p>
-              </div>
-            </div>
-          ))}
+          <PetLogCarousel logs={displayedLogs} />
           <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
-            日志和变化值来自心宠数据库中的事件与日记记录，用于帮助老师理解学生端可见的心宠体验线索，不等同于真实心理测评、诊断或风险分级。
+            {isDemoPetObserver && liveSync.update?.logs?.length
+              ? "日志来自本地心宠服务，展示心宠最近所在场景、活动事件与状态变化；不等同于真实心理测评、诊断或风险分级。"
+              : "日志和变化值来自心宠数据库中的事件与日记记录，用于帮助老师理解学生端可见的心宠体验线索，不等同于真实心理测评、诊断或风险分级。"}
           </p>
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function formatServerLogTime(date: string, time: string) {
+  const today = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
+
+  return date === today ? time : `${date.slice(5)} ${time}`
+}
+
+function LiveSyncBadge({
+  status,
+  lastUpdatedAt,
+}: {
+  status: PetLiveSyncConnectionStatus
+  lastUpdatedAt: number | null
+}) {
+  const presentation = {
+    connecting: {
+      label: "正在连接本地心宠",
+      className: "border-sky-200 bg-sky-50 text-sky-700",
+      icon: Wifi,
+    },
+    live: {
+      label: "实时同步",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      icon: Wifi,
+    },
+    reconnecting: {
+      label: "正在重连",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+      icon: WifiOff,
+    },
+    offline: {
+      label: "本地服务未连接",
+      className: "border-slate-200 bg-slate-50 text-slate-600",
+      icon: WifiOff,
+    },
+  }[status]
+  const Icon = presentation.icon
+  const updateTime = lastUpdatedAt
+    ? new Date(lastUpdatedAt).toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+    : null
+
+  return (
+    <Badge variant="outline" className={presentation.className}>
+      <Icon className="h-3 w-3" />
+      {presentation.label}
+      {updateTime ? ` · ${updateTime}` : ""}
+    </Badge>
   )
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { useState, Suspense } from "react"
+import { useCallback, useEffect, useRef, useState, Suspense } from "react"
 import {
   Globe,
   ScanSearch,
@@ -29,6 +29,14 @@ import {
   PawPrint,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  acknowledgeRiskWorkOrderNotifications,
+  EMPTY_RISK_WORK_ORDER_NOTIFICATION_STATE,
+  reconcileRiskWorkOrderNotifications,
+  type RiskWorkOrderNotificationState,
+} from "@/lib/risk-work-order-notifications"
+
+const RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY = "psytwin:risk-work-order-notifications"
 
 interface SubMenuItem {
   icon: React.ElementType
@@ -100,14 +108,21 @@ const menuGroups: MenuGroup[] = [
 
 function SubMenuItemLink({ 
   item, 
-  isActive 
+  isActive,
+  pendingCount = 0,
+  pendingCountJumpKey = 0,
 }: { 
   item: SubMenuItem
   isActive: boolean
+  pendingCount?: number
+  pendingCountJumpKey?: number
 }) {
   return (
     <Link
       href={item.href}
+      onClick={item.href === "/risk-trace"
+        ? () => window.dispatchEvent(new Event("risk-work-orders:viewed"))
+        : undefined}
       className={cn(
         "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
         isActive
@@ -122,14 +137,26 @@ function SubMenuItemLink({
         )}
       />
       <span>{item.label}</span>
+      {pendingCount > 0 && (
+        <span
+          key={pendingCountJumpKey}
+          aria-label={`${pendingCount} 条未查看预警`}
+          className={cn(
+            "ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-red-300/70 bg-red-600 px-1 text-[10px] font-bold leading-none tabular-nums text-white shadow-[0_0_9px_rgba(220,38,38,0.58),inset_0_1px_0_rgba(255,255,255,0.28)]",
+            pendingCountJumpKey > 0 && "risk-badge-hop"
+          )}
+        >
+          {pendingCount > 99 ? "99+" : pendingCount}
+        </span>
+      )}
       {isActive && (
-        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+        <span className={cn("h-1.5 w-1.5 rounded-full bg-primary", pendingCount > 0 ? "ml-1" : "ml-auto")} />
       )}
     </Link>
   )
 }
 
-function SubMenuItemLinkInner({ item }: { item: SubMenuItem }) {
+function SubMenuItemLinkInner({ item, pendingCount, pendingCountJumpKey }: { item: SubMenuItem; pendingCount?: number; pendingCountJumpKey?: number }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const itemPath = item.href.split('?')[0]
@@ -137,10 +164,10 @@ function SubMenuItemLinkInner({ item }: { item: SubMenuItem }) {
   const currentSearch = searchParams.toString()
   const isActive = pathname === itemPath && (itemSearch ? currentSearch === itemSearch : true)
   
-  return <SubMenuItemLink item={item} isActive={isActive} />
+  return <SubMenuItemLink item={item} isActive={isActive} pendingCount={pendingCount} pendingCountJumpKey={pendingCountJumpKey} />
 }
 
-function SubMenuItemLinkWithSuspense({ item }: { item: SubMenuItem }) {
+function SubMenuItemLinkWithSuspense({ item, pendingCount, pendingCountJumpKey }: { item: SubMenuItem; pendingCount?: number; pendingCountJumpKey?: number }) {
   return (
     <Suspense fallback={
       <div className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70">
@@ -148,7 +175,7 @@ function SubMenuItemLinkWithSuspense({ item }: { item: SubMenuItem }) {
       <span className="whitespace-normal break-normal">{item.label}</span>
       </div>
     }>
-      <SubMenuItemLinkInner item={item} />
+      <SubMenuItemLinkInner item={item} pendingCount={pendingCount} pendingCountJumpKey={pendingCountJumpKey} />
     </Suspense>
   )
 }
@@ -159,12 +186,16 @@ function MenuGroupItem({
   onToggle,
   collapsed,
   onExpand,
+  pendingRiskWorkOrderCount,
+  pendingRiskWorkOrderJumpKey,
 }: {
   group: MenuGroup
   isExpanded: boolean
   onToggle: () => void
   collapsed: boolean
   onExpand: () => void
+  pendingRiskWorkOrderCount: number
+  pendingRiskWorkOrderJumpKey: number
 }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -216,7 +247,11 @@ function MenuGroupItem({
         <ul className="mt-1 ml-4 flex flex-col gap-1 border-l border-border pl-2">
           {group.subItems.map((item) => (
             <li key={item.href}>
-              <SubMenuItemLinkWithSuspense item={item} />
+              <SubMenuItemLinkWithSuspense
+                item={item}
+                pendingCount={item.href === "/risk-trace" ? pendingRiskWorkOrderCount : undefined}
+                pendingCountJumpKey={item.href === "/risk-trace" ? pendingRiskWorkOrderJumpKey : undefined}
+              />
             </li>
           ))}
         </ul>
@@ -231,6 +266,8 @@ function MenuGroupItemWithSuspense(props: {
   onToggle: () => void
   collapsed: boolean
   onExpand: () => void
+  pendingRiskWorkOrderCount: number
+  pendingRiskWorkOrderJumpKey: number
 }) {
   return (
     <Suspense fallback={
@@ -248,8 +285,95 @@ function MenuGroupItemWithSuspense(props: {
 }
 
 export function DashboardSidebar() {
+  const pathname = usePathname()
   const [expandedGroups, setExpandedGroups] = useState<boolean[]>([true, true, true, true, false])
   const [collapsed, setCollapsed] = useState(false)
+  const [pendingRiskWorkOrderCount, setPendingRiskWorkOrderCount] = useState(0)
+  const [pendingRiskWorkOrderJumpKey, setPendingRiskWorkOrderJumpKey] = useState(0)
+  const riskNotificationStateRef = useRef<RiskWorkOrderNotificationState>(
+    EMPTY_RISK_WORK_ORDER_NOTIFICATION_STATE,
+  )
+  const riskNotificationInitializedRef = useRef(false)
+
+  const persistRiskNotificationState = useCallback((state: RiskWorkOrderNotificationState) => {
+    try {
+      window.localStorage.setItem(RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY, JSON.stringify(state))
+    } catch {
+      // The in-memory notification state still works when browser storage is unavailable.
+    }
+  }, [])
+
+  const acknowledgeRiskNotifications = useCallback(() => {
+    const nextState = acknowledgeRiskWorkOrderNotifications(riskNotificationStateRef.current)
+    riskNotificationStateRef.current = nextState
+    setPendingRiskWorkOrderCount(0)
+    persistRiskNotificationState(nextState)
+  }, [persistRiskNotificationState])
+
+  const refreshPendingRiskWorkOrderCount = useCallback(async () => {
+    try {
+      const response = await fetch("/api/risk-work-orders/pending-count", { cache: "no-store" })
+      const payload = await response.json()
+      if (!response.ok) return
+      const nextCount = Math.max(0, Number(payload.data?.count) || 0)
+
+      if (!riskNotificationInitializedRef.current) {
+        try {
+          const storedValue = window.localStorage.getItem(RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY)
+          if (storedValue) {
+            const storedState = JSON.parse(storedValue) as Partial<RiskWorkOrderNotificationState>
+            riskNotificationStateRef.current = {
+              pendingTotal: Math.max(0, Number(storedState.pendingTotal) || 0),
+              unseenCount: Math.max(0, Number(storedState.unseenCount) || 0),
+            }
+          } else {
+            riskNotificationStateRef.current = { pendingTotal: nextCount, unseenCount: 0 }
+          }
+        } catch {
+          riskNotificationStateRef.current = { pendingTotal: nextCount, unseenCount: 0 }
+        }
+        riskNotificationInitializedRef.current = true
+      }
+
+      const previousState = riskNotificationStateRef.current
+      const nextState = reconcileRiskWorkOrderNotifications(
+        previousState,
+        nextCount,
+        pathname === "/risk-trace",
+      )
+      if (nextState.unseenCount > previousState.unseenCount) {
+        setPendingRiskWorkOrderJumpKey((current) => current + 1)
+      }
+      riskNotificationStateRef.current = nextState
+      setPendingRiskWorkOrderCount(nextState.unseenCount)
+      persistRiskNotificationState(nextState)
+    } catch {
+      // Keep the last known count while the network or database is temporarily unavailable.
+    }
+  }, [pathname, persistRiskNotificationState])
+
+  useEffect(() => {
+    const initialTimer = window.setTimeout(refreshPendingRiskWorkOrderCount, 0)
+    const timer = window.setInterval(refreshPendingRiskWorkOrderCount, 15_000)
+    const handleChange = () => void refreshPendingRiskWorkOrderCount()
+    const handleViewed = () => acknowledgeRiskNotifications()
+    window.addEventListener("risk-work-orders:changed", handleChange)
+    window.addEventListener("risk-work-orders:viewed", handleViewed)
+    window.addEventListener("focus", handleChange)
+    return () => {
+      window.clearTimeout(initialTimer)
+      window.clearInterval(timer)
+      window.removeEventListener("risk-work-orders:changed", handleChange)
+      window.removeEventListener("risk-work-orders:viewed", handleViewed)
+      window.removeEventListener("focus", handleChange)
+    }
+  }, [acknowledgeRiskNotifications, refreshPendingRiskWorkOrderCount])
+
+  useEffect(() => {
+    if (pathname === "/risk-trace" && riskNotificationInitializedRef.current) {
+      acknowledgeRiskNotifications()
+    }
+  }, [acknowledgeRiskNotifications, pathname])
   
   const toggleGroup = (index: number) => {
     setExpandedGroups(prev => prev.map((expanded, i) => i === index ? !expanded : expanded))
@@ -291,6 +415,8 @@ export function DashboardSidebar() {
                 onToggle={() => toggleGroup(index)}
                 collapsed={collapsed}
                 onExpand={() => setCollapsed(false)}
+                pendingRiskWorkOrderCount={pendingRiskWorkOrderCount}
+                pendingRiskWorkOrderJumpKey={pendingRiskWorkOrderJumpKey}
               />
             </li>
           ))}

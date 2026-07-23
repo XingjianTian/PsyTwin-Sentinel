@@ -534,6 +534,9 @@ ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
 - [x] Pocket HTTP 与 WebSocket 共用权威位置应用逻辑。*(已于 2026-07-20 完成代码与自动化测试)*
 - [x] Unity HUD 消费并显示原始 `sceneId`。*(已于 2026-07-20 完成代码与 Unity EditMode 测试)*
 - [x] Pocket 兼容旧版状态直接位于 `data` 下的响应。*(已于 2026-07-20 根据线上接口完成回归测试)*
+- [x] Sentinel `stu-test` 心宠页固定观察 `demo_pet`，实时同步 mood、energy、social、sceneId 与 activity。*(已于 2026-07-22 通过本地 WebSocket 联调，三项状态值持续更新)*
+- [x] Sentinel `demo_pet` 页面消费服务端 `activityLog`，展示最近的场景切换、行为事件与状态变化，并补充事件发生地点。*(已于 2026-07-22 完成本地联调与 8 项适配器自动化测试)*
+- [x] Sentinel 心宠日志采用实时信息流展示：新日志从顶部进入，既有日志向下移动，并兼容系统减少动态效果设置。*(已于 2026-07-22 完成浏览器动效联调)*
 - [ ] 线上心宠服务部署 `data.state`、`stateVersion`、`updatedAt` 与 `serverTime`。*(2026-07-20 核对线上接口仍为旧结构)*
 - [ ] Pocket、Unity 与心宠服务完成同一 `userId` 的端到端运行联调。*(等待线上契约升级与运行环境联调)*
 

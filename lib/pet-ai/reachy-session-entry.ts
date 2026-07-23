@@ -19,10 +19,10 @@ export function getReachySessionEntryPresentation({
   serviceError?: string
 }): ReachySessionEntryPresentation {
   if (!isDemoStudent) {
-    return { canStart: false, reason: "首版仅允许测试学生启动实体 Reachy 对话" }
+    return { canStart: false, reason: "首版仅允许测试学生启动实体心宠对话" }
   }
   if (running) {
-    return { canStart: false, reason: "当前已有 Reachy 对话正在运行" }
+    return { canStart: false, reason: "当前已有心宠对话正在运行" }
   }
   if (availability === "checking") {
     return { canStart: false, reason: "正在检查 ClawBody 服务状态…" }

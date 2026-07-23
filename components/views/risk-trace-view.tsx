@@ -184,6 +184,7 @@ export function RiskTraceView() {
     setActionMessage(null)
     try {
       await confirmIntervention(selectedOrder.id)
+      window.dispatchEvent(new Event("risk-work-orders:changed"))
       setActionMessage(`已确认干预：${selectedOrder.name}`)
       
       // 获取当前选中工单的索引
@@ -214,6 +215,7 @@ export function RiskTraceView() {
     setActionMessage(null)
     try {
       await resolveWarning(selectedOrder.id)
+      window.dispatchEvent(new Event("risk-work-orders:changed"))
       setActionMessage(`已解除预警：${selectedOrder.name}`)
       await loadOrders()
     } catch {

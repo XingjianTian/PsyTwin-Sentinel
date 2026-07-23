@@ -1,11 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Activity, Bot, BrainCircuit, CircleAlert, MessageSquareText, PawPrint, Play, RefreshCw, Save, Search, Settings2, Square, Volume2 } from "lucide-react"
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Activity, Bot, BrainCircuit, CircleAlert, FileUp, MessageSquareText, PawPrint, Play, RefreshCw, Save, Search, Settings2, Square, Trash2, Volume2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -14,8 +15,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { ReachyDebugConsole } from "@/components/views/pet-ai-management/reachy-debug-console"
 import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-presentation"
 import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
+import { parsePetAiProfileMarkdown } from "@/lib/pet-ai/profile-markdown"
 import { getReachySessionEntryPresentation, type ReachyServiceAvailability } from "@/lib/pet-ai/reachy-session-entry"
 import { getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
+import { isStudentReachyTranscriptRole } from "@/lib/pet-ai/transcript-role"
 import { cn } from "@/lib/utils"
 
 type StudentSummary = { id: string; name: string; studentNo: string; className: string; riskLevel: string; mbti: string | null; pet: { id: string; name: string; isOnline: boolean; expression: string | null; mood: number } | null }
@@ -25,7 +28,7 @@ type Detail = {
   student: { id: string; name: string; studentNo: string; className: string; riskLevel: string; mbti: string | null; psychProfile: Record<string, number> | null }
   pet: { id: string; name: string; imageSrc: string; species: string; color: string; accessory: string; expression: string; mood: number; energy: number; sociability: number; activity: string; scene: string; state: string; personality: PetPersonality }
   aiProfile: AiProfile
-  conversations: Array<{ id: string; role: "student" | "pet"; content: string; createdAt: string; topic: string; demo: true; riskLevel: string }>
+  conversations: Array<{ id: string; role: "student" | "pet"; content: string; createdAt: string; topic: string; demo: boolean; riskLevel: string }>
   isDemoStudent: boolean
 }
 type ReachyEvent = { id: number; kind: "emotion" | "handoff" | "professional" | "relay" | "tts"; status: "complete" | "fallback" | "error"; title: string; summary: string; risk_level?: string; created_at: string }
@@ -52,12 +55,16 @@ export function PetAiManagementView() {
   const [riskLevel, setRiskLevel] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [clearingConversations, setClearingConversations] = useState(false)
+  const [importingProfile, setImportingProfile] = useState(false)
   const [activeTab, setActiveTab] = useState("info")
   const [reachy, setReachy] = useState<ReachyStatus>({ state: "offline" })
   const [reachyError, setReachyError] = useState("")
   const [reachyAvailability, setReachyAvailability] = useState<ReachyServiceAvailability>("checking")
   const transcriptCursorRef = useRef(0)
   const eventCursorRef = useRef(0)
+  const liveSessionBaselineReadyRef = useRef(false)
+  const profileFileInputRef = useRef<HTMLInputElement>(null)
 
   const loadStudents = useCallback(async () => {
     setLoading(true)
@@ -92,6 +99,17 @@ export function PetAiManagementView() {
     return () => { cancelled = true }
   }, [selectedId])
 
+  useEffect(() => {
+    if (activeTab !== "records" || !selectedId) return
+    let cancelled = false
+    fetch(`/api/pet-ai/students/${selectedId}`).then(async (response) => {
+      const payload = await readPayload(response)
+      if (!response.ok) throw new Error(payload.message || "对话记录加载失败")
+      if (!cancelled) setDetail(payload.data)
+    }).catch((error) => !cancelled && toast.error(error.message))
+    return () => { cancelled = true }
+  }, [activeTab, selectedId])
+
   const pollReachy = useCallback(async () => {
     try {
       const after = transcriptCursorRef.current
@@ -99,12 +117,32 @@ export function PetAiManagementView() {
       const response = await fetch(`/api/pet-ai/reachy/status?after=${after}&eventAfter=${eventAfter}`)
       const payload = await readPayload(response)
       if (!response.ok) throw new Error(payload.message || "设备服务不可用")
+      const isBaselineRequest = !liveSessionBaselineReadyRef.current
+      liveSessionBaselineReadyRef.current = true
+      if ((payload.data.workOrderSync?.created || 0) > 0) {
+        window.dispatchEvent(new Event("risk-work-orders:changed"))
+      }
       transcriptCursorRef.current = payload.data.transcript?.cursor || after
       eventCursorRef.current = payload.data.events?.cursor || eventAfter
       setReachy((current) => ({
         ...payload.data,
-        transcript: { cursor: payload.data.transcript?.cursor, items: mergeUniqueById(current.transcript?.items || [], payload.data.transcript?.items || []).slice(-100) },
-        events: { cursor: payload.data.events?.cursor, items: mergeUniqueById(current.events?.items || [], payload.data.events?.items || []).slice(-100) },
+        risk_level: isBaselineRequest
+          ? "LOW"
+          : mergeUniqueById(current.transcript?.items || [], payload.data.transcript?.items || [])
+              .filter((item) => isStudentReachyTranscriptRole(item.role))
+              .reduce((level, item) => highestRiskLevel(level, item.risk_level), "LOW"),
+        transcript: {
+          cursor: payload.data.transcript?.cursor,
+          items: isBaselineRequest
+            ? []
+            : mergeUniqueById(current.transcript?.items || [], payload.data.transcript?.items || []).slice(-100),
+        },
+        events: {
+          cursor: payload.data.events?.cursor,
+          items: isBaselineRequest
+            ? []
+            : mergeUniqueById(current.events?.items || [], payload.data.events?.items || []).slice(-100),
+        },
       }))
       setReachyError("")
       setReachyAvailability("available")
@@ -124,11 +162,13 @@ export function PetAiManagementView() {
   useEffect(() => {
     transcriptCursorRef.current = 0
     eventCursorRef.current = 0
+    liveSessionBaselineReadyRef.current = false
   }, [selectedId])
 
   const selectStudent = (studentId: string) => {
     transcriptCursorRef.current = 0
     eventCursorRef.current = 0
+    liveSessionBaselineReadyRef.current = false
     setReachy((current) => ({ ...current, transcript: { cursor: 0, items: [] }, events: { cursor: 0, items: [] } }))
     setSelectedId(studentId)
   }
@@ -142,6 +182,47 @@ export function PetAiManagementView() {
       if (!response.ok) throw new Error(payload.message || "保存失败")
       toast.success("性格配置已保存")
     } catch (error) { toast.error((error as Error).message) } finally { setSaving(false) }
+  }
+
+  const importProfile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith(".md")) {
+      toast.error("请选择 .md 格式的性格文件")
+      return
+    }
+    if (file.size > 512 * 1024) {
+      toast.error("性格文件不能超过 512 KB")
+      return
+    }
+
+    setImportingProfile(true)
+    try {
+      const importedProfile = parsePetAiProfileMarkdown(await file.text())
+      setProfile(importedProfile)
+      toast.success(`已导入 ${file.name}`, { description: "请检查配置后点击“保存配置”使其生效。" })
+    } catch (error) {
+      toast.error("性格导入失败", { description: (error as Error).message })
+    } finally {
+      setImportingProfile(false)
+    }
+  }
+
+  const clearConversationHistory = async () => {
+    if (!detail?.isDemoStudent || clearingConversations) return
+    setClearingConversations(true)
+    try {
+      const response = await fetch(`/api/pet-ai/students/${detail.student.id}/conversations`, { method: "DELETE" })
+      const payload = await readPayload(response)
+      if (!response.ok) throw new Error(payload.message || "清空对话记录失败")
+      setDetail((current) => current ? { ...current, conversations: [] } : current)
+      toast.success("对话记录已清空")
+    } catch (error) {
+      toast.error((error as Error).message)
+    } finally {
+      setClearingConversations(false)
+    }
   }
 
   const sessionEntry = getReachySessionEntryPresentation({
@@ -165,9 +246,10 @@ export function PetAiManagementView() {
       if (action === "start" || action === "stop") {
         transcriptCursorRef.current = 0
         eventCursorRef.current = 0
+        liveSessionBaselineReadyRef.current = true
         setReachy((current) => ({ ...current, transcript: { cursor: 0, items: [] }, events: { cursor: 0, items: [] } }))
       }
-      toast.success(action === "start" ? "Reachy 对话已启动" : "Reachy 对话已停止")
+      toast.success(action === "start" ? "心宠对话已启动" : "心宠对话已停止")
       void pollReachy()
     } catch (error) { toast.error((error as Error).message) }
   }
@@ -182,7 +264,7 @@ export function PetAiManagementView() {
   return (
     <div className="flex h-[calc(100dvh-6.5rem)] min-h-[560px] flex-col gap-3 overflow-hidden">
       <header className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <div><h1 className="text-xl font-semibold">心宠AI管理中心</h1><p className="mt-1 text-sm text-muted-foreground">{workspaceMode === "management" ? "管理每位学生的心宠形象、性格与对话能力" : "连接并检查本机 Reachy Mini Lite 的运行状态"}</p></div>
+        <div><h1 className="text-xl font-semibold">心宠AI管理中心</h1><p className="mt-1 text-sm text-muted-foreground">{workspaceMode === "management" ? "管理每位学生的心宠形象、性格与对话能力" : "连接并检查实体心宠的运行状态"}</p></div>
         <div role="group" aria-label="心宠工作区" className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 sm:w-auto">
           <Button
             type="button"
@@ -234,7 +316,7 @@ export function PetAiManagementView() {
               {!detail || !profile ? <div className="space-y-3">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />)}</div> : <div className="space-y-6">
                 <section className="flex items-start gap-4">
                   <div className="relative flex size-32 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/5"><Image src={detail.pet.imageSrc} alt={`${detail.pet.name}的心宠外观`} width={150} height={150} loading="eager" className="size-28 object-contain" /></div>
-                  <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-semibold">{detail.pet.name}</h2>{detail.isDemoStudent && <Badge>Pocket 同款心宠 · Reachy 联调</Badge>}</div><p className="mt-1 text-sm text-muted-foreground">{detail.student.name} · {detail.student.studentNo} · {detail.student.className}</p><dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm"><div><dt className="text-muted-foreground">外观</dt><dd className="mt-0.5">{detail.pet.color} · {detail.pet.accessory}</dd></div><div><dt className="text-muted-foreground">表情</dt><dd className="mt-0.5">{detail.pet.expression}</dd></div><div><dt className="text-muted-foreground">当前场景</dt><dd className="mt-0.5">{detail.pet.scene}</dd></div><div><dt className="text-muted-foreground">活动</dt><dd className="mt-0.5">{detail.pet.activity}</dd></div></dl></div>
+                  <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-semibold">{detail.pet.name}</h2>{detail.isDemoStudent && <Badge>Pocket 同款心宠 · 实体联调</Badge>}</div><p className="mt-1 text-sm text-muted-foreground">{detail.student.name} · {detail.student.studentNo} · {detail.student.className}</p><dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm"><div><dt className="text-muted-foreground">外观</dt><dd className="mt-0.5">{detail.pet.color} · {detail.pet.accessory}</dd></div><div><dt className="text-muted-foreground">表情</dt><dd className="mt-0.5">{detail.pet.expression}</dd></div><div><dt className="text-muted-foreground">当前场景</dt><dd className="mt-0.5">{detail.pet.scene}</dd></div><div><dt className="text-muted-foreground">活动</dt><dd className="mt-0.5">{detail.pet.activity}</dd></div></dl></div>
                 </section>
 
                 <section><div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold">OCEAN 性格画像</h3><span className="text-xs text-muted-foreground">读取心宠真实性格数据</span></div><div className="grid grid-cols-5 gap-2">{ocean && traitLabels.map(([key, label]) => <div key={key} className="rounded-lg bg-muted/70 p-2 text-center"><div className="text-base font-semibold text-primary">{ocean[key]}</div><div className="text-xs text-muted-foreground">{label}</div></div>)}</div><p className="mt-2 text-xs text-muted-foreground">学生画像：MBTI {detail.student.mbti || "未记录"} · 心理综合分 {detail.student.psychProfile?.overallScore ?? "未记录"}</p></section>
@@ -253,8 +335,26 @@ export function PetAiManagementView() {
             </TabsContent>
 
             <TabsContent value="records" className="min-h-0 overflow-y-auto p-4">
-              <div className="mb-4 flex items-center justify-between"><span className="text-sm font-medium">最近对话</span><Badge variant="secondary">演示记录</Badge></div>
-              {detail?.conversations.length === 0 ? <div className="rounded-lg border border-dashed px-5 py-10 text-center"><MessageSquareText className="mx-auto size-6 text-muted-foreground" /><p className="mt-3 text-sm font-medium">测试心宠还没有历史对话</p><p className="mt-1 text-xs leading-5 text-muted-foreground">启动 Reachy 会话后，请在“实时联调”中查看本次转写。当前会话不会保存为历史记录。</p></div> : <div className="space-y-3">{detail?.conversations.map((message, index) => {
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="text-sm font-medium">最近对话</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{detail?.isDemoStudent ? "真实记录" : "演示记录"}</Badge>
+                  {detail?.isDemoStudent && detail.conversations.length > 0 && <AlertDialog>
+                    <AlertDialogTrigger asChild><Button type="button" variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Trash2 />清空记录</Button></AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>清空测试学生的对话记录？</AlertDialogTitle>
+                        <AlertDialogDescription>这会永久删除测试学生的全部实体心宠联调对话，且无法恢复。性格配置和预警工单不会受到影响。</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={clearingConversations}>取消</AlertDialogCancel>
+                        <AlertDialogAction disabled={clearingConversations} onClick={clearConversationHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{clearingConversations ? "清空中" : "确认清空"}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>}
+                </div>
+              </div>
+              {detail?.conversations.length === 0 ? <div className="rounded-lg border border-dashed px-5 py-10 text-center"><MessageSquareText className="mx-auto size-6 text-muted-foreground" /><p className="mt-3 text-sm font-medium">测试心宠还没有历史对话</p><p className="mt-1 text-xs leading-5 text-muted-foreground">完成实体心宠实时联调后，学生原话与心宠回复会自动保存在这里。</p></div> : <div className="space-y-3">{detail?.conversations.map((message, index) => {
                 const messageDate = new Date(message.createdAt)
                 const previous = detail.conversations[index - 1]
                 const showDate = !previous || new Date(previous.createdAt).toDateString() !== messageDate.toDateString()
@@ -275,10 +375,10 @@ export function PetAiManagementView() {
               })}</div>}
             </TabsContent>
             <TabsContent value="live" className="min-h-0 overflow-y-auto p-4">
-              <div className="rounded-lg bg-muted/70 p-3"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className={cn("size-2.5 rounded-full", reachy.running ? "bg-success" : "bg-muted-foreground/50")} /><span className="text-sm font-medium">{reachy.running ? "设备会话运行中" : "设备待机"}</span>{reachy.student_id === selectedId && <Badge variant="outline" className={cn("ml-1 gap-1.5", sessionRisk.badgeClassName)}><CircleAlert className="size-3" />实时风险 · {sessionRisk.label}</Badge>}</div><Button size="icon-sm" variant="ghost" onClick={pollReachy} aria-label="刷新设备状态"><RefreshCw /></Button></div><p id="reachy-session-entry-reason" aria-live="polite" className="mt-1 text-xs text-muted-foreground">{sessionEntry.reason || (detail?.isDemoStudent ? "当前绑定：测试学生 · 实体 Reachy" : "当前学生仅支持文本联调")}</p><div className="mt-3 flex gap-2"><Button size="sm" onClick={() => controlSession("start")} disabled={!sessionEntry.canStart} aria-describedby="reachy-session-entry-reason" title={sessionEntry.reason || undefined}><Play />开始对话</Button><Button size="sm" variant="outline" onClick={() => controlSession("stop")} disabled={!reachy.running}><Square />停止</Button></div></div>
+              <div className="rounded-lg bg-muted/70 p-3"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className={cn("size-2.5 rounded-full", reachy.running ? "bg-success" : "bg-muted-foreground/50")} /><span className="text-sm font-medium">{reachy.running ? "设备会话运行中" : "设备待机"}</span>{reachy.student_id === selectedId && <Badge variant="outline" className={cn("ml-1 gap-1.5", sessionRisk.badgeClassName)}><CircleAlert className="size-3" />实时风险 · {sessionRisk.label}</Badge>}</div><Button size="icon-sm" variant="ghost" onClick={pollReachy} aria-label="刷新设备状态"><RefreshCw /></Button></div><p id="reachy-session-entry-reason" aria-live="polite" className="mt-1 text-xs text-muted-foreground">{sessionEntry.reason || (detail?.isDemoStudent ? "当前绑定：测试学生 · 实体心宠" : "当前学生仅支持文本联调")}</p><div className="mt-3 flex gap-2"><Button size="sm" onClick={() => controlSession("start")} disabled={!sessionEntry.canStart} aria-describedby="reachy-session-entry-reason" title={sessionEntry.reason || undefined}><Play />开始对话</Button><Button size="sm" variant="outline" onClick={() => controlSession("stop")} disabled={!reachy.running}><Square />停止</Button></div></div>
 
               <section className="mt-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-medium">实时对话</h3><span className="text-[11px] text-muted-foreground">百度 ASR / TTS</span></div>{(reachy.transcript?.items || []).length === 0 ? <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">启动设备会话后，学生语音与测试心宠回复会显示在这里。</p> : <div className="space-y-2">{reachy.transcript?.items?.map((item) => {
-                const isStudent = item.role === "user"
+                const isStudent = isStudentReachyTranscriptRole(item.role)
                 const itemRiskLevel = normalizeRiskLevel(item.risk_level)
                 const itemRisk = getRiskPresentation(itemRiskLevel)
                 return <div key={item.id} className={cn("flex", isStudent ? "justify-end" : "justify-start")}><div className={cn("w-fit max-w-[88%] rounded-xl px-3 py-2 text-sm leading-5 transition-colors duration-200 motion-reduce:transition-none", isStudent ? "rounded-br-sm" : "rounded-bl-sm", isStudent ? itemRisk.studentMessageClassName : itemRisk.petMessageClassName)}><div className="mb-1 flex items-center gap-2 text-[11px] font-medium"><span className={itemRiskLevel === "LOW" ? "text-muted-foreground" : "text-current/75"}>{isStudent ? "测试学生 · ASR" : "测试心宠 · TTS"}</span>{itemRiskLevel !== "LOW" && <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", itemRisk.badgeClassName)}>{itemRisk.label}</Badge>}</div><p className="text-pretty">{item.content}</p></div></div>
@@ -294,12 +394,18 @@ export function PetAiManagementView() {
             </TabsContent>
             <TabsContent value="profile" className="min-h-0 overflow-y-auto p-4">
               {!detail || !profile ? <div className="space-y-3">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-20 animate-pulse rounded-lg bg-muted" />)}</div> : <div className="space-y-5">
-                <div><h2 className="text-base font-semibold">性格配置</h2><p className="mt-1 text-sm text-muted-foreground">设置 {detail.pet.name} 与 {detail.student.name} 对话时的表达方式和行为边界。</p></div>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div><h2 className="text-base font-semibold">性格配置</h2><p className="mt-1 text-sm text-muted-foreground">设置 {detail.pet.name} 与 {detail.student.name} 对话时的表达方式和行为边界。</p></div>
+                  <div>
+                    <input ref={profileFileInputRef} type="file" accept=".md,text/markdown" aria-label="选择性格 Markdown 文件" className="sr-only" onChange={importProfile} />
+                    <Button type="button" variant="outline" size="sm" disabled={importingProfile} onClick={() => profileFileInputRef.current?.click()}><FileUp />{importingProfile ? "读取中" : "导入性格"}</Button>
+                  </div>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1.5 text-sm"><span>表达语气</span><Input value={profile.tone} onChange={(event) => setProfile({ ...profile, tone: event.target.value })} /></label><label className="space-y-1.5 text-sm"><span>回复风格</span><Input value={profile.responseStyle} onChange={(event) => setProfile({ ...profile, responseStyle: event.target.value })} /></label></div>
                 <label className="block space-y-2 text-sm"><span className="flex justify-between">主动程度 <strong>{profile.initiative}</strong></span><Slider value={[profile.initiative]} onValueChange={([value]) => setProfile({ ...profile, initiative: value })} /></label>
                 <label className="block space-y-1.5 text-sm"><span>身份与行为约束</span><Textarea rows={6} value={profile.systemPrompt} onChange={(event) => setProfile({ ...profile, systemPrompt: event.target.value })} /></label>
                 <label className="block space-y-1.5 text-sm"><span>知识范围</span><Input value={profile.knowledgeScope.join("、")} onChange={(event) => setProfile({ ...profile, knowledgeScope: event.target.value.split(/[、,，]/).map((item) => item.trim()).filter(Boolean) })} /><span className="block text-xs text-muted-foreground">使用顿号或逗号分隔多个知识范围。</span></label>
-                <div className="flex items-center justify-between gap-4 border-t pt-4"><p className="text-xs text-muted-foreground">保存后用于下一次 Reachy 会话</p><Button onClick={saveProfile} disabled={saving}><Save />{saving ? "保存中" : "保存配置"}</Button></div>
+                <div className="flex items-center justify-between gap-4 border-t pt-4"><p className="text-xs text-muted-foreground">保存后用于下一次实体心宠会话</p><Button onClick={saveProfile} disabled={saving}><Save />{saving ? "保存中" : "保存配置"}</Button></div>
               </div>}
             </TabsContent>
           </Tabs>

@@ -250,7 +250,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 - **自动语音转写**: VAD 检测静音 → 百度 ASR 识别 → 实时显示转写文本
 - **数据持久化**: 所有原始数据存入 PostgreSQL，支持历史回溯
 - **智能过滤**: 支持按学生 ID 订阅，只接收关注学生的数据
-- **直播融合**: 摄像头窗口优先使用 Reachy Mini 摄像头，未连接时回退到本机摄像头；状态只在视频画面内显示，避免顶部信息重复
+- **直播融合**: 摄像头窗口优先使用心宠摄像头，未连接时回退到本机摄像头；状态只在视频画面内显示，避免顶部信息重复
 - **演示友好布局**: 顶部学生、咨询室、会话状态、LIVE 状态和“学生列表 / 实时测试”切换保持单行；异常长时长会被格式化为 `HH:mm:ss` / `99:59:59+`
 - **四流同屏**: 视觉流展示主要表情和焦虑/悲伤/愤怒指标，语音流展示波形与转写，生理流轮播心率/皮电/HRV/压力，交互流展示频率、反应延迟、震颤和回避行为
 
@@ -719,9 +719,9 @@ npm run dev
 
 访问 http://localhost:3000
 
-### Reachy Mini 心宠调试（Windows Host Bridge）
+### 实体心宠调试（Windows Host Bridge）
 
-首次部署或交付其他开发者时，请先阅读[《心宠调试与 Reachy Mini 实时联调完整配置教程》](./docs/REACHY_MINI_SETUP_GUIDE.md)。该教程包含两仓库拉取、Windows Host Bridge、Docker、Sentinel、首次验收、日常操作和完整故障排查步骤。
+首次部署或交付其他开发者时，请先阅读[《实体心宠实时联调完整配置教程》](./docs/REACHY_MINI_SETUP_GUIDE.md)。该教程包含两仓库拉取、Windows Host Bridge、Docker、Sentinel、首次验收、日常操作和完整故障排查步骤。
 
 Sentinel 只通过服务端访问 ClawBody 和 Windows Host Bridge；浏览器只调用 Sentinel 同源 API。将下列配置分别写入两个仓库的本地 `.env`，不要提交密钥：
 
@@ -739,7 +739,7 @@ HOST_BRIDGE_API_KEY="<host-bridge-key>"
 
 `CLAWBODY_SERVICE_KEY` 必须与 ClawBody 的 `SERVICE_API_KEY` 相同，Sentinel 与 ClawBody 两侧的 `HOST_BRIDGE_API_KEY` 也必须相同。这两组密钥都是服务端机密，禁止改成 `NEXT_PUBLIC_*` 变量或传入浏览器。`7860` 是 Sentinel 访问的 ClawBody 内部服务端口，`7861` 是只监听 Windows 回环地址的 Host Bridge 端口；不要将 Host Bridge 发布到局域网或公网。
 
-在 Windows 10/11 上，先按 ClawBody 仓库 README 完成 `.venv`、Reachy Mini SDK 和 `.env` 配置。然后仅需在 ClawBody 仓库根目录安装一次当前用户的隐藏登录任务：
+在 Windows 10/11 上，先按 ClawBody 仓库 README 完成 `.venv`、设备 SDK 和 `.env` 配置。然后仅需在 ClawBody 仓库根目录安装一次当前用户的隐藏登录任务：
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -750,7 +750,7 @@ clawbody-host status
 
 `install` 创建或更新固定任务 `PsyTwin ClawBody Host Bridge`；`restart` 用于安装后立即启动，否则它会在下次登录时启动；`status` 查看任务状态。不要同时运行计划任务实例和前台 `clawbody-host-bridge`。更完整的安装、前台诊断与卸载说明以 ClawBody 仓库 README 为准。
 
-日常使用前必须完全退出 Reachy Mini Control，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
+日常使用前必须完全退出设备控制程序，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
 
 ```text
 启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备 → 返回实时联调 → 开始对话
@@ -760,8 +760,8 @@ clawbody-host status
 2. 如需确认 Host Bridge，在 ClawBody 仓库根目录运行 `.\.venv\Scripts\clawbody-host.exe status`；任务未运行时运行 `.\.venv\Scripts\clawbody-host.exe restart`。这两条命令不依赖当前 PowerShell 已激活虚拟环境。
 3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
 4. 设备显示 `Ready` 后点击“返回实时联调”；页面会自动回到“心宠管理”并打开“实时联调”页签。
-5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体 Reachy 对话；其他学生只能使用文本联调。
-6. 学生对着 Reachy 说话后，“实时对话”会显示百度 ASR 转写与心宠 TTS 回复，“协作过程”会显示风险识别和双层 AI 摘要。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
+5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体心宠对话；其他学生只能使用文本联调。
+6. 学生对着实体心宠说话后，“实时对话”会显示百度 ASR 转写与心宠 TTS 回复，“协作过程”会显示风险识别和双层 AI 摘要。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
 
 以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
 
@@ -779,8 +779,8 @@ Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
 |------|------|
 | “心宠设备控制桥未运行” | 在 ClawBody 仓库根目录执行 `.\.venv\Scripts\clawbody-host.exe status`，必要时执行 `.\.venv\Scripts\clawbody-host.exe restart`，再用 `/health` 只读检查。 |
 | Host Bridge 返回 `401` 或 Sentinel 显示设备请求失败 | 确认 Sentinel 和 ClawBody 的 `HOST_BRIDGE_API_KEY` 完全一致，修改后重启对应服务；不要将密钥放入 URL、日志或前端变量。 |
-| 未发现 Reachy Mini Lite USB | 确认 Reachy Mini Control 已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
-| daemon 启动失败或 `8000` 端口冲突 | 退出 Reachy Mini Control 和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
+| 未发现实体心宠 USB | 确认设备控制程序已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
+| daemon 启动失败或 `8000` 端口冲突 | 退出设备控制程序和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
 | Docker/ClawBody 未连接 | USB、daemon 和基础硬件调试仍可用；学生会话入口保持不可用。检查 `docker compose ps`、`http://127.0.0.1:7860/health` 以及 `SERVICE_API_KEY`/`CLAWBODY_SERVICE_KEY` 是否匹配。 |
 
 Sentinel 设备 API 只接受预定义的发现、启停、重启、动作、姿态和音量命令，不接收 shell 命令、可执行文件路径或任意上游 URL。设备启动链路本身不访问 Hugging Face、GitHub、OpenAI 或应用商店。

@@ -3,6 +3,7 @@ import { z } from "zod"
 
 import { requestClawBody } from "@/lib/pet-ai/clawbody-client"
 import { isHostBridgeUnavailable, requestHostBridge } from "@/lib/pet-ai/host-bridge-client"
+import { REACHY_CHOREOGRAPHY_NAMES } from "@/lib/pet-ai/reachy-choreographies"
 import type { ReachyDeviceCommand, ReachyDeviceSnapshot } from "@/lib/pet-ai/reachy-device"
 
 export const dynamic = "force-dynamic"
@@ -18,6 +19,13 @@ const commandSchema: z.ZodType<ReachyDeviceCommand> = z.discriminatedUnion("acti
     .object({
       action: z.literal("device_action"),
       deviceAction: z.enum(["wake_up", "goto_sleep", "center", "antenna_test", "test_sound"]),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("choreography"),
+      kind: z.enum(["emotion", "dance", "music"]),
+      move: z.string(),
     })
     .strict(),
   z
@@ -39,7 +47,18 @@ const commandSchema: z.ZodType<ReachyDeviceCommand> = z.discriminatedUnion("acti
       volume: z.number().int().min(0).max(100),
     })
     .strict(),
-])
+]).superRefine((command, context) => {
+  if (
+    command.action === "choreography"
+    && !(REACHY_CHOREOGRAPHY_NAMES[command.kind] as readonly string[]).includes(command.move)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "不支持的表情或动作",
+      path: ["move"],
+    })
+  }
+})
 
 const phaseSchema = z.enum([
   "offline",
@@ -337,6 +356,11 @@ async function runCommand(command: ReachyDeviceCommand) {
       return publicDeviceStatus(await requestHostBridge("/v1/device/action", {
         method: "POST",
         body: JSON.stringify({ action: command.deviceAction }),
+      }))
+    case "choreography":
+      return publicDeviceStatus(await requestHostBridge("/v1/device/choreography", {
+        method: "POST",
+        body: JSON.stringify({ kind: command.kind, move: command.move }),
       }))
     case "pose":
       return publicDeviceStatus(await requestHostBridge("/v1/device/pose", {
