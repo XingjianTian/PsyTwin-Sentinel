@@ -171,7 +171,10 @@ export function StrategyCenterView() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [dropdownOpen])
 
-  const currentPresetLabel = agentList.find((p) => p.value === selectedPreset)?.label || ""
+  const currentPresetLabel =
+    agentList.find((p) => p.value === selectedPreset)?.label ||
+    promptPresets.find((p) => p.value === selectedPreset)?.label ||
+    selectedPreset
 
   const handleSelectPreset = (value: string) => {
     const label = agentList.find(a => a.value === value)?.label || ""
@@ -329,16 +332,18 @@ export function StrategyCenterView() {
   }
 
   const handleEnhancePrompt = async () => {
-    if (!promptText.trim() || isEnhancing) return
+    if (isEnhancing) return
 
-    const enhanced = ENHANCED_PROMPTS[selectedPreset]
+    const agentName = currentAgentName || currentPresetLabel
+    const presetId = NAME_TO_ID[agentName] || selectedPreset
+    const enhanced = ENHANCED_PROMPTS[presetId]
+
     if (!enhanced) {
       toast.error("当前 Agent 不支持 AI 补充（仅支持 DBA、采集员、分析师）")
       return
     }
 
     setIsEnhancing(true)
-    // 等待3秒模拟AI思考
     await new Promise((resolve) => setTimeout(resolve, 3000))
     setPromptText(enhanced)
     setIsEnhancing(false)
@@ -432,7 +437,7 @@ export function StrategyCenterView() {
                 <Button
                   variant="outline"
                   onClick={handleEnhancePrompt}
-                  disabled={isEnhancing || !promptText.trim()}
+                  disabled={isEnhancing}
                   className="relative gap-1.5 bg-background"
                 >
                   <Sparkles className={`h-4 w-4 ${isEnhancing ? "animate-spin" : ""}`} />
