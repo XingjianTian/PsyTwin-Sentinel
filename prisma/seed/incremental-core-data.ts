@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, RiskLevel } from "@prisma/client"
 
 import { petDiaryTemplates } from "../pet-diary-templates"
 
@@ -39,6 +39,22 @@ const openClawAgents = {
     color: "#15803d",
     role: "特征提取",
   },
+}
+
+const demoStudent = {
+  id: "stu-test",
+  name: "测试学生",
+  studentNo: "TEST001",
+  className: "测试班级",
+  riskLevel: RiskLevel.LOW,
+}
+
+async function seedDemoStudent(prisma: PrismaClient) {
+  await prisma.student.upsert({
+    where: { id: demoStudent.id },
+    update: demoStudent,
+    create: demoStudent,
+  })
 }
 
 async function seedOpenClawAgents(prisma: PrismaClient) {
@@ -84,6 +100,7 @@ async function seedIncrementalCoreData() {
   console.log("Incremental core data seed")
   console.log(`- OpenClaw agents: ${Object.keys(openClawAgents).length}`)
   console.log(`- Pet diary templates: ${petDiaryTemplates.length}`)
+  console.log(`- Demo students: 1 (${demoStudent.id})`)
 
   if (isDryRun) {
     console.log("Dry run complete. No database writes were performed.")
@@ -93,6 +110,7 @@ async function seedIncrementalCoreData() {
   const prisma = new PrismaClient()
 
   try {
+    await seedDemoStudent(prisma)
     await seedOpenClawAgents(prisma)
     await seedPetDiaryTemplates(prisma)
     console.log("Incremental core data seed completed.")

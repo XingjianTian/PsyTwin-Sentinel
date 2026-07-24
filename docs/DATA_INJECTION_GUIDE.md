@@ -226,7 +226,7 @@ npx prisma db seed
 npm run seed:incremental
 ```
 
-该命令补充 OpenClaw Agents 和心宠日记模板，使用 `upsert`，适合已有业务数据的开发库。
+该命令补充固定测试学生 `stu-test`、OpenClaw Agents 和心宠日记模板，使用 `upsert`，适合已有业务数据的开发库。队友拉取最新代码后重新运行此命令，即可安全补齐“测试学生”，不会清空已有学生或业务记录。
 
 ### 第五步：单独补充心宠日记模板（可选）
 

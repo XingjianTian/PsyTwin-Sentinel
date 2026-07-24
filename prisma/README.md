@@ -69,7 +69,7 @@ npx prisma generate
 npm run seed:incremental
 ```
 
-`npm run seed:incremental` is idempotent and does not clear existing data. It uses stable unique keys with Prisma `upsert` for OpenClaw agents and pet diary templates, so teammates can run it after pulling new database updates without losing local records.
+`npm run seed:incremental` is idempotent and does not clear existing data. It uses stable unique keys with Prisma `upsert` for the fixed `stu-test` demo student, OpenClaw agents, and pet diary templates, so teammates can run it after pulling new database updates without losing local records.
 
 Use `npm run seed:incremental -- --dry-run` to preview the record groups without writing to the database.
 
