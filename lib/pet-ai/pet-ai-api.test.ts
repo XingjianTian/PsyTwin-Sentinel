@@ -110,10 +110,13 @@ test("Pocket test student is pinned, renamed, and reads persisted physical-pet h
   const listSource = await readFile(new URL("../../app/api/pet-ai/students/route.ts", import.meta.url), "utf8")
   const detailSource = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/route.ts", import.meta.url), "utf8")
   const viewSource = await readFile(new URL("../../components/views/pet-ai-management-view.tsx", import.meta.url), "utf8")
+  const snapshotSource = await readFile(new URL("../../app/actions/pet-snapshot.ts", import.meta.url), "utf8")
 
   assert.match(listSource, /prioritizeDemoStudent/)
   assert.match(listSource, /DEMO_PET_NAME/)
   assert.match(detailSource, /DEMO_PET_NAME/)
+  assert.match(snapshotSource, /const demoStudentId = process\.env\.PET_AI_DEMO_STUDENT_ID \|\| "stu-test"/)
+  assert.match(snapshotSource, /const desiredName = pet\.ownerId === demoStudentId \? DEMO_PET_NAME : pet\.name/)
   assert.match(detailSource, /buildPetLiveChatSessionId/)
   assert.match(detailSource, /chatMessage\.findMany/)
   assert.match(viewSource, /自动保存在这里/)
