@@ -202,7 +202,7 @@ test("corrects legacy activity logs that are eight hours ahead", () => {
 })
 
 test("keeps new authoritative server events ahead of corrected legacy logs", () => {
-  const updatedAt = Date.parse("2026-07-24T08:17:48Z")
+  const updatedAt = Date.parse("2026-07-24T08:29:02Z")
   const result = parsePocketPetStatusMessage({
     type: "pet_status",
     payload: {
@@ -211,7 +211,7 @@ test("keeps new authoritative server events ahead of corrected legacy logs", () 
         activityLog: {
           "2026-07-24": [
             { time: "23:56", type: "event", desc: "旧日志" },
-            { time: "16:17:48", timestamp: updatedAt, type: "event", desc: "感到有点孤单" },
+            { time: "16:29:02", timestamp: updatedAt, type: "event", desc: "感到有点孤单" },
           ],
         },
       },
@@ -221,7 +221,7 @@ test("keeps new authoritative server events ahead of corrected legacy logs", () 
   })
 
   assert.equal(result?.logs?.[0].title, "感到有点孤单")
-  assert.equal(result?.logs?.[0].time, "16:17:48")
+  assert.equal(result?.logs?.[0].time, "16:29:02")
   assert.equal(result?.logs?.[0].timestamp, updatedAt)
   assert.equal(result?.logs?.[1].time, "15:56:00")
 })

@@ -267,7 +267,7 @@ function parsePocketActivityLogs(
   )
   const futureOffset = referenceTime !== undefined
     && newestLegacyTimestamp > referenceTime + FUTURE_LOG_TOLERANCE_MS
-    ? Math.round((newestLegacyTimestamp - referenceTime) / (60 * 60 * 1000)) * 60 * 60 * 1000
+    ? Math.ceil((newestLegacyTimestamp - referenceTime) / (60 * 60 * 1000)) * 60 * 60 * 1000
     : 0
 
   return parsedLogs
