@@ -236,7 +236,7 @@ export default function StudentPetPage() {
     isDemoPetObserver && liveSync.update?.logs?.length
       ? liveSync.update.logs.map((log) => ({
           id: log.id,
-          time: formatServerLogTime(log.date, log.time),
+          time: formatServerLogTime(log.date, log.time, log.timestamp),
           source: "心宠服务",
           title: log.title,
           detail: log.detail,
@@ -349,13 +349,30 @@ export default function StudentPetPage() {
   )
 }
 
-function formatServerLogTime(date: string, time: string) {
+function formatServerLogTime(date: string, time: string, timestamp?: number) {
   const today = new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Shanghai",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(new Date())
+
+  if (timestamp !== undefined) {
+    const normalizedDate = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(timestamp))
+    const normalizedTime = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(new Date(timestamp))
+    return normalizedDate === today ? normalizedTime : `${normalizedDate.slice(5)} ${normalizedTime}`
+  }
 
   return date === today ? time : `${date.slice(5)} ${time}`
 }

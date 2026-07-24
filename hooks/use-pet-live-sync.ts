@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import {
   buildPocketPetWebSocketBaseUrl,
   buildPocketPetWebSocketUrl,
+  mergePocketPetLiveLogs,
   parsePocketPetStatusMessage,
   type PocketPetLiveUpdate,
 } from "@/lib/pet-live-sync"
@@ -101,7 +102,13 @@ export function usePetLiveSync({
         }
         const receivedAt = nextUpdate.updatedAt || Date.now()
         setLastUpdatedAt(receivedAt)
-        setUpdate((current) => ({ ...current, ...nextUpdate }))
+        setUpdate((current) => ({
+          ...current,
+          ...nextUpdate,
+          ...(nextUpdate.logs
+            ? { logs: mergePocketPetLiveLogs(current?.logs, nextUpdate.logs) }
+            : {}),
+        }))
       })
 
       socket.addEventListener("close", () => {

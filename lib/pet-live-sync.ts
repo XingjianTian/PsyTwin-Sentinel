@@ -96,6 +96,7 @@ export interface PocketPetLiveLog {
   id: string
   date: string
   time: string
+  timestamp?: number
   type: "scene_change" | "event" | "status_change" | "activity"
   title: string
   detail: string
@@ -118,6 +119,20 @@ export function buildPocketPetWebSocketUrl(baseUrl: string, userId: string) {
   return url.toString()
 }
 
+export function mergePocketPetLiveLogs(
+  currentLogs: PocketPetLiveLog[] | undefined,
+  incomingLogs: PocketPetLiveLog[],
+) {
+  const uniqueLogs = new Map<string, PocketPetLiveLog>()
+  for (const log of [...incomingLogs, ...(currentLogs || [])]) {
+    if (!uniqueLogs.has(log.id)) uniqueLogs.set(log.id, log)
+  }
+
+  return Array.from(uniqueLogs.values())
+    .sort((left, right) => (right.timestamp || 0) - (left.timestamp || 0))
+    .slice(0, 6)
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
@@ -135,13 +150,41 @@ function nonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim() ? value : undefined
 }
 
+const SHANGHAI_TIME_ZONE = "Asia/Shanghai"
+const FUTURE_LOG_TOLERANCE_MS = 5 * 60 * 1000
+
+function formatShanghaiDate(timestamp: number) {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: SHANGHAI_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(timestamp))
+}
+
+function formatShanghaiTime(timestamp: number) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: SHANGHAI_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp))
+}
+
+function parseShanghaiWallClock(date: string, time: string) {
+  const timestamp = Date.parse(`${date}T${time}:00+08:00`)
+  return Number.isFinite(timestamp) ? timestamp : undefined
+}
+
 function parsePocketActivityLogs(
   activityLog: unknown,
   fallbackSceneId: string,
+  referenceTime?: number,
 ): PocketPetLiveLog[] | undefined {
   if (!isRecord(activityLog)) return undefined
 
-  const parsedLogs: PocketPetLiveLog[] = []
+  const parsedLogs: Array<PocketPetLiveLog & { hasAuthoritativeTimestamp?: boolean }> = []
   let currentSceneId = fallbackSceneId
   const datedEntries = Object.entries(activityLog).sort(([left], [right]) =>
     left.localeCompare(right),
@@ -196,10 +239,14 @@ function parsePocketActivityLogs(
           : `在${scene.sceneName}活动，状态发生变化`
       }
 
+      const authoritativeTimestamp = finiteNumber(entry.timestamp)
+      const timestamp = authoritativeTimestamp ?? parseShanghaiWallClock(date, time)
       parsedLogs.push({
-        id: `${date}-${time}-${index}`,
+        id: `${date}-${time}-${authoritativeTimestamp ?? index}`,
         date,
         time,
+        ...(timestamp === undefined ? {} : { timestamp }),
+        ...(authoritativeTimestamp === undefined ? {} : { hasAuthoritativeTimestamp: true }),
         type,
         title,
         detail,
@@ -212,7 +259,32 @@ function parsePocketActivityLogs(
     }
   }
 
-  return parsedLogs.slice(-6).reverse()
+  const newestLegacyTimestamp = parsedLogs.reduce(
+    (latest, log) => log.hasAuthoritativeTimestamp
+      ? latest
+      : Math.max(latest, log.timestamp || 0),
+    0,
+  )
+  const futureOffset = referenceTime !== undefined
+    && newestLegacyTimestamp > referenceTime + FUTURE_LOG_TOLERANCE_MS
+    ? Math.round((newestLegacyTimestamp - referenceTime) / (60 * 60 * 1000)) * 60 * 60 * 1000
+    : 0
+
+  return parsedLogs
+    .map((log) => {
+      const { hasAuthoritativeTimestamp, ...publicLog } = log
+      if (hasAuthoritativeTimestamp || !futureOffset || log.timestamp === undefined) return publicLog
+      const timestamp = log.timestamp - futureOffset
+      return {
+        ...publicLog,
+        date: formatShanghaiDate(timestamp),
+        time: formatShanghaiTime(timestamp),
+        timestamp,
+      }
+    })
+    .sort((left, right) => (left.timestamp || 0) - (right.timestamp || 0))
+    .slice(-6)
+    .reverse()
 }
 
 export function getPocketScenePresentation(sceneId: string): PocketScenePresentation {
@@ -260,6 +332,7 @@ export function parsePocketPetStatusMessage(
   const logs = parsePocketActivityLogs(
     status.activityLog,
     sceneId || DEFAULT_POCKET_SCENE_ID,
+    updatedAt,
   )
 
   if (mood !== undefined) update.mood = mood
