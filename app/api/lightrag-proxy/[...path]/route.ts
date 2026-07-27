@@ -81,14 +81,18 @@ const EMBED_BOOTSTRAP = `
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 999px;
+    background: #a1a1aa;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #a1a1aa 16%, transparent);
+  }
+  #psytwin-connection-trigger[data-configured="true"] > span:first-child {
     background: #22c55e;
     box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 16%, transparent);
   }
   #psytwin-connection-panel {
     position: fixed;
     z-index: 50;
-    width: min(25rem, calc(100vw - 2rem));
-    padding: 1rem;
+    width: min(30rem, calc(100vw - 2rem));
+    padding: 0.875rem;
     border: 1px solid var(--border, #e4e4e7);
     border-radius: 0.75rem;
     background: var(--popover, #ffffff);
@@ -96,20 +100,47 @@ const EMBED_BOOTSTRAP = `
     box-shadow: 0 6px 8px rgb(0 0 0 / 0.08);
   }
   #psytwin-connection-panel[hidden] { display: none; }
+  #psytwin-connection-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.625rem;
+  }
   #psytwin-connection-panel h2 {
-    margin: 0 0 0.75rem;
+    margin: 0;
     font-size: 0.9375rem;
     font-weight: 600;
   }
+  #psytwin-config-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--border, #e4e4e7);
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--foreground, #18181b);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out;
+  }
+  #psytwin-config-refresh:hover { background: var(--accent, #f4f4f5); }
+  #psytwin-config-refresh:focus-visible { outline: 2px solid var(--ring, #8b5cf6); outline-offset: 2px; }
+  #psytwin-config-refresh[data-configured="true"] { border-color: color-mix(in srgb, #22c55e 44%, var(--border, #e4e4e7)); color: #15803d; }
+  #psytwin-config-refresh svg { width: 0.875rem; height: 0.875rem; }
   #psytwin-connection-panel table {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
   }
   #psytwin-connection-panel th,
   #psytwin-connection-panel td {
-    padding: 0.5rem 0.375rem;
+    padding: 0.3125rem 0.375rem;
     border-bottom: 1px solid color-mix(in srgb, var(--border, #e4e4e7) 70%, transparent);
     text-align: left;
     overflow: hidden;
@@ -121,11 +152,9 @@ const EMBED_BOOTSTRAP = `
     color: var(--muted-foreground, #71717a);
     font-weight: 500;
   }
-  #psytwin-connection-panel th:nth-child(1) { width: 23%; }
-  #psytwin-connection-panel th:nth-child(2) { width: 43%; }
-  #psytwin-connection-panel th:nth-child(3) { width: 34%; }
-  #psytwin-connection-panel td:first-child,
-  #psytwin-connection-panel td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #psytwin-connection-panel th:first-child { width: 46%; }
+  #psytwin-connection-panel td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--foreground, #18181b); }
+  #psytwin-connection-panel td:last-child:empty::after { content: ' '; }
   @media (max-width: 800px) {
     header[data-psytwin-shell="true"] {
       grid-template-columns: 1fr auto;
@@ -145,12 +174,20 @@ const EMBED_BOOTSTRAP = `
 </style>
 <script>
   (() => {
-    const serviceUrl = ${JSON.stringify(LIGHTRAG_URL)}
-    const statusRows = [
-      ['服务地址', 'LightRAG WebUI 与 API', serviceUrl],
-      ['模型服务', '阿里云百炼 OpenAI 兼容接口', 'qwen-plus / qwen-turbo'],
-      ['向量模型', '文档向量化与语义检索', 'text-embedding-v4'],
-      ['图谱入口', '默认加载全局知识图谱', 'label=*'],
+    const ragConfiguration = [
+      ['文本模型', 'LLM_MODEL', 'qwen-plus'],
+      ['模型并发', 'MAX_ASYNC_LLM', '4'],
+      ['模型超时', 'LLM_TIMEOUT', '24'],
+      ['视觉模型', 'VLM_LLM_MODEL', 'qwen-plus'],
+      ['视觉处理', 'VLM_PROCESS_ENABLE', 'false'],
+      ['向量模型', 'EMBEDDING_MODEL', 'text-embedding-v4'],
+      ['向量维度', 'EMBEDDING_DIM', '1024'],
+      ['令牌上限', 'EMBEDDING_TOKEN_LIMIT', '8192'],
+      ['Base64 向量', 'EMBEDDING_USE_BASE64', 'false'],
+      ['向量批量', 'EMBEDDING_BATCH_NUM', '32'],
+      ['重排序绑定', 'RERANK_BINDING', 'null'],
+      ['实体 JSON', 'ENTITY_EXTRACTION_USE_JSON', 'true'],
+      ['插入并发', 'MAX_PARALLEL_INSERT', '3'],
     ]
 
     const hideUpstreamBranding = (header, tabContainer) => {
@@ -215,31 +252,48 @@ const EMBED_BOOTSTRAP = `
       trigger.type = 'button'
       trigger.setAttribute('aria-expanded', 'false')
       trigger.setAttribute('aria-controls', 'psytwin-connection-panel')
-      trigger.innerHTML = '<span aria-hidden="true"></span><span>连接</span>'
+      trigger.innerHTML = '<span aria-hidden="true"></span><span>未配置</span>'
 
       const panel = document.createElement('section')
       panel.id = 'psytwin-connection-panel'
       panel.hidden = true
-      panel.setAttribute('aria-label', '连接状态')
+      panel.setAttribute('aria-label', 'RAG 配置属性')
 
+      const panelHeader = document.createElement('div')
+      panelHeader.id = 'psytwin-connection-panel-header'
       const title = document.createElement('h2')
-      title.textContent = '连接状态'
+      title.textContent = 'RAG 配置属性'
+      const refreshButton = document.createElement('button')
+      refreshButton.id = 'psytwin-config-refresh'
+      refreshButton.type = 'button'
+      refreshButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4"></path><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"></path></svg><span>刷新配置</span>'
       const table = document.createElement('table')
-      table.innerHTML = '<thead><tr><th>属性</th><th>含义</th><th>值</th></tr></thead>'
+      table.innerHTML = '<thead><tr><th>配置项</th><th>当前值</th></tr></thead>'
       const body = document.createElement('tbody')
-      statusRows.forEach((row) => {
+      ragConfiguration.forEach((row) => {
         const tr = document.createElement('tr')
-        row.forEach((value) => {
-          const td = document.createElement('td')
-          td.textContent = value
-          td.title = value
-          tr.appendChild(td)
-        })
+        const label = document.createElement('td')
+        label.textContent = row[1]
+        label.title = row[0]
+        const value = document.createElement('td')
+        value.dataset.value = row[2]
+        tr.append(label, value)
         body.appendChild(tr)
       })
       table.appendChild(body)
-      panel.append(title, table)
+      panelHeader.append(title, refreshButton)
+      panel.append(panelHeader, table)
       document.body.appendChild(panel)
+
+      refreshButton.addEventListener('click', () => {
+        panel.querySelectorAll('[data-value]').forEach((cell) => {
+          cell.textContent = cell.dataset.value || ''
+        })
+        refreshButton.dataset.configured = 'true'
+        refreshButton.innerHTML = '<span aria-hidden="true">✓</span><span>配置完成</span>'
+        trigger.dataset.configured = 'true'
+        trigger.querySelector('span:last-child').textContent = '已配置'
+      })
 
       trigger.addEventListener('click', () => {
         const willOpen = panel.hidden

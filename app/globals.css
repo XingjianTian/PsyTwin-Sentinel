@@ -383,3 +383,14 @@
     animation: none;
   }
 }
+
+.visual-expression-progress {
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-expression-progress {
+    transition: none;
+  }
+}

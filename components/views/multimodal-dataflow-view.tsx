@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type ElementType } from "react"
+import { useCallback, useEffect, useRef, useState, type ElementType } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -43,6 +43,21 @@ import { createIdleRealtimeStudent } from "@/lib/multimodal-live-state"
 
 type CameraStatus = "idle" | "loading" | "streaming" | "error"
 type VitalMetricKey = "heartRate" | "gsr" | "hrv" | "stress"
+
+const CONSULTATION_ROOMS = ["A01", "A02", "A03"] as const
+
+const EXPRESSION_SIMULATION_SHORTCUTS = {
+  Numpad1: { primary: "nervous", anxiety: 0.86, sadness: 0.18, anger: 0.12 },
+  Numpad2: { primary: "happy", anxiety: 0.08, sadness: 0.03, anger: 0.02 },
+  Numpad3: { primary: "dazed", anxiety: 0.16, sadness: 0.08, anger: 0.03 },
+} as const
+
+type ExpressionSimulationCode = keyof typeof EXPRESSION_SIMULATION_SHORTCUTS
+
+function fluctuateExpressionValue(value: number) {
+  const fluctuationRatio = 0.9 + Math.random() * 0.2
+  return Math.min(1, Math.max(0, value * fluctuationRatio))
+}
 
 interface StudentData {
   id: string
@@ -119,6 +134,7 @@ function getExpressionLabel(primary: string) {
   if (primary === "surprise" || primary === "surprised") return "惊讶"
   if (primary === "disgust" || primary === "disgusted") return "厌恶"
   if (primary === "nervous") return "紧张"
+  if (primary === "dazed") return "发呆"
   if (primary === "neutral") return "中性"
   return "未知"
 }
@@ -131,6 +147,7 @@ function getExpressionEmoji(primary: string) {
   if (primary === "surprise" || primary === "surprised") return "😮"
   if (primary === "disgust" || primary === "disgusted") return "🤢"
   if (primary === "nervous") return "😰"
+  if (primary === "dazed") return "😶‍🌫️"
   if (primary === "neutral") return "😐"
   return "❓"
 }
@@ -175,7 +192,7 @@ function SignalTooltip({
   )
 }
 
-function VoiceWaveform({ levels }: { levels?: number[] }) {
+function VoiceWaveform({ levels, compact = false }: { levels?: number[]; compact?: boolean }) {
   const [bars, setBars] = useState<number[]>(Array(40).fill(5))
 
   useEffect(() => {
@@ -203,8 +220,8 @@ function VoiceWaveform({ levels }: { levels?: number[] }) {
   }, [levels])
 
   return (
-    <div className="rounded-lg border border-purple-100 bg-white p-2 shadow-sm dark:border-purple-900 dark:bg-slate-900">
-      <div className="flex h-[92px] items-end gap-[2px]">
+    <div className={`rounded-lg border border-purple-100 bg-white shadow-sm dark:border-purple-900 dark:bg-slate-900 ${compact ? "p-1" : "p-2"}`}>
+      <div className={`flex items-end gap-[2px] ${compact ? "h-[34px]" : "h-[92px]"}`}>
         {bars.map((h, i) => (
           <div
             key={i}
@@ -391,15 +408,28 @@ function VitalMetricPanel({
   )
 }
 
-export function MultimodalDataFlowView() {
+interface MultimodalDataFlowViewProps {
+  streamMode?: "full" | "essential"
+  videoSource?: "camera" | "unity"
+}
+
+export function MultimodalDataFlowView({
+  streamMode = "full",
+  videoSource = "camera",
+}: MultimodalDataFlowViewProps) {
+  const showAllStreams = streamMode === "full"
+  const isUnityStream = videoSource === "unity"
+  const unityStreamUrl = process.env.NEXT_PUBLIC_UNITY_STREAM_URL || "http://127.0.0.1:8081/unity-stream"
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle")
   const [cameraLabel, setCameraLabel] = useState("心宠摄像头")
   const [isCameraFallback, setIsCameraFallback] = useState(false)
   const [cameraError, setCameraError] = useState("")
+  const [unityStreamAttempt, setUnityStreamAttempt] = useState(0)
   const [students, setStudents] = useState<StudentData[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState<string>("")
+  const [selectedRoom, setSelectedRoom] = useState<(typeof CONSULTATION_ROOMS)[number]>("A01")
   const [currentTime, setCurrentTime] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [isMock, setIsMock] = useState(false)
@@ -409,6 +439,35 @@ export function MultimodalDataFlowView() {
   const [audioLevel, setAudioLevel] = useState<number[]>([])
   const [voiceTranscription, setVoiceTranscription] = useState<string>("")
   const [hasReceivedData, setHasReceivedData] = useState(false)
+  const [expressionSimulationCode, setExpressionSimulationCode] = useState<ExpressionSimulationCode | null>(null)
+
+  const applyExpressionSimulation = useCallback((shortcutCode: ExpressionSimulationCode) => {
+    const preset = EXPRESSION_SIMULATION_SHORTCUTS[shortcutCode]
+    setExpressionSimulationCode(shortcutCode)
+    setStudents((previousStudents) =>
+      previousStudents.map((student) =>
+        student.id === selectedStudentId || student.id === "stu-test"
+          ? { ...student, expression: { ...preset } }
+          : student
+      )
+    )
+  }, [selectedStudentId])
+
+  useEffect(() => {
+    const handleExpressionShortcut = (event: KeyboardEvent) => {
+      if (isUnityStream || activeTab !== "realtime-test" || !event.ctrlKey || event.repeat) return
+
+      const shortcutCode = (event.code === "Digit1" ? "Numpad1" : event.code === "Digit2" ? "Numpad2" : event.code === "Digit3" ? "Numpad3" : event.code) as ExpressionSimulationCode
+      const preset = EXPRESSION_SIMULATION_SHORTCUTS[shortcutCode]
+      if (!preset) return
+
+      event.preventDefault()
+      applyExpressionSimulation(shortcutCode)
+    }
+
+    window.addEventListener("keydown", handleExpressionShortcut)
+    return () => window.removeEventListener("keydown", handleExpressionShortcut)
+  }, [activeTab, applyExpressionSimulation, isUnityStream])
 
   const testStudent: StudentData = {
     id: "stu-test",
@@ -458,6 +517,7 @@ export function MultimodalDataFlowView() {
       setAudioLevel([])
       setHrHistory([])
       setHasReceivedData(false)
+      setExpressionSimulationCode(null)
     } else {
       setLoading(true)
       void fetchData()
@@ -465,6 +525,13 @@ export function MultimodalDataFlowView() {
   }
 
   useEffect(() => {
+    if (isUnityStream) {
+      setCameraStatus("loading")
+      setCameraLabel("Unity 游戏画面")
+      setCameraError("")
+      return
+    }
+
     let cancelled = false
 
     async function connectCamera() {
@@ -531,7 +598,18 @@ export function MultimodalDataFlowView() {
         streamRef.current = null
       }
     }
-  }, [])
+  }, [isUnityStream])
+
+  useEffect(() => {
+    if (!isUnityStream || cameraStatus === "streaming") return
+
+    const retryTimer = window.setTimeout(() => {
+      setCameraStatus("loading")
+      setUnityStreamAttempt((attempt) => attempt + 1)
+    }, 3000)
+
+    return () => window.clearTimeout(retryTimer)
+  }, [cameraStatus, isUnityStream, unityStreamAttempt])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -548,6 +626,7 @@ export function MultimodalDataFlowView() {
       setIsMock(true)
       setLoading(false)
       setHasReceivedData(false)
+      setExpressionSimulationCode(null)
       setAudioLevel([])
       setHrHistory([])
     } else {
@@ -557,12 +636,15 @@ export function MultimodalDataFlowView() {
   }, [activeTab])
 
   useEffect(() => {
-    if (activeTab !== "realtime-test" || !hasReceivedData) return
+    if (activeTab !== "realtime-test" || !expressionSimulationCode) return
 
     const fluctuate = () => {
-      const anxiety = 0.55 + Math.random() * 0.4
-      const sadness = 0.1 + Math.random() * 0.25
-      const anger = 0.05 + Math.random() * 0.2
+      const simulationPreset = expressionSimulationCode
+        ? EXPRESSION_SIMULATION_SHORTCUTS[expressionSimulationCode]
+        : null
+      const anxiety = simulationPreset ? fluctuateExpressionValue(simulationPreset.anxiety) : 0.55 + Math.random() * 0.4
+      const sadness = simulationPreset ? fluctuateExpressionValue(simulationPreset.sadness) : 0.1 + Math.random() * 0.25
+      const anger = simulationPreset ? fluctuateExpressionValue(simulationPreset.anger) : 0.05 + Math.random() * 0.2
 
       setStudents((prev) =>
         prev.map((s) => {
@@ -570,7 +652,7 @@ export function MultimodalDataFlowView() {
             return {
               ...s,
               expression: {
-                primary: "nervous",
+                primary: simulationPreset?.primary ?? "nervous",
                 anxiety: Math.min(0.98, anxiety),
                 sadness: Math.min(0.4, sadness),
                 anger: Math.min(0.3, anger),
@@ -583,10 +665,10 @@ export function MultimodalDataFlowView() {
     }
 
     fluctuate()
-    const interval = setInterval(fluctuate, 1500 + Math.random() * 1500)
+    const interval = setInterval(fluctuate, 1200)
 
     return () => clearInterval(interval)
-  }, [activeTab, selectedStudentId, hasReceivedData])
+  }, [activeTab, selectedStudentId, expressionSimulationCode])
 
   useEffect(() => {
     if (activeTab !== "realtime-test") return
@@ -625,16 +707,14 @@ export function MultimodalDataFlowView() {
                         emotionLabel: data.voiceAnalysis.emotionLabel || "未知",
                       }
                     : s.voice,
-                  expression: isTestStudent
-                    ? s.expression
-                    : data.expressionData
-                      ? {
-                          primary: data.expressionData.primaryExpression || s.expression.primary,
-                          anxiety: data.expressionData.anxietyLevel || 0,
-                          sadness: data.expressionData.sadnessLevel || 0,
-                          anger: data.expressionData.angerLevel || 0,
-                        }
-                      : s.expression,
+                  expression: data.expressionData
+                    ? {
+                        primary: data.expressionData.primaryExpression || s.expression.primary,
+                        anxiety: data.expressionData.anxietyLevel || 0,
+                        sadness: data.expressionData.sadnessLevel || 0,
+                        anger: data.expressionData.angerLevel || 0,
+                      }
+                    : s.expression,
                   behavior: data.behaviorData
                     ? {
                         interactionFreq: data.behaviorData.interactionFreq || 0,
@@ -824,7 +904,9 @@ export function MultimodalDataFlowView() {
   const activeVitalIndex = activeVitalMetricIndex % vitalMetrics.length
   const activeVital = vitalMetrics[activeVitalIndex]
   const activeVitalSeries = buildVitalSeries(activeVital, hrHistory)
-  const activeModeLabel = activeTab === "student-list" ? "学生列表" : "实时测试"
+  const activeModeLabel = showAllStreams
+    ? activeTab === "student-list" ? "学生列表" : "实时测试"
+    : "无人值守"
   const liveElapsedText = formatLiveElapsed(currentStudent.duration, currentTime.getSeconds())
 
   return (
@@ -832,9 +914,11 @@ export function MultimodalDataFlowView() {
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-2xl font-bold tracking-normal">实时多模态直播舱</h1>
+            <h1 className="text-2xl font-bold tracking-normal">{isUnityStream ? "心图 VR 实时看板" : "无人咨询直播室"}</h1>
             <p className="text-sm text-muted-foreground">
-              视觉、语音、生理与交互信号的同步直播监测
+              {isUnityStream
+                ? "Unity 场景画面与多模态数据流的同步监测"
+                : "视觉与语音信号的同步直播监测"}
             </p>
           </div>
         </div>
@@ -842,8 +926,12 @@ export function MultimodalDataFlowView() {
 
       <Card className="border-border bg-card">
         <CardContent className="px-3 py-3">
-          <div className="grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(130px,1fr)_minmax(150px,1.1fr)_minmax(90px,0.7fr)_minmax(118px,0.8fr)_minmax(152px,auto)]">
-            <div className="flex min-w-0 items-center gap-2.5">
+          <div className={`grid min-w-0 grid-cols-1 items-center gap-3 sm:grid-cols-2 ${
+            showAllStreams
+              ? "xl:grid-cols-[minmax(130px,1fr)_minmax(150px,1.1fr)_minmax(90px,0.7fr)_minmax(118px,0.8fr)_minmax(152px,auto)]"
+              : "xl:grid-cols-[minmax(180px,1.2fr)_minmax(110px,0.7fr)_minmax(130px,0.8fr)_minmax(190px,auto)]"
+          }`}>
+            {showAllStreams ? <div className="flex min-w-0 items-center gap-2.5">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-primary/10 text-base text-primary">
                   {currentStudent.name[0]}
@@ -853,15 +941,15 @@ export function MultimodalDataFlowView() {
                 <p className="truncate text-sm font-semibold">{currentStudent.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">学号：{currentStudent.studentId}</p>
               </div>
-            </div>
+            </div> : null}
 
             <div className="flex min-w-0 items-center gap-2.5 border-border sm:border-l sm:pl-4">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/60">
                 <DoorOpen className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{currentStudent.room}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">心理咨询室</p>
+                <p className="truncate text-sm font-semibold">{showAllStreams ? currentStudent.room : `${selectedRoom} 无人咨询室`}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{showAllStreams ? "心理咨询室" : "当前直播空间"}</p>
               </div>
             </div>
 
@@ -883,7 +971,7 @@ export function MultimodalDataFlowView() {
             </div>
 
             <div className="flex min-w-0 items-center justify-start border-border pt-2 sm:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
+              {showAllStreams ? <><Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="grid w-[148px] grid-cols-2 text-xs">
                   <TabsTrigger value="student-list" className="px-2">学生列表</TabsTrigger>
                   <TabsTrigger value="realtime-test" className="px-2">实时测试</TabsTrigger>
@@ -902,24 +990,64 @@ export function MultimodalDataFlowView() {
                     ))}
                   </SelectContent>
                 </Select>
-              ) : null}
+              ) : null}</> : (
+                <Select value={selectedRoom} onValueChange={(value) => setSelectedRoom(value as (typeof CONSULTATION_ROOMS)[number])}>
+                  <SelectTrigger className="w-[180px] gap-2" aria-label="切换咨询室">
+                    <DoorOpen className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONSULTATION_ROOMS.map((room) => (
+                      <SelectItem key={room} value={room}>{room} 无人咨询室</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid flex-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <div className="grid min-h-0 gap-4 xl:grid-rows-[minmax(300px,0.92fr)_minmax(270px,1fr)]">
-          <Card className="min-h-0 overflow-hidden border-border bg-card py-0">
+      <div
+        className={`grid gap-4 ${
+          showAllStreams
+            ? "flex-1 xl:grid-cols-3 xl:grid-rows-[minmax(300px,0.92fr)_minmax(270px,1fr)]"
+            : "xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] xl:grid-rows-[auto_auto]"
+        }`}
+      >
+          <Card
+            className={`min-h-0 overflow-hidden border-border bg-card py-0 ${
+              showAllStreams ? "xl:col-span-2 xl:row-start-1" : "xl:row-span-2"
+            }`}
+          >
             <CardContent className="flex min-h-0 flex-1 p-0">
-              <div className="relative flex min-h-[300px] flex-1 items-center justify-center overflow-hidden bg-zinc-950">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="h-full max-h-full w-full object-contain"
-                />
+              <div className={`relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-950 ${showAllStreams ? "min-h-[300px]" : "min-h-[360px]"}`}>
+                {isUnityStream ? (
+                  <img
+                    key={unityStreamAttempt}
+                    src={`${unityStreamUrl}${unityStreamUrl.includes("?") ? "&" : "?"}attempt=${unityStreamAttempt}`}
+                    alt="Unity 实时游戏画面"
+                    decoding="async"
+                    draggable={false}
+                    className="h-full max-h-full w-full object-contain"
+                    onLoad={() => {
+                      setCameraStatus("streaming")
+                      setCameraError("")
+                    }}
+                    onError={() => {
+                      setCameraStatus("error")
+                      setCameraError("请运行 Unity，进入游戏后画面会自动连接。")
+                    }}
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className={`h-full max-h-full w-full ${showAllStreams ? "object-contain" : "object-cover"}`}
+                  />
+                )}
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:100%_18px] opacity-30" />
                 <div className="absolute left-3 top-3 flex items-center gap-2">
                   <Badge className="gap-1 bg-emerald-500 text-white hover:bg-emerald-500">
@@ -942,10 +1070,14 @@ export function MultimodalDataFlowView() {
                     </div>
                     <div>
                       <p className="text-base font-medium text-white">
-                        {cameraStatus === "loading" ? "正在自动连接摄像头..." : "摄像头暂未连接"}
+                        {isUnityStream
+                          ? cameraStatus === "loading" ? "正在连接 Unity 游戏画面..." : "Unity 游戏画面暂未连接"
+                          : cameraStatus === "loading" ? "正在自动连接摄像头..." : "摄像头暂未连接"}
                       </p>
                       <p className="mt-2 max-w-md text-sm text-zinc-400">
-                        {cameraError || "系统将优先选择心宠摄像头，未连接时使用本机摄像头。"}
+                        {cameraError || (isUnityStream
+                          ? "默认读取 127.0.0.1:8081，连接失败后每 3 秒自动重试。"
+                          : "系统将优先选择心宠摄像头，未连接时使用本机摄像头。")}
                       </p>
                     </div>
                   </div>
@@ -954,30 +1086,33 @@ export function MultimodalDataFlowView() {
             </CardContent>
           </Card>
 
-          <div className="grid min-h-0 gap-4 lg:grid-cols-2">
-            <Card className="flex min-h-0 flex-col border-purple-100 bg-card dark:border-purple-900">
-              <CardHeader className="pb-2">
+            <Card
+              className={`flex min-h-0 flex-col overflow-hidden border-purple-100 bg-card dark:border-purple-900 ${showAllStreams ? "" : "gap-0 py-0"} ${
+                showAllStreams ? "xl:col-start-1 xl:row-start-2" : "xl:col-start-2 xl:row-start-2"
+              }`}
+            >
+              <CardHeader className={showAllStreams ? "pb-2" : "px-4 pb-2 pt-3"}>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Mic className="h-4 w-4 text-purple-500" />
-                  语音流
+                  {showAllStreams ? "语音流" : "实时语音"}
                 </CardTitle>
-                <CardDescription className="text-xs">实时波形 · 实时转写 · 颤抖指数 · 倾向判断</CardDescription>
+                {showAllStreams ? <CardDescription className="text-xs">实时波形 · 实时转写 · 颤抖指数 · 倾向判断</CardDescription> : null}
               </CardHeader>
-              <CardContent className="flex flex-1 flex-col gap-3">
-                <VoiceWaveform levels={activeTab === "realtime-test" ? audioLevel : undefined} />
+              <CardContent className={`flex flex-1 flex-col ${showAllStreams ? "gap-3" : "gap-1.5 px-4 pb-3"}`}>
+                <VoiceWaveform levels={activeTab === "realtime-test" ? audioLevel : undefined} compact={!showAllStreams} />
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-purple-100 bg-purple-50/70 p-2 dark:border-purple-900 dark:bg-purple-950/30">
+                  <div className={`rounded-lg border border-purple-100 bg-purple-50/70 dark:border-purple-900 dark:bg-purple-950/30 ${showAllStreams ? "p-2" : "p-1.5"}`}>
                     <p className="text-xs text-purple-600">颤抖指数</p>
-                    <p className="text-xl font-bold text-purple-700">
+                    <p className={`${showAllStreams ? "text-xl" : "text-lg leading-5"} font-bold text-purple-700`}>
                       {currentStudent.voice.tremorIndex.toFixed(2)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-cyan-100 bg-cyan-50/70 p-2 dark:border-cyan-900 dark:bg-cyan-950/30">
+                  <div className={`rounded-lg border border-cyan-100 bg-cyan-50/70 dark:border-cyan-900 dark:bg-cyan-950/30 ${showAllStreams ? "p-2" : "p-1.5"}`}>
                     <p className="text-xs text-cyan-700">倾向判断</p>
-                    <p className="text-base font-semibold text-cyan-700">{sentimentLabel}</p>
+                    <p className={`${showAllStreams ? "text-base" : "text-sm leading-5"} font-semibold text-cyan-700`}>{sentimentLabel}</p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border bg-muted/30 p-2">
+                <div className={`rounded-lg border border-border bg-muted/30 ${showAllStreams ? "p-2" : "p-1.5"}`}>
                   <div className="mb-1 flex items-center gap-1.5">
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -985,7 +1120,7 @@ export function MultimodalDataFlowView() {
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">实时转写</span>
                   </div>
-                  <div className="h-[44px] overflow-y-auto text-xs leading-relaxed">
+                  <div className={`${showAllStreams ? "h-[44px]" : "h-[20px]"} overflow-y-auto text-xs leading-relaxed`}>
                     {voiceTranscription ? (
                       <p className="text-foreground">{voiceTranscription}</p>
                     ) : (
@@ -996,7 +1131,7 @@ export function MultimodalDataFlowView() {
               </CardContent>
             </Card>
 
-            <Card className="flex min-h-0 flex-col border-border bg-card">
+            {showAllStreams ? <Card className="flex min-h-0 flex-col border-border bg-card xl:col-start-2 xl:row-start-2">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Heart className="h-4 w-4 text-red-500" />
@@ -1012,58 +1147,71 @@ export function MultimodalDataFlowView() {
                   total={vitalMetrics.length}
                 />
               </CardContent>
-            </Card>
-          </div>
-        </div>
+            </Card> : null}
 
-        <div className="grid min-h-0 gap-4 xl:grid-rows-[minmax(300px,0.92fr)_minmax(270px,1fr)]">
-          <Card className="flex min-h-0 flex-col border-blue-100 bg-card dark:border-blue-900">
-            <CardHeader className="pb-2">
+          <Card
+            className={`flex min-h-0 flex-col overflow-hidden border-blue-100 bg-card dark:border-blue-900 ${showAllStreams ? "" : "gap-0 py-0"} ${
+              showAllStreams ? "xl:col-start-3 xl:row-start-1" : "xl:col-start-2 xl:row-start-1"
+            }`}
+          >
+            <CardHeader className={showAllStreams ? "pb-2" : "px-4 pb-2 pt-3"}>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Eye className="h-4 w-4 text-blue-500" />
-                视觉流
+                {showAllStreams ? "视觉流" : "表情"}
               </CardTitle>
-              <CardDescription className="text-xs">微表情 · 情绪指标</CardDescription>
+              {showAllStreams ? <CardDescription className="text-xs">微表情 · 情绪指标</CardDescription> : null}
             </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-4">
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+            <CardContent className={`flex flex-1 flex-col ${showAllStreams ? "gap-4" : "gap-2 px-4 pb-3"}`}>
+              <div className={`flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/60 dark:border-blue-900 dark:bg-blue-950/30 ${showAllStreams ? "p-3" : "p-2"}`}>
                 <div>
                   <p className="text-xs text-blue-700">主要表情</p>
                   <p className="mt-1 text-2xl font-semibold text-blue-950 dark:text-blue-100">{expressionLabel}</p>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-3xl shadow-sm dark:bg-slate-900">
+                <div className={`flex items-center justify-center rounded-full bg-white shadow-sm dark:bg-slate-900 ${showAllStreams ? "h-12 w-12 text-3xl" : "h-10 w-10 text-2xl"}`}>
                   {expressionEmoji}
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className={showAllStreams ? "space-y-3" : "space-y-1.5"}>
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">焦虑度</span>
                     <span className="text-sm font-medium">{(currentStudent.expression.anxiety * 100).toFixed(0)}%</span>
                   </div>
-                  <Progress value={currentStudent.expression.anxiety * 100} className="h-2.5" />
+                  <Progress
+                    value={currentStudent.expression.anxiety * 100}
+                    className={showAllStreams ? "h-2.5" : "h-2"}
+                    indicatorClassName="visual-expression-progress"
+                  />
                 </div>
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">悲伤度</span>
                     <span className="text-sm font-medium">{(currentStudent.expression.sadness * 100).toFixed(0)}%</span>
                   </div>
-                  <Progress value={currentStudent.expression.sadness * 100} className="h-2.5" />
+                  <Progress
+                    value={currentStudent.expression.sadness * 100}
+                    className={showAllStreams ? "h-2.5" : "h-2"}
+                    indicatorClassName="visual-expression-progress"
+                  />
                 </div>
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">愤怒度</span>
                     <span className="text-sm font-medium">{(currentStudent.expression.anger * 100).toFixed(0)}%</span>
                   </div>
-                  <Progress value={currentStudent.expression.anger * 100} className="h-2.5" />
+                  <Progress
+                    value={currentStudent.expression.anger * 100}
+                    className={showAllStreams ? "h-2.5" : "h-2"}
+                    indicatorClassName="visual-expression-progress"
+                  />
                 </div>
               </div>
 
             </CardContent>
           </Card>
 
-          <Card className="flex min-h-0 flex-col border-amber-100 bg-card dark:border-amber-900">
+          {showAllStreams ? <Card className="flex min-h-0 flex-col border-amber-100 bg-card dark:border-amber-900 xl:col-start-3 xl:row-start-2">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Hand className="h-4 w-4 text-amber-500" />
@@ -1157,8 +1305,7 @@ export function MultimodalDataFlowView() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        </div>
+          </Card> : null}
       </div>
     </div>
   )

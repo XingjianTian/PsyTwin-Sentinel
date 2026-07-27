@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState, Suspense } from "react"
 import {
   Globe,
@@ -58,9 +58,9 @@ const menuGroups: MenuGroup[] = [
     href: "#",
     subItems: [
       { icon: Globe, label: "校园心理健康态势", href: "/dashboard" },
-      { icon: Gamepad2, label: "心图·VR体验数据", href: "/vr-dashboard" },
+      { icon: Gamepad2, label: "心图VR实时看板", href: "/vr-dashboard" },
       { icon: MessageCircle, label: "微信小程序看板", href: "/pocket-records" },
-      { icon: Activity, label: "实时多模态直播舱", href: "/multimodal" },
+      { icon: Activity, label: "无人咨询直播室", href: "/multimodal" },
     ],
   },
   {
@@ -117,9 +117,14 @@ function SubMenuItemLink({
   pendingCount?: number
   pendingCountJumpKey?: number
 }) {
+  const router = useRouter()
+
   return (
     <Link
       href={item.href}
+      prefetch
+      onMouseEnter={() => router.prefetch(item.href)}
+      onFocus={() => router.prefetch(item.href)}
       onClick={item.href === "/risk-trace"
         ? () => window.dispatchEvent(new Event("risk-work-orders:viewed"))
         : undefined}
@@ -286,6 +291,7 @@ function MenuGroupItemWithSuspense(props: {
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [expandedGroups, setExpandedGroups] = useState<boolean[]>([true, true, true, true, false])
   const [collapsed, setCollapsed] = useState(false)
   const [pendingRiskWorkOrderCount, setPendingRiskWorkOrderCount] = useState(0)
@@ -351,6 +357,17 @@ export function DashboardSidebar() {
       // Keep the last known count while the network or database is temporarily unavailable.
     }
   }, [pathname, persistRiskNotificationState])
+
+  useEffect(() => {
+    const priorityRoutes = menuGroups
+      .flatMap((group) => group.subItems)
+      .map((item) => item.href)
+    const prefetchTimer = window.setTimeout(() => {
+      priorityRoutes.forEach((href) => router.prefetch(href))
+    }, 300)
+
+    return () => window.clearTimeout(prefetchTimer)
+  }, [router])
 
   useEffect(() => {
     const initialTimer = window.setTimeout(refreshPendingRiskWorkOrderCount, 0)

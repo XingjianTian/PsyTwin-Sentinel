@@ -90,7 +90,7 @@ export function PocketPetStage({
           </span>
         </div>
       ) : null}
-      <div className={`absolute bottom-7 z-10 h-8 w-40 rounded-[50%] bg-slate-950/20 blur-sm ${demoConversation ? "right-[18%]" : ""}`} />
+      <div className={`absolute bottom-7 z-10 h-7 w-32 rounded-[50%] bg-slate-950/20 blur-sm ${demoConversation ? "right-[18%]" : ""}`} />
       {demoConversation?.speaker === "main" && demoConversation.text ? (
         <div className="absolute bottom-52 right-[12%] z-20 max-w-64 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-md">
           {demoConversation.text}
@@ -99,11 +99,11 @@ export function PocketPetStage({
       <Image
         src={frameSrc}
         alt="小程序心宠"
-        width={192}
-        height={192}
+        width={144}
+        height={144}
         priority
         unoptimized
-        className={`pet-float relative z-10 h-48 w-48 object-contain drop-shadow-xl ${demoConversation ? "ml-auto mr-[12%]" : ""}`}
+        className={`pet-float relative z-10 h-36 w-36 object-contain drop-shadow-xl ${demoConversation ? "ml-auto mr-[12%]" : ""}`}
         style={{ imageRendering: "pixelated" }}
       />
     </div>
