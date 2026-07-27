@@ -264,6 +264,7 @@ export default function StudentPetPage() {
             <PocketPetStage
               sceneName={displayedSceneName}
               sceneBackgroundSrc={displayedSceneBackground}
+              demoConversation={liveSync.update?.demoConversation}
             />
           ) : (
           <div className="relative flex min-h-[360px] items-end justify-center overflow-hidden rounded-lg border border-border bg-[linear-gradient(180deg,#eef7ff_0%,#f7fbf2_62%,#e4f5dc_100%)] p-6">

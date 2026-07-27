@@ -580,3 +580,6 @@ ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
 ---
 
 *文档版本: v2.2 | 更新日期: 2026-07-20*
+# F9 心宠对话演示扩展（2026-07-27）
+
+`pet_status.payload.status` 可选包含 `demoConversation`：`active`、`phase`、`speaker`、`text` 以及 `companion` (`id`、`name`、`avatar`)。`meeting` 阶段可省略说话者与台词；进入心理咨询室或演示结束时字段为 `null` 或不存在。该字段仅由本地心宠服务器权威下发，Pocket、Sentinel 与 Unity 只读消费。

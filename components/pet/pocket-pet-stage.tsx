@@ -4,6 +4,7 @@ import Image from "next/image"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { MapPin } from "lucide-react"
 import { POCKET_PET_ANIMATION_FRAMES } from "@/lib/pet-live-sync"
+import type { PocketPetDemoConversation } from "@/lib/pet-live-sync"
 
 const FRAME_INTERVAL_MS = 1_000
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
@@ -25,9 +26,11 @@ function getServerReducedMotionSnapshot() {
 export function PocketPetStage({
   sceneName,
   sceneBackgroundSrc,
+  demoConversation,
 }: {
   sceneName: string
   sceneBackgroundSrc: string
+  demoConversation?: PocketPetDemoConversation | null
 }) {
   const [frameIndex, setFrameIndex] = useState(0)
   const prefersReducedMotion = useSyncExternalStore(
@@ -66,7 +69,33 @@ export function PocketPetStage({
         <MapPin className="h-3.5 w-3.5 text-primary" />
         {sceneName}
       </div>
-      <div className="absolute bottom-7 z-10 h-8 w-40 rounded-[50%] bg-slate-950/20 blur-sm" />
+      {demoConversation ? (
+        <div className="absolute bottom-8 left-[12%] z-10 flex w-36 flex-col items-center">
+          {demoConversation.speaker === "companion" && demoConversation.text ? (
+            <div className="mb-2 max-w-56 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-md">
+              {demoConversation.text}
+            </div>
+          ) : null}
+          <Image
+            src="/pet/variants/pet-06.png"
+            alt={`${demoConversation.companion.name}心宠`}
+            width={144}
+            height={144}
+            unoptimized
+            className="h-36 w-36 object-contain drop-shadow-lg"
+            style={{ imageRendering: "pixelated" }}
+          />
+          <span className="rounded-full bg-slate-900/75 px-3 py-1 text-xs font-medium text-white">
+            {demoConversation.companion.name}
+          </span>
+        </div>
+      ) : null}
+      <div className={`absolute bottom-7 z-10 h-8 w-40 rounded-[50%] bg-slate-950/20 blur-sm ${demoConversation ? "right-[18%]" : ""}`} />
+      {demoConversation?.speaker === "main" && demoConversation.text ? (
+        <div className="absolute bottom-52 right-[12%] z-20 max-w-64 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-md">
+          {demoConversation.text}
+        </div>
+      ) : null}
       <Image
         src={frameSrc}
         alt="小程序心宠"
@@ -74,7 +103,7 @@ export function PocketPetStage({
         height={192}
         priority
         unoptimized
-        className="pet-float relative z-10 h-48 w-48 object-contain drop-shadow-xl"
+        className={`pet-float relative z-10 h-48 w-48 object-contain drop-shadow-xl ${demoConversation ? "ml-auto mr-[12%]" : ""}`}
         style={{ imageRendering: "pixelated" }}
       />
     </div>

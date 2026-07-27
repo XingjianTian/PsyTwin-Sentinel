@@ -290,6 +290,29 @@ test("rejects stale versions, malformed JSON and unrelated messages", () => {
   assert.equal(parsePocketPetStatusMessage({ type: "heartbeat_ack", payload: {} }), null)
 })
 
+test("parses the server-authoritative demo conversation", () => {
+  const result = parsePocketPetStatusMessage({
+    type: "pet_status",
+    payload: {
+      status: {
+        sceneId: "picnic_lawn",
+        demoConversation: {
+          active: true,
+          phase: "line_2",
+          speaker: "companion",
+          text: "和你聊天很开心。",
+          companion: { id: "demo_companion", name: "小暖" },
+        },
+      },
+      stateVersion: 12,
+    },
+  })
+
+  assert.equal(result?.demoConversation?.speaker, "companion")
+  assert.equal(result?.demoConversation?.companion.name, "小暖")
+  assert.equal(result?.demoConversation?.text, "和你聊天很开心。")
+})
+
 test("maps known scenes and falls back to the bedroom background", () => {
   assert.deepEqual(getPocketScenePresentation("psychological_room"), {
     sceneId: "psychological_room",

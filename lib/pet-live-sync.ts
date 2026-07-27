@@ -90,6 +90,18 @@ export interface PocketPetLiveUpdate extends Partial<PocketScenePresentation> {
   stateVersion?: number
   updatedAt?: number
   logs?: PocketPetLiveLog[]
+  demoConversation?: PocketPetDemoConversation | null
+}
+
+export interface PocketPetDemoConversation {
+  active: boolean
+  phase: string
+  speaker?: "main" | "companion"
+  text?: string
+  companion: {
+    id: string
+    name: string
+  }
 }
 
 export interface PocketPetLiveLog {
@@ -334,6 +346,25 @@ export function parsePocketPetStatusMessage(
     sceneId || DEFAULT_POCKET_SCENE_ID,
     updatedAt,
   )
+  const demoConversation = isRecord(status.demoConversation)
+    && status.demoConversation.active === true
+    && isRecord(status.demoConversation.companion)
+    ? {
+        active: true,
+        phase: nonEmptyString(status.demoConversation.phase) || "meeting",
+        ...(status.demoConversation.speaker === "main"
+          || status.demoConversation.speaker === "companion"
+          ? { speaker: status.demoConversation.speaker }
+          : {}),
+        ...(nonEmptyString(status.demoConversation.text)
+          ? { text: nonEmptyString(status.demoConversation.text) }
+          : {}),
+        companion: {
+          id: nonEmptyString(status.demoConversation.companion.id) || "demo_companion",
+          name: nonEmptyString(status.demoConversation.companion.name) || "小暖",
+        },
+      } satisfies PocketPetDemoConversation
+    : null
 
   if (mood !== undefined) update.mood = mood
   if (energy !== undefined) update.energy = energy
@@ -343,6 +374,9 @@ export function parsePocketPetStatusMessage(
   if (stateVersion !== undefined) update.stateVersion = stateVersion
   if (updatedAt !== undefined) update.updatedAt = updatedAt
   if (logs) update.logs = logs
+  if (Object.hasOwn(status, "demoConversation")) {
+    update.demoConversation = demoConversation
+  }
 
   return update
 }
