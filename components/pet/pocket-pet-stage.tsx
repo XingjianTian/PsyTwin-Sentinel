@@ -60,7 +60,6 @@ export function PocketPetStage({
         alt={`${sceneName}场景`}
         fill
         priority
-        unoptimized
         sizes="(min-width: 1024px) 42vw, 100vw"
         className="object-cover object-center"
       />

@@ -155,6 +155,21 @@ const EMBED_BOOTSTRAP = `
   #psytwin-connection-panel th:first-child { width: 46%; }
   #psytwin-connection-panel td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--foreground, #18181b); }
   #psytwin-connection-panel td:last-child:empty::after { content: ' '; }
+  a[data-psytwin-reference-link="true"] {
+    color: var(--primary, #7c3aed);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  a[data-psytwin-reference-link="true"]:hover {
+    color: color-mix(in srgb, var(--primary, #7c3aed) 78%, #000);
+  }
+  a[data-psytwin-reference-link="true"]:focus-visible {
+    border-radius: 0.125rem;
+    outline: 2px solid var(--ring, #8b5cf6);
+    outline-offset: 2px;
+  }
   @media (max-width: 800px) {
     header[data-psytwin-shell="true"] {
       grid-template-columns: 1fr auto;
@@ -337,9 +352,64 @@ const EMBED_BOOTSTRAP = `
       }
     }
 
-    new MutationObserver(enhanceShell).observe(document.documentElement, { childList: true, subtree: true })
-    document.addEventListener('DOMContentLoaded', enhanceShell)
-    enhanceShell()
+    const enhanceReferenceLinks = () => {
+      document.querySelectorAll('li').forEach((item) => {
+        if (item.querySelector('[data-psytwin-reference-link="true"]')) return
+
+        const text = item.textContent || ''
+        const match = text.match(/^\\s*\\[\\d+\\]\\s+([^\\\\/\\s]+\\.md)\\s*$/i)
+        if (!match) return
+
+        const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT)
+        let node
+        while ((node = walker.nextNode())) {
+          const value = node.nodeValue || ''
+          const index = value.indexOf(match[1])
+          if (index === -1) continue
+
+          const link = document.createElement('a')
+          link.dataset.psytwinReferenceLink = 'true'
+          link.href = '/knowledge-document?file=' + encodeURIComponent(match[1])
+          link.target = '_blank'
+          link.rel = 'noopener noreferrer'
+          link.title = '在新标签页查看 ' + match[1]
+          link.textContent = match[1]
+
+          const before = document.createTextNode(value.slice(0, index))
+          const after = document.createTextNode(value.slice(index + match[1].length))
+          node.parentNode?.replaceChild(after, node)
+          after.parentNode?.insertBefore(link, after)
+          link.parentNode?.insertBefore(before, link)
+          break
+        }
+      })
+    }
+
+    const enhanceWebUi = () => {
+      enhanceShell()
+      enhanceReferenceLinks()
+    }
+
+    let enhanceScheduled = false
+    const scheduleEnhanceWebUi = () => {
+      if (enhanceScheduled) return
+      enhanceScheduled = true
+      requestAnimationFrame(() => {
+        enhanceScheduled = false
+        enhanceWebUi()
+      })
+    }
+
+    const observer = new MutationObserver(scheduleEnhanceWebUi)
+    if (document.documentElement) {
+      observer.observe(document.documentElement, { childList: true, subtree: true })
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.documentElement, { childList: true, subtree: true })
+      }, { once: true })
+    }
+    document.addEventListener('DOMContentLoaded', scheduleEnhanceWebUi)
+    scheduleEnhanceWebUi()
   })()
 </script>`
 
@@ -352,7 +422,7 @@ function getTargetUrl(path: string[]) {
   return new URL(normalizedPath, `${LIGHTRAG_URL.replace(/\/$/, "")}/`)
 }
 
-function createResponseHeaders(source: Headers) {
+function createResponseHeaders(source: Headers, options: { isHtml: boolean; isStaticAsset: boolean }) {
   const headers = new Headers()
   const contentType = source.get("content-type")
 
@@ -360,7 +430,15 @@ function createResponseHeaders(source: Headers) {
     headers.set("content-type", contentType)
   }
 
-  headers.set("cache-control", "no-store")
+  if (options.isStaticAsset) {
+    headers.set("cache-control", "public, max-age=31536000, immutable")
+    const etag = source.get("etag")
+    const lastModified = source.get("last-modified")
+    if (etag) headers.set("etag", etag)
+    if (lastModified) headers.set("last-modified", lastModified)
+  } else {
+    headers.set("cache-control", options.isHtml ? "private, no-cache" : "no-store")
+  }
   return headers
 }
 
@@ -368,6 +446,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const { path } = await context.params
   const targetUrl = getTargetUrl(path)
   targetUrl.search = request.nextUrl.search
+  const isStaticAsset = request.method === "GET" && path[0] === "webui" && path[1] === "assets"
 
   const headers = new Headers()
   const requestContentType = request.headers.get("content-type")
@@ -383,12 +462,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     // The external LightRAG service is the source of truth; this route only supplies same-origin access.
     // @ts-expect-error Required by Node fetch when forwarding a ReadableStream body.
     duplex: "half",
+    cache: isStaticAsset ? "force-cache" : "no-store",
+    next: isStaticAsset ? { revalidate: 31_536_000 } : undefined,
   })
 
-  const responseHeaders = createResponseHeaders(response.headers)
   const contentType = response.headers.get("content-type") ?? ""
+  const isHtml = contentType.includes("text/html")
+  const responseHeaders = createResponseHeaders(response.headers, { isHtml, isStaticAsset })
 
-  if (contentType.includes("text/html")) {
+  if (isHtml) {
     const sourceHtml = await response.text()
     const isSwaggerDocument = path[0] === "docs"
     const html = (isSwaggerDocument

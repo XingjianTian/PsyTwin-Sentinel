@@ -1,5 +1,8 @@
 # PsyTwin Sentinel
 
+> 同事首次拉取或需要复现当前本地环境时，请先阅读
+> [本地一致性配置指南](./docs/LOCAL_ENV_SETUP.md)。
+
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" />
@@ -679,10 +682,11 @@ npm run seed:incremental -- --dry-run
 
 ### 环境要求
 
-- **Node.js**: 18+
+- **Node.js**: 24（本地验证版本 24.15.0）
+- **npm**: 11（本地验证版本 11.12.1）
 - **PostgreSQL**: 15+
 - **Redis**: 7+
-- **Docker**: (可选，用于部署)
+- **Docker Desktop**: 推荐，用于一键启动 PostgreSQL 与 Redis
 
 ### 安装步骤
 
@@ -691,33 +695,34 @@ npm run seed:incremental -- --dry-run
 git clone https://github.com/XingjianTian/PsyTwin-Sentinel.git
 cd PsyTwin-Sentinel
 
-# 2. 安装依赖
-npm install
+# 2. 按锁文件安装依赖
+npm ci
 
 # 3. 配置环境变量
 cp .env.example .env
 # 编辑 .env 配置数据库连接、OpenClaw Gateway、LightRAG 服务地址等
 
-# 4. 数据库迁移
-npx prisma migrate dev
+# 4. 启动本地 PostgreSQL 与 Redis
+docker compose --env-file .env -f docker-compose.dev.yml up -d
 
-# 5. 生成 Prisma Client
+# 5. 应用已提交的数据库迁移并生成 Prisma Client
+npx prisma migrate deploy
 npx prisma generate
 
-# 6. 填充测试数据 (可选，完整重建演示数据)
-npx prisma db seed
-
-# 7. 非破坏性补齐核心数据 (推荐，适合 pull 新迁移后执行)
+# 6. 非破坏性补齐核心数据
 npm run seed:incremental
 
-# 8. 运行基础质量检查
+# 7. 运行基础质量检查
 npm run lint
 
-# 9. 启动开发服务器
+# 8. 启动开发服务器
 npm run dev
 ```
 
 访问 http://localhost:3000
+
+环境变量逐项说明、密钥交接清单和故障排查见
+[《本地一致性配置指南》](./docs/LOCAL_ENV_SETUP.md)。
 
 ### 实体心宠调试（Windows Host Bridge）
 

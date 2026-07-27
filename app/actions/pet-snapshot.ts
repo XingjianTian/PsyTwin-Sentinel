@@ -434,7 +434,16 @@ async function ensurePet(student: StudentInfo) {
 const activityLabelsList = Object.values(activityLabels)
 
 export async function getStudentPetSnapshot(studentId: string): Promise<StudentPetSnapshot> {
-  await ensureUniquePetNames()
+  const existingPet = await findPet(studentId)
+  if (existingPet) {
+    if (existingPet.diaryEntries.length > 0 && existingPet.events.length > 0) {
+      return toSnapshot(existingPet)
+    }
+
+    await ensurePetHistory(existingPet)
+    return toSnapshot(await findPet(studentId))
+  }
+
   const student = await prisma.student.findUnique({
     where: { id: studentId },
     select: {

@@ -97,6 +97,24 @@ test("profile input trims text and rejects invalid initiative", () => {
   assert.throws(() => petAiProfileInputSchema.parse({ ...parsed, initiative: 101 }))
 })
 
+test("profile input accepts a fully cleared personality configuration", () => {
+  const parsed = petAiProfileInputSchema.parse({
+    tone: "  ",
+    responseStyle: "",
+    initiative: 0,
+    systemPrompt: "  ",
+    knowledgeScope: [],
+  })
+
+  assert.deepEqual(parsed, {
+    tone: "",
+    responseStyle: "",
+    initiative: 0,
+    systemPrompt: "",
+    knowledgeScope: [],
+  })
+})
+
 test("demo student is pinned without disturbing the remaining order", () => {
   const students = [{ id: "stu-a" }, { id: "stu-test" }, { id: "stu-b" }]
   assert.deepEqual(prioritizeDemoStudent(students, "stu-test").map((item) => item.id), ["stu-test", "stu-a", "stu-b"])

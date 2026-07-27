@@ -9,6 +9,7 @@ test("knowledge base view renders only the full-width LightRAG console", () => {
   const html = renderToStaticMarkup(<RagKnowledgeBaseView />)
 
   assert.match(html, /id="lightrag-console"/)
+  assert.match(html, /allow-popups allow-popups-to-escape-sandbox/)
   assert.match(html, /h-full w-full border-0/)
   assert.doesNotMatch(html, />已接入</)
   assert.doesNotMatch(html, />文档管理</)

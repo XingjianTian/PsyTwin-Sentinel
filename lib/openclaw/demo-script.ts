@@ -224,7 +224,7 @@ export async function runOpenClawDemoWorkflow({ requestId, agentId }: DemoContex
     agentId: "main",
     type: "lifecycle.start",
     state: "analyzing",
-    message: "小芯已完成任务拆解，准备联动 DBA、分析师和咨询师执行本轮演示流程。",
+    message: "主智能体已完成任务拆解，准备联动 DBA、分析师和咨询师执行本轮演示流程。",
   })
 
   await sleep(1800)
@@ -338,7 +338,7 @@ export async function runOpenClawDemoWorkflow({ requestId, agentId }: DemoContex
     agentId: "main",
     type: "lifecycle.review",
     state: "analyzing",
-    message: "小芯正在汇总子代理结果，生成演示版总览结论并同步到指挥中心。",
+    message: "主智能体正在汇总子代理结果，生成演示版总览结论并同步到指挥中心。",
   })
 
   const finalResponse = `收到，演示链路已按预设流程完成。\n\n🛡️ **PsyTwin 全链路任务执行中（演示脚本）**\n\n| 子系统 | 状态 | 结果 |\n|--------|------|------|\n| **DBA** | ✅ 已完成 | 已筛出 10 名心理波动明显学生 |\n| **分析师** | ✅ 已完成 | 完成高 / 中 / 观察三级风险分层 |\n| **咨询师** | ✅ 已待命 | 通知话术、接待预案与小明通知写库已完成 |\n\n**演示结论**\n- 建议先批量发送温馨通知，观察学生是否主动接入。\n- 对高关注学生保留人工复核窗口，必要时直接转入咨询师跟进。\n- 本轮演示会在结束阶段固定向手机号 ${notificationResult.studentPhone} 的学生追加 1 条未读 student_notifications 记录，便于小程序侧直接展示。\n- 当前页面动态为演示脚本驱动，适合现场展示，不依赖真实网关即时响应。\n\n如果需要，我可以继续模拟“学生收到通知后接入咨询师”的下一段演示。`

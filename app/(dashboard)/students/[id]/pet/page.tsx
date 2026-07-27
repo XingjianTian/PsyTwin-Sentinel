@@ -193,7 +193,6 @@ function petStatusTrackClass(value: number, palette: StatusPalette = "default") 
 export default function StudentPetPage() {
   const params = useParams()
   const studentId = params.id as string
-  const [student, setStudent] = useState<StudentSummary | null>(null)
   const [pet, setPet] = useState<StudentPetSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const isDemoPetObserver = studentId === "stu-test"
@@ -202,13 +201,7 @@ export default function StudentPetPage() {
   useEffect(() => {
     async function fetchPetData() {
       try {
-        const [response, petSnapshot] = await Promise.all([
-          fetch(`/api/students/${studentId}`),
-          getStudentPetSnapshot(studentId),
-        ])
-        if (!response.ok) throw new Error("Failed to fetch student")
-        const data = await response.json()
-        setStudent({ id: data.id, name: data.name, studentNo: data.studentNo })
+        const petSnapshot = await getStudentPetSnapshot(studentId)
         setPet(petSnapshot)
       } catch (error) {
         console.error("Failed to fetch pet data:", error)
@@ -256,7 +249,7 @@ export default function StudentPetPage() {
             心宠外观
           </CardTitle>
           <Badge variant="secondary" className="ml-auto">
-            {student?.name || "学生"}的心宠
+            {pet.studentName || "学生"}的心宠
           </Badge>
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-[minmax(260px,0.9fr)_1fr]">
@@ -280,7 +273,6 @@ export default function StudentPetPage() {
               width={176}
               height={256}
               priority
-              unoptimized
               className="pet-float relative z-10 h-64 w-auto object-contain drop-shadow-xl"
               style={{ imageRendering: "pixelated", width: "auto" }}
             />
@@ -293,7 +285,7 @@ export default function StudentPetPage() {
                 <div>
                   <h3 className="text-2xl font-bold text-foreground">{pet.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    心宠 · {student?.studentNo || studentId}
+                    心宠 · {pet.studentNo || studentId}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">

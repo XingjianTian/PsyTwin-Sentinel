@@ -1,23 +1,23 @@
 import { z } from "zod"
 
-const trimmedText = (min: number, max: number) => z.string().trim().min(min).max(max)
+const trimmedText = (max: number) => z.string().trim().max(max)
 
 export const petAiProfileInputSchema = z.object({
-  tone: trimmedText(2, 40),
-  responseStyle: trimmedText(2, 60),
+  tone: trimmedText(40),
+  responseStyle: trimmedText(60),
   initiative: z.number().int().min(0).max(100),
-  systemPrompt: trimmedText(10, 2000),
-  knowledgeScope: z.array(trimmedText(1, 40)).min(1).max(8),
+  systemPrompt: trimmedText(2000),
+  knowledgeScope: z.array(z.string().trim().min(1).max(40)).max(8),
 })
 
 export type PetAiProfileInput = z.infer<typeof petAiProfileInputSchema>
 
 export const DEFAULT_PET_AI_PROFILE: PetAiProfileInput = {
-  tone: "温暖陪伴",
-  responseStyle: "简短自然",
-  initiative: 60,
-  systemPrompt: "你是学生可信赖的心宠伙伴。用自然、简短、尊重的语言回应，不替代专业心理咨询。",
-  knowledgeScope: ["心理健康知识", "校园生活", "情绪陪伴"],
+  tone: "",
+  responseStyle: "",
+  initiative: 0,
+  systemPrompt: "",
+  knowledgeScope: [],
 }
 
 export function buildPetRuntimeIdentity({ petName, profile }: { petName: string; profile: PetAiProfileInput }) {
