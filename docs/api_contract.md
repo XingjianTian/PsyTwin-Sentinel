@@ -540,6 +540,42 @@ ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
 - [ ] 线上心宠服务部署 `data.state`、`stateVersion`、`updatedAt` 与 `serverTime`。*(2026-07-20 核对线上接口仍为旧结构)*
 - [ ] Pocket、Unity 与心宠服务完成同一 `userId` 的端到端运行联调。*(等待线上契约升级与运行环境联调)*
 
+### 8.3 Pocket 触发心宠难过表情
+
+```http
+POST /api/pocket/pet/expression
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+请求体仅接受固定语义化枚举，不允许 Pocket 提交底层动作名：
+
+```json
+{
+  "expression": "sad"
+}
+```
+
+成功响应（HTTP 200）：
+
+```json
+{
+  "code": 0,
+  "message": "心宠表情请求已发送",
+  "data": {
+    "expression": "sad"
+  }
+}
+```
+
+错误响应：未登录返回 HTTP 401；请求体非法返回 HTTP 400；设备服务不可用或动作执行失败返回 HTTP 502。
+Sentinel 必须将 `sad` 固定映射到已登记的 `emotion/sad1` 动作，不得接受任意动作路径或命令。
+
+**状态追踪**:
+- [x] Sentinel 提供 Pocket 专用难过表情接口并固定映射安全动作白名单。*(已于 2026-07-27 完成接口、契约与自动化验证)*
+- [x] Pocket 创建演示求助事件后调用难过表情接口。*(已于 2026-07-27 完成请求封装与交互接入)*
+- [ ] 实体心宠执行 `sad1` 表情的连机验收。*(需要心宠设备与 Host Bridge 在线)*
+
 ---
 
 ## 9. 枚举定义

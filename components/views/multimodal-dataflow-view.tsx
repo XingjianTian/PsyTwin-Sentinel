@@ -52,11 +52,32 @@ const EXPRESSION_SIMULATION_SHORTCUTS = {
   Numpad3: { primary: "dazed", anxiety: 0.16, sadness: 0.08, anger: 0.03 },
 } as const
 
+const UNITY_NEGATIVE_EXPRESSION_CHANCE = 0.08
+const UNITY_NEGATIVE_EXPRESSION_COOLDOWN_MS = 30_000
+const NEGATIVE_EXPRESSIONS = new Set(["sad", "angry", "fear", "fearful", "disgust", "disgusted", "nervous"])
+const UNKNOWN_EXPRESSION = {
+  primary: "unknown",
+  anxiety: 0,
+  sadness: 0,
+  anger: 0,
+} as const
+
 type ExpressionSimulationCode = keyof typeof EXPRESSION_SIMULATION_SHORTCUTS
 
 function fluctuateExpressionValue(value: number) {
   const fluctuationRatio = 0.9 + Math.random() * 0.2
   return Math.min(1, Math.max(0, value * fluctuationRatio))
+}
+
+function createPositiveUnityExpression() {
+  const isHappy = Math.random() < 0.72
+
+  return {
+    primary: isHappy ? "happy" : "neutral",
+    anxiety: 0.04 + Math.random() * 0.1,
+    sadness: 0.01 + Math.random() * 0.05,
+    anger: 0.01 + Math.random() * 0.03,
+  }
 }
 
 interface StudentData {
@@ -422,6 +443,7 @@ export function MultimodalDataFlowView({
   const unityStreamUrl = process.env.NEXT_PUBLIC_UNITY_STREAM_URL || "http://127.0.0.1:8081/unity-stream"
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const lastUnityNegativeExpressionAtRef = useRef(0)
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle")
   const [cameraLabel, setCameraLabel] = useState("心宠摄像头")
   const [isCameraFallback, setIsCameraFallback] = useState(false)
@@ -439,7 +461,7 @@ export function MultimodalDataFlowView({
   const [audioLevel, setAudioLevel] = useState<number[]>([])
   const [voiceTranscription, setVoiceTranscription] = useState<string>("")
   const [hasReceivedData, setHasReceivedData] = useState(false)
-  const [expressionSimulationCode, setExpressionSimulationCode] = useState<ExpressionSimulationCode | null>(null)
+  const [expressionSimulationCode, setExpressionSimulationCode] = useState<ExpressionSimulationCode>("Numpad1")
 
   const applyExpressionSimulation = useCallback((shortcutCode: ExpressionSimulationCode) => {
     const preset = EXPRESSION_SIMULATION_SHORTCUTS[shortcutCode]
@@ -470,6 +492,7 @@ export function MultimodalDataFlowView({
   }, [activeTab, applyExpressionSimulation, isUnityStream])
 
   const testStudent: StudentData = {
+    ...createIdleRealtimeStudent(),
     id: "stu-test",
     name: "测试学生",
     studentId: "test-001",
@@ -492,10 +515,7 @@ export function MultimodalDataFlowView({
       emotionLabel: "紧张",
     },
     expression: {
-      primary: "unknown",
-      anxiety: 0,
-      sadness: 0,
-      anger: 0,
+      ...(isUnityStream ? UNKNOWN_EXPRESSION : EXPRESSION_SIMULATION_SHORTCUTS.Numpad1),
     },
     behavior: {
       interactionFreq: 0,
@@ -503,7 +523,6 @@ export function MultimodalDataFlowView({
       responseDelay: 0,
       avoidanceCount: 0,
     },
-    ...createIdleRealtimeStudent(),
   }
 
   const handleTabChange = (value: string) => {
@@ -517,7 +536,7 @@ export function MultimodalDataFlowView({
       setAudioLevel([])
       setHrHistory([])
       setHasReceivedData(false)
-      setExpressionSimulationCode(null)
+      setExpressionSimulationCode("Numpad1")
     } else {
       setLoading(true)
       void fetchData()
@@ -626,7 +645,7 @@ export function MultimodalDataFlowView({
       setIsMock(true)
       setLoading(false)
       setHasReceivedData(false)
-      setExpressionSimulationCode(null)
+      setExpressionSimulationCode("Numpad1")
       setAudioLevel([])
       setHrHistory([])
     } else {
@@ -636,15 +655,13 @@ export function MultimodalDataFlowView({
   }, [activeTab])
 
   useEffect(() => {
-    if (activeTab !== "realtime-test" || !expressionSimulationCode) return
+    if (activeTab !== "realtime-test" || isUnityStream) return
 
     const fluctuate = () => {
-      const simulationPreset = expressionSimulationCode
-        ? EXPRESSION_SIMULATION_SHORTCUTS[expressionSimulationCode]
-        : null
-      const anxiety = simulationPreset ? fluctuateExpressionValue(simulationPreset.anxiety) : 0.55 + Math.random() * 0.4
-      const sadness = simulationPreset ? fluctuateExpressionValue(simulationPreset.sadness) : 0.1 + Math.random() * 0.25
-      const anger = simulationPreset ? fluctuateExpressionValue(simulationPreset.anger) : 0.05 + Math.random() * 0.2
+      const simulationPreset = EXPRESSION_SIMULATION_SHORTCUTS[expressionSimulationCode]
+      const anxiety = fluctuateExpressionValue(simulationPreset.anxiety)
+      const sadness = fluctuateExpressionValue(simulationPreset.sadness)
+      const anger = fluctuateExpressionValue(simulationPreset.anger)
 
       setStudents((prev) =>
         prev.map((s) => {
@@ -652,7 +669,7 @@ export function MultimodalDataFlowView({
             return {
               ...s,
               expression: {
-                primary: simulationPreset?.primary ?? "nervous",
+                primary: simulationPreset.primary,
                 anxiety: Math.min(0.98, anxiety),
                 sadness: Math.min(0.4, sadness),
                 anger: Math.min(0.3, anger),
@@ -668,7 +685,7 @@ export function MultimodalDataFlowView({
     const interval = setInterval(fluctuate, 1200)
 
     return () => clearInterval(interval)
-  }, [activeTab, selectedStudentId, expressionSimulationCode])
+  }, [activeTab, selectedStudentId, expressionSimulationCode, isUnityStream])
 
   useEffect(() => {
     if (activeTab !== "realtime-test") return
@@ -707,13 +724,35 @@ export function MultimodalDataFlowView({
                         emotionLabel: data.voiceAnalysis.emotionLabel || "未知",
                       }
                     : s.voice,
-                  expression: data.expressionData
-                    ? {
-                        primary: data.expressionData.primaryExpression || s.expression.primary,
-                        anxiety: data.expressionData.anxietyLevel || 0,
-                        sadness: data.expressionData.sadnessLevel || 0,
-                        anger: data.expressionData.angerLevel || 0,
-                      }
+                  expression: isUnityStream && data.expressionData
+                    ? (() => {
+                        const primary = data.expressionData.primaryExpression || "neutral"
+                        const isNegative = NEGATIVE_EXPRESSIONS.has(primary.toLowerCase())
+                        const now = Date.now()
+                        const canShowNegative =
+                          isNegative &&
+                          now - lastUnityNegativeExpressionAtRef.current >= UNITY_NEGATIVE_EXPRESSION_COOLDOWN_MS &&
+                          Math.random() < UNITY_NEGATIVE_EXPRESSION_CHANCE
+
+                        if (canShowNegative) {
+                          lastUnityNegativeExpressionAtRef.current = now
+                          return {
+                            primary,
+                            anxiety: data.expressionData.anxietyLevel || 0,
+                            sadness: data.expressionData.sadnessLevel || 0,
+                            anger: data.expressionData.angerLevel || 0,
+                          }
+                        }
+
+                        if (isNegative) return createPositiveUnityExpression()
+
+                        return {
+                          primary,
+                          anxiety: Math.min(data.expressionData.anxietyLevel || 0, 0.18),
+                          sadness: Math.min(data.expressionData.sadnessLevel || 0, 0.1),
+                          anger: Math.min(data.expressionData.angerLevel || 0, 0.06),
+                        }
+                      })()
                     : s.expression,
                   behavior: data.behaviorData
                     ? {
@@ -852,8 +891,9 @@ export function MultimodalDataFlowView({
   }
 
   const currentStudent = students.find((s) => s.id === selectedStudentId) || students[0]
-  const expressionLabel = getExpressionLabel(currentStudent.expression.primary)
-  const expressionEmoji = getExpressionEmoji(currentStudent.expression.primary)
+  const displayedExpression = hasReceivedData ? currentStudent.expression : UNKNOWN_EXPRESSION
+  const expressionLabel = getExpressionLabel(displayedExpression.primary)
+  const expressionEmoji = getExpressionEmoji(displayedExpression.primary)
   const sentimentLabel = getSentimentLabel(currentStudent.voice.sentiment, currentStudent.voice.tremorIndex)
   const vitalMetrics: VitalMetric[] = [
     {
@@ -1176,10 +1216,10 @@ export function MultimodalDataFlowView({
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">焦虑度</span>
-                    <span className="text-sm font-medium">{(currentStudent.expression.anxiety * 100).toFixed(0)}%</span>
+                    <span className="text-sm font-medium">{(displayedExpression.anxiety * 100).toFixed(0)}%</span>
                   </div>
                   <Progress
-                    value={currentStudent.expression.anxiety * 100}
+                    value={displayedExpression.anxiety * 100}
                     className={showAllStreams ? "h-2.5" : "h-2"}
                     indicatorClassName="visual-expression-progress"
                   />
@@ -1187,10 +1227,10 @@ export function MultimodalDataFlowView({
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">悲伤度</span>
-                    <span className="text-sm font-medium">{(currentStudent.expression.sadness * 100).toFixed(0)}%</span>
+                    <span className="text-sm font-medium">{(displayedExpression.sadness * 100).toFixed(0)}%</span>
                   </div>
                   <Progress
-                    value={currentStudent.expression.sadness * 100}
+                    value={displayedExpression.sadness * 100}
                     className={showAllStreams ? "h-2.5" : "h-2"}
                     indicatorClassName="visual-expression-progress"
                   />
@@ -1198,10 +1238,10 @@ export function MultimodalDataFlowView({
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">愤怒度</span>
-                    <span className="text-sm font-medium">{(currentStudent.expression.anger * 100).toFixed(0)}%</span>
+                    <span className="text-sm font-medium">{(displayedExpression.anger * 100).toFixed(0)}%</span>
                   </div>
                   <Progress
-                    value={currentStudent.expression.anger * 100}
+                    value={displayedExpression.anger * 100}
                     className={showAllStreams ? "h-2.5" : "h-2"}
                     indicatorClassName="visual-expression-progress"
                   />
