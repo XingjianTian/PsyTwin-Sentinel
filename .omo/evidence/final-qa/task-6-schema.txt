@@ -1,0 +1,18 @@
+=== Task 6 - Schema format & validate ===
+
+--- Check 1: npx prisma format ---
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Prisma schema loaded from prisma\schema.prisma
+Formatted prisma\schema.prisma in 32ms 🚀
+RESULT: PASS - Formatted successfully
+
+--- Check 2: npx prisma validate ---
+warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+For more information, see: https://pris.ly/prisma-config
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+The schema at prisma\schema.prisma is valid 🚀
+RESULT: PASS - Schema is valid

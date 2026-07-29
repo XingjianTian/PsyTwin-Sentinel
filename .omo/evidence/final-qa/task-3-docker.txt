@@ -1,0 +1,12 @@
+=== Task 3 - Docker health check ===
+
+--- Check 1: docker compose ps ---
+NAME                   IMAGE                COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+psytwin-postgres-dev   postgres:15-alpine   "docker-entrypoint.s…"   postgres   17 minutes ago   Up 17 minutes (healthy)   0.0.0.0:5432->5432/tcp
+
+RESULT: PASS - Container is healthy
+
+--- Check 2: pg_isready ---
+/var/run/postgresql:5432 - accepting connections
+
+RESULT: PASS - accepting connections

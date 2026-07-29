@@ -1,0 +1,11 @@
+=== Task 8 - Seed & idempotency ===
+
+--- Check 1: First seed run ---
+Seed completed successfully.
+The seed command has been executed.
+RESULT: PASS
+
+--- Check 2: Second seed run (idempotency) ---
+Seed completed successfully.
+The seed command has been executed.
+RESULT: PASS - No duplicate errors, idempotent
