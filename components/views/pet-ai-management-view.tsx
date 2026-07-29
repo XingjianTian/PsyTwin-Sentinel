@@ -17,7 +17,7 @@ import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-pr
 import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
 import { parsePetAiProfileMarkdown } from "@/lib/pet-ai/profile-markdown"
 import { getReachySessionEntryPresentation, type ReachyServiceAvailability } from "@/lib/pet-ai/reachy-session-entry"
-import { getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
+import { classifyMessageRisk, getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
 import { isStudentReachyTranscriptRole } from "@/lib/pet-ai/transcript-role"
 import { cn } from "@/lib/utils"
 
@@ -130,7 +130,7 @@ export function PetAiManagementView() {
           ? "LOW"
           : mergeUniqueById(current.transcript?.items || [], payload.data.transcript?.items || [])
               .filter((item) => isStudentReachyTranscriptRole(item.role))
-              .reduce((level, item) => highestRiskLevel(level, item.risk_level), "LOW"),
+              .reduce((level, item) => highestRiskLevel(level, highestRiskLevel(item.risk_level, classifyMessageRisk(item.content))), "LOW"),
         transcript: {
           cursor: payload.data.transcript?.cursor,
           items: isBaselineRequest
@@ -379,7 +379,9 @@ export function PetAiManagementView() {
 
               <section className="mt-4"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-medium">实时对话</h3><span className="text-[11px] text-muted-foreground">百度 ASR / TTS</span></div>{(reachy.transcript?.items || []).length === 0 ? <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">启动设备会话后，学生语音与测试心宠回复会显示在这里。</p> : <div className="space-y-2">{reachy.transcript?.items?.map((item) => {
                 const isStudent = isStudentReachyTranscriptRole(item.role)
-                const itemRiskLevel = normalizeRiskLevel(item.risk_level)
+                const itemRiskLevel = isStudent
+                  ? highestRiskLevel(item.risk_level, classifyMessageRisk(item.content))
+                  : normalizeRiskLevel(item.risk_level)
                 const itemRisk = getRiskPresentation(itemRiskLevel)
                 return <div key={item.id} className={cn("flex", isStudent ? "justify-end" : "justify-start")}><div className={cn("w-fit max-w-[88%] rounded-xl px-3 py-2 text-sm leading-5 transition-colors duration-200 motion-reduce:transition-none", isStudent ? "rounded-br-sm" : "rounded-bl-sm", isStudent ? itemRisk.studentMessageClassName : itemRisk.petMessageClassName)}><div className="mb-1 flex items-center gap-2 text-[11px] font-medium"><span className={itemRiskLevel === "LOW" ? "text-muted-foreground" : "text-current/75"}>{isStudent ? "测试学生 · ASR" : "测试心宠 · TTS"}</span>{itemRiskLevel !== "LOW" && <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", itemRisk.badgeClassName)}>{itemRisk.label}</Badge>}</div><p className="text-pretty">{item.content}</p></div></div>
               })}</div>}</section>

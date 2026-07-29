@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 
 import { isStudentReachyTranscriptRole } from "@/lib/pet-ai/transcript-role"
+import { classifyMessageRisk, highestRiskLevel } from "@/lib/pet-ai/risk-presentation"
 
 export type ReachyConversationRole = "student" | "pet"
 
@@ -31,9 +32,10 @@ function normalizePetRole(value: unknown): ReachyConversationRole | null {
   return normalized === "assistant" || normalized === "pet" ? "pet" : null
 }
 
-function normalizeRiskLevel(value: unknown) {
-  const normalized = typeof value === "string" ? value.trim().toUpperCase() : "LOW"
-  return ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(normalized) ? normalized : "LOW"
+function normalizeRiskLevel(value: unknown, content: string, role: ReachyConversationRole) {
+  const declaredLevel = typeof value === "string" ? value.trim().toUpperCase() : "LOW"
+  if (role === "student") return highestRiskLevel(declaredLevel, classifyMessageRisk(content))
+  return ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(declaredLevel) ? declaredLevel : "LOW"
 }
 
 export function buildPetLiveChatSessionId(studentId: string, petId: string) {
@@ -65,7 +67,7 @@ export function extractReachyConversationCandidates({
       id: `pet-live-msg-${digest}`,
       role,
       content: content.slice(0, 4000),
-      riskLevel: normalizeRiskLevel(item.risk_level),
+      riskLevel: normalizeRiskLevel(item.risk_level, content, role),
       createdAt: parseDate(item.created_at, now),
       seq,
     }]

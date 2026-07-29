@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 
 import { isStudentReachyTranscriptRole } from "@/lib/pet-ai/transcript-role"
+import { classifyMessageRisk, highestRiskLevel } from "@/lib/pet-ai/risk-presentation"
 
 export type ReachyRiskLevel = "MEDIUM" | "HIGH"
 
@@ -17,10 +18,11 @@ function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null
 }
 
-function normalizeRiskLevel(value: unknown): ReachyRiskLevel | null {
-  const normalized = typeof value === "string" ? value.toUpperCase() : ""
-  if (normalized === "MEDIUM") return "MEDIUM"
-  if (normalized === "HIGH" || normalized === "CRITICAL") return "HIGH"
+function normalizeRiskLevel(value: unknown, sourceText: string): ReachyRiskLevel | null {
+  const declaredLevel = typeof value === "string" ? value.trim().toUpperCase() : "LOW"
+  const detectedLevel = highestRiskLevel(declaredLevel, classifyMessageRisk(sourceText))
+  if (detectedLevel === "MEDIUM") return "MEDIUM"
+  if (detectedLevel === "HIGH" || detectedLevel === "CRITICAL") return "HIGH"
   return null
 }
 
@@ -43,8 +45,8 @@ export function extractReachyRiskWorkOrderCandidates({
 
   return transcript.items.flatMap((item) => {
     if (!isRecord(item) || !isStudentReachyTranscriptRole(item.role)) return []
-    const riskLevel = normalizeRiskLevel(item.risk_level)
     const sourceText = typeof item.content === "string" ? item.content.trim() : ""
+    const riskLevel = normalizeRiskLevel(item.risk_level, sourceText)
     if (!riskLevel || !sourceText) return []
 
     const sourceKey = [studentId, String(item.id ?? ""), String(item.created_at ?? ""), sourceText].join("|")
