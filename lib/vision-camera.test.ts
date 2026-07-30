@@ -4,9 +4,35 @@ import test, { type TestContext } from "node:test"
 
 import {
   createReachyCameraPreviewController,
+  isStreamUsingCamera,
   reachyMiniCameraAdapter,
   type ReachyMiniCameraSession,
 } from "./vision-camera"
+
+test("reuses a permission stream that already belongs to the Reachy camera", () => {
+  const track = {
+    label: "Reachy Mini Camera",
+    getSettings: () => ({ deviceId: "reachy" }),
+  } as MediaStreamTrack
+  const stream = {
+    getVideoTracks: () => [track],
+  } as MediaStream
+
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "reachy", label: "Reachy Mini Camera" }), true)
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "other", label: "Reachy Mini Camera" }), true)
+})
+
+test("does not reuse a permission stream from another camera", () => {
+  const track = {
+    label: "HD WebCam",
+    getSettings: () => ({ deviceId: "laptop" }),
+  } as MediaStreamTrack
+  const stream = {
+    getVideoTracks: () => [track],
+  } as MediaStream
+
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "reachy", label: "Reachy Mini Camera" }), false)
+})
 
 type MediaDevicesStub = Pick<MediaDevices, "enumerateDevices" | "getUserMedia">
 

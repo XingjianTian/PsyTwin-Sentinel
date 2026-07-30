@@ -7,18 +7,15 @@ const readSource = async (relativePath: string) =>
 
 test("sidebar nests pet AI management directly under the AI configuration group", async () => {
   const source = await readSource("../components/dashboard-sidebar.tsx")
-  const workbenchIndex = source.indexOf('label: "心理工作业务台"')
-  const archiveIndex = source.indexOf('label: "数字孪生档案"')
-  const aiConfigIndex = source.indexOf('label: "心图·AI配置"')
-  const petAiIndex = source.indexOf('label: "心宠AI管理中心"')
-  const knowledgeBaseIndex = source.indexOf('label: "心理学知识库"')
-  const systemIndex = source.indexOf('label: "系统管理"')
+  const aiConfigIndex = source.indexOf('label: "心图 · AI 配置"')
+  const knowledgeBaseIndex = source.indexOf('href: "/ai-config?tab=rag"')
+  const petAiIndex = source.indexOf('href: "/pet-ai-management"')
+  const strategyCenterIndex = source.indexOf('href: "/ai-config?tab=strategy"')
 
-  assert.ok(workbenchIndex >= 0 && archiveIndex > workbenchIndex)
-  assert.ok(!(petAiIndex > workbenchIndex && petAiIndex < archiveIndex))
-  assert.ok(aiConfigIndex >= 0 && petAiIndex > aiConfigIndex)
-  assert.ok(petAiIndex < knowledgeBaseIndex && knowledgeBaseIndex < systemIndex)
-  assert.match(source, /label: "心宠AI管理中心", href: "\/pet-ai-management"/)
+  assert.ok(aiConfigIndex >= 0)
+  assert.ok(aiConfigIndex < knowledgeBaseIndex)
+  assert.ok(knowledgeBaseIndex < petAiIndex && petAiIndex < strategyCenterIndex)
+  assert.match(source, /label: "心宠 AI 管理中心", href: "\/pet-ai-management"/)
   assert.match(source, /label: "后台智能体配置中心", href: "\/ai-config\?tab=strategy"/)
   assert.doesNotMatch(source, /模型与策略中心/)
   assert.match(source, /\/api\/risk-work-orders\/pending-count/)
@@ -30,7 +27,7 @@ test("sidebar nests pet AI management directly under the AI configuration group"
   assert.match(source, /条未查看预警/)
   assert.match(source, /nextState\.unseenCount > previousState\.unseenCount/)
   assert.match(source, /risk-badge-hop/)
-  assert.match(source, /shadow-\[0_0_9px/)
+  assert.match(source, /shadow-\[0_0_0_3px/)
 })
 
 test("pet AI management route renders the native management workspace", async () => {

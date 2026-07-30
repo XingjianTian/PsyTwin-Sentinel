@@ -45,6 +45,18 @@ export interface ReachyCameraPreviewController {
   dispose: () => void
 }
 
+export function isStreamUsingCamera(
+  stream: MediaStream,
+  device: VisionCameraDevice,
+) {
+  const track = stream.getVideoTracks()[0]
+  if (!track) return false
+
+  const activeDeviceId = track.getSettings().deviceId
+  return activeDeviceId === device.deviceId
+    || /reachy|mini/i.test(track.label)
+}
+
 export function createReachyCameraPreviewController(
   adapter: Pick<ReachyMiniCameraAdapter, "start">,
   setVideoStream: (stream: MediaStream | null) => void,

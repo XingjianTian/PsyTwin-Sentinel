@@ -131,8 +131,8 @@ const menuGroups: MenuGroup[] = [
     icon: BrainCircuit,
     label: "心图 · AI 配置",
     subItems: [
-      { icon: PawPrint, label: "心宠 AI 管理中心", href: "/pet-ai-management" },
       { icon: Database, label: "心理学知识库", href: "/ai-config?tab=rag" },
+      { icon: PawPrint, label: "心宠 AI 管理中心", href: "/pet-ai-management" },
       { icon: BrainCircuit, label: "后台智能体配置中心", href: "/ai-config?tab=strategy" },
     ],
   },

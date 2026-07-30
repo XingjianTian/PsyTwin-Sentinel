@@ -38,7 +38,7 @@ import {
   YAxis,
 } from "recharts"
 
-import { localBrowserCameraAdapter } from "@/lib/vision-camera"
+import { isStreamUsingCamera, localBrowserCameraAdapter } from "@/lib/vision-camera"
 import { createIdleRealtimeStudent } from "@/lib/multimodal-live-state"
 
 type CameraStatus = "idle" | "loading" | "streaming" | "error"
@@ -586,15 +586,22 @@ export function MultimodalDataFlowView({
 
         const postPermissionReachy = postPermissionDevices.find((device) => /reachy|mini/i.test(device.label))
         if (!reachyDevice && postPermissionReachy) {
-          localBrowserCameraAdapter.stop(stream)
-          stream = await localBrowserCameraAdapter.start({ deviceId: postPermissionReachy.deviceId })
-          if (cancelled) {
+          if (!isStreamUsingCamera(stream, postPermissionReachy)) {
             localBrowserCameraAdapter.stop(stream)
-            return
-          }
-          streamRef.current = stream
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream
+            streamRef.current = null
+            if (videoRef.current) {
+              videoRef.current.srcObject = null
+            }
+
+            stream = await localBrowserCameraAdapter.start({ deviceId: postPermissionReachy.deviceId })
+            if (cancelled) {
+              localBrowserCameraAdapter.stop(stream)
+              return
+            }
+            streamRef.current = stream
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream
+            }
           }
           setCameraLabel(postPermissionReachy.label)
           setIsCameraFallback(false)
