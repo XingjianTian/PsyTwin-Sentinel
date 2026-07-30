@@ -4,29 +4,30 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState, Suspense } from "react"
 import {
-  Globe,
-  ScanSearch,
-  Users,
+  Activity,
+  Bell,
+  BookOpen,
   BrainCircuit,
-  Database,
-  Workflow,
-  Gamepad2,
-  FileText,
-  Settings,
   ChevronDown,
   ChevronRight,
-  Monitor,
-  Activity,
-  Cpu,
-  Cloud,
-  Shield,
-  Bell,
-  PanelLeftClose,
-  PanelLeft,
-  MessageCircle,
   ClipboardList,
-  BookOpen,
+  Cloud,
+  Cpu,
+  Database,
+  FileText,
+  Gamepad2,
+  Globe,
+  MessageCircle,
+  Monitor,
+  PanelLeft,
+  PanelLeftClose,
   PawPrint,
+  ScanSearch,
+  Settings,
+  Shield,
+  Sparkles,
+  Users,
+  Workflow,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -47,18 +48,64 @@ interface SubMenuItem {
 interface MenuGroup {
   icon: React.ElementType
   label: string
-  href: string
   subItems: SubMenuItem[]
 }
+
+const groupTones = [
+  {
+    panel: "border-violet-200 bg-violet-50/70",
+    submenu: "bg-violet-100/45",
+    hover: "hover:bg-violet-100/75",
+    icon: "text-violet-600",
+    text: "text-violet-800",
+    item: "bg-violet-100/90 text-violet-800",
+    dot: "bg-violet-600 shadow-[0_0_0_3px_rgba(124,58,237,0.13)]",
+  },
+  {
+    panel: "border-indigo-200 bg-indigo-50/70",
+    submenu: "bg-indigo-100/45",
+    hover: "hover:bg-indigo-100/75",
+    icon: "text-indigo-600",
+    text: "text-indigo-800",
+    item: "bg-indigo-100/90 text-indigo-800",
+    dot: "bg-indigo-600 shadow-[0_0_0_3px_rgba(79,70,229,0.13)]",
+  },
+  {
+    panel: "border-sky-200 bg-sky-50/70",
+    submenu: "bg-sky-100/45",
+    hover: "hover:bg-sky-100/75",
+    icon: "text-sky-600",
+    text: "text-sky-800",
+    item: "bg-sky-100/90 text-sky-800",
+    dot: "bg-sky-600 shadow-[0_0_0_3px_rgba(2,132,199,0.13)]",
+  },
+  {
+    panel: "border-cyan-200 bg-cyan-50/70",
+    submenu: "bg-cyan-100/45",
+    hover: "hover:bg-cyan-100/75",
+    icon: "text-cyan-600",
+    text: "text-cyan-800",
+    item: "bg-cyan-100/90 text-cyan-800",
+    dot: "bg-cyan-600 shadow-[0_0_0_3px_rgba(8,145,178,0.13)]",
+  },
+  {
+    panel: "border-slate-200 bg-slate-50/75",
+    submenu: "bg-slate-100/70",
+    hover: "hover:bg-slate-200/75",
+    icon: "text-slate-600",
+    text: "text-slate-800",
+    item: "bg-slate-200/85 text-slate-900",
+    dot: "bg-slate-600 shadow-[0_0_0_3px_rgba(71,85,105,0.13)]",
+  },
+] as const
 
 const menuGroups: MenuGroup[] = [
   {
     icon: Globe,
     label: "全域态势感知",
-    href: "#",
     subItems: [
       { icon: Globe, label: "校园心理健康态势", href: "/dashboard" },
-      { icon: Gamepad2, label: "心图VR实时看板", href: "/vr-dashboard" },
+      { icon: Gamepad2, label: "心图 VR 实时看板", href: "/vr-dashboard" },
       { icon: MessageCircle, label: "微信小程序看板", href: "/pocket-records" },
       { icon: Activity, label: "无人咨询直播室", href: "/multimodal" },
     ],
@@ -66,17 +113,15 @@ const menuGroups: MenuGroup[] = [
   {
     icon: ClipboardList,
     label: "心理工作业务台",
-    href: "#",
     subItems: [
-      { icon: Workflow, label: "心图·AI助手", href: "/ai-config?tab=openclaw" },
+      { icon: Workflow, label: "心图 · AI 助手", href: "/ai-config?tab=openclaw" },
       { icon: ScanSearch, label: "预警工单管理", href: "/risk-trace" },
       { icon: Monitor, label: "设备与预约管理", href: "/device-appointments" },
     ],
   },
   {
     icon: BookOpen,
-    label: "数字孪生档案",
-    href: "#",
+    label: "数字学生档案",
     subItems: [
       { icon: Users, label: "学生心理档案", href: "/students" },
       { icon: FileText, label: "评估干预记录", href: "/interventions" },
@@ -84,10 +129,9 @@ const menuGroups: MenuGroup[] = [
   },
   {
     icon: BrainCircuit,
-    label: "心图·AI配置",
-    href: "#",
+    label: "心图 · AI 配置",
     subItems: [
-      { icon: PawPrint, label: "心宠AI管理中心", href: "/pet-ai-management" },
+      { icon: PawPrint, label: "心宠 AI 管理中心", href: "/pet-ai-management" },
       { icon: Database, label: "心理学知识库", href: "/ai-config?tab=rag" },
       { icon: BrainCircuit, label: "后台智能体配置中心", href: "/ai-config?tab=strategy" },
     ],
@@ -95,7 +139,6 @@ const menuGroups: MenuGroup[] = [
   {
     icon: Settings,
     label: "系统管理",
-    href: "#",
     subItems: [
       { icon: Shield, label: "安全策略", href: "/system-settings?tab=security" },
       { icon: Cpu, label: "基础设置", href: "/system-settings?tab=basic" },
@@ -106,14 +149,15 @@ const menuGroups: MenuGroup[] = [
   },
 ]
 
-function SubMenuItemLink({ 
-  item, 
-  isActive,
-  pendingCount = 0,
-  pendingCountJumpKey = 0,
-}: { 
+function isCurrentRoute(pathname: string, currentSearch: string, href: string) {
+  const [itemPath, itemSearch = ""] = href.split("?")
+  return pathname === itemPath && (!itemSearch || currentSearch === itemSearch)
+}
+
+function SubMenuItemLink({ item, isActive, tone, pendingCount = 0, pendingCountJumpKey = 0 }: {
   item: SubMenuItem
   isActive: boolean
+  tone: typeof groupTones[number]
   pendingCount?: number
   pendingCountJumpKey?: number
 }) {
@@ -125,76 +169,39 @@ function SubMenuItemLink({
       prefetch
       onMouseEnter={() => router.prefetch(item.href)}
       onFocus={() => router.prefetch(item.href)}
-      onClick={item.href === "/risk-trace"
-        ? () => window.dispatchEvent(new Event("risk-work-orders:viewed"))
-        : undefined}
+      onClick={item.href === "/risk-trace" ? () => window.dispatchEvent(new Event("risk-work-orders:viewed")) : undefined}
       className={cn(
-        "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        "group flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-[14px] font-medium tracking-[0.01em] outline-none transition-[background-color,color,transform] duration-150 focus-visible:ring-2 focus-visible:ring-primary/40",
         isActive
-          ? "bg-primary/10 font-medium text-primary"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          ? tone.item
+          : cn("text-slate-600 hover:text-slate-950", tone.hover)
       )}
     >
-      <item.icon
-        className={cn(
-          "h-4 w-4 shrink-0",
-          isActive ? "text-primary" : "text-muted-foreground"
-        )}
-      />
-      <span>{item.label}</span>
+      <item.icon className={cn("h-[18px] w-[18px] shrink-0 stroke-[1.9]", isActive ? tone.icon : "text-slate-500 group-hover:text-primary")} />
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
       {pendingCount > 0 && (
         <span
           key={pendingCountJumpKey}
           aria-label={`${pendingCount} 条未查看预警`}
-          className={cn(
-            "ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-red-300/70 bg-red-600 px-1 text-[10px] font-bold leading-none tabular-nums text-white shadow-[0_0_9px_rgba(220,38,38,0.58),inset_0_1px_0_rgba(255,255,255,0.28)]",
-            pendingCountJumpKey > 0 && "risk-badge-hop"
-          )}
+          className={cn("inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold tabular-nums text-white", pendingCountJumpKey > 0 && "risk-badge-hop")}
         >
           {pendingCount > 99 ? "99+" : pendingCount}
         </span>
       )}
-      {isActive && (
-        <span className={cn("h-1.5 w-1.5 rounded-full bg-primary", pendingCount > 0 ? "ml-1" : "ml-auto")} />
-      )}
+      {isActive && <span className={cn("h-2 w-2 shrink-0 rounded-full", tone.dot)} />}
     </Link>
   )
 }
 
-function SubMenuItemLinkInner({ item, pendingCount, pendingCountJumpKey }: { item: SubMenuItem; pendingCount?: number; pendingCountJumpKey?: number }) {
+function SubMenuItemLinkInner({ item, tone, pendingCount, pendingCountJumpKey }: { item: SubMenuItem; tone: typeof groupTones[number]; pendingCount?: number; pendingCountJumpKey?: number }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const itemPath = item.href.split('?')[0]
-  const itemSearch = item.href.includes('?') ? item.href.split('?')[1] : ''
-  const currentSearch = searchParams.toString()
-  const isActive = pathname === itemPath && (itemSearch ? currentSearch === itemSearch : true)
-  
-  return <SubMenuItemLink item={item} isActive={isActive} pendingCount={pendingCount} pendingCountJumpKey={pendingCountJumpKey} />
+  return <SubMenuItemLink item={item} isActive={isCurrentRoute(pathname, searchParams.toString(), item.href)} tone={tone} pendingCount={pendingCount} pendingCountJumpKey={pendingCountJumpKey} />
 }
 
-function SubMenuItemLinkWithSuspense({ item, pendingCount, pendingCountJumpKey }: { item: SubMenuItem; pendingCount?: number; pendingCountJumpKey?: number }) {
-  return (
-    <Suspense fallback={
-      <div className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70">
-        <item.icon className="h-4 w-4 shrink-0" />
-      <span className="whitespace-normal break-normal">{item.label}</span>
-      </div>
-    }>
-      <SubMenuItemLinkInner item={item} pendingCount={pendingCount} pendingCountJumpKey={pendingCountJumpKey} />
-    </Suspense>
-  )
-}
-
-function MenuGroupItem({
-  group,
-  isExpanded,
-  onToggle,
-  collapsed,
-  onExpand,
-  pendingRiskWorkOrderCount,
-  pendingRiskWorkOrderJumpKey,
-}: {
+function MenuGroupItem({ group, groupIndex, isExpanded, onToggle, collapsed, onExpand, pendingRiskWorkOrderCount, pendingRiskWorkOrderJumpKey }: {
   group: MenuGroup
+  groupIndex: number
   isExpanded: boolean
   onToggle: () => void
   collapsed: boolean
@@ -205,108 +212,62 @@ function MenuGroupItem({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const Icon = group.icon
-  
-  const isActiveParent = group.subItems.some(item => {
-    const itemPath = item.href.split('?')[0]
-    const itemSearch = item.href.includes('?') ? item.href.split('?')[1] : ''
-    const currentSearch = searchParams.toString()
-    return pathname === itemPath && (itemSearch ? currentSearch === itemSearch : true)
-  })
-  
-  const handleClick = () => {
-    if (collapsed) {
-      onExpand()
-    } else {
-      onToggle()
-    }
-  }
-  
+  const tone = groupTones[groupIndex]
+  const isActiveParent = group.subItems.some((item) => isCurrentRoute(pathname, searchParams.toString(), item.href))
+
   return (
-    <div className="flex flex-col">
+    <section className={cn(
+      "overflow-hidden rounded-xl border transition-[background-color,border-color] duration-200",
+      isActiveParent || isExpanded ? tone.panel : "border-slate-200/90 bg-white/65 hover:border-slate-300",
+      collapsed && "border-transparent bg-transparent hover:border-transparent"
+    )}>
       <button
-        onClick={handleClick}
+        onClick={collapsed ? onExpand : onToggle}
         className={cn(
-          "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-          isActiveParent
-            ? "bg-primary/10 font-medium text-primary"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-          collapsed && "justify-center px-0"
+          "flex min-h-12 w-full items-center gap-3 px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40",
+          isActiveParent || isExpanded ? tone.text : "text-slate-800 hover:bg-slate-50/80",
+          collapsed && "justify-center rounded-lg px-0"
         )}
         title={collapsed ? group.label : undefined}
+        aria-expanded={!collapsed && isExpanded}
       >
-        <Icon
-          className={cn(
-            "h-4 w-4 shrink-0",
-            isActiveParent ? "text-primary" : "text-muted-foreground"
-          )}
-        />
-        {!collapsed && <span className="font-bold">{group.label}</span>}
-        {!collapsed && (isExpanded ? (
-          <ChevronDown className="ml-auto h-3.5 w-3.5" />
-        ) : (
-          <ChevronRight className="ml-auto h-3.5 w-3.5" />
-        ))}
+        <Icon className={cn("h-5 w-5 shrink-0 stroke-[2]", isActiveParent || isExpanded ? tone.icon : "text-slate-500")} />
+        {!collapsed && <span className="flex-1 text-[15px] font-bold tracking-[0.01em]">{group.label}</span>}
+        {!collapsed && (isExpanded ? <ChevronDown className={cn("h-4 w-4", tone.icon)} /> : <ChevronRight className="h-4 w-4 text-slate-500" />)}
       </button>
-      
+
       {isExpanded && !collapsed && (
-        <ul className="mt-1 ml-4 flex flex-col gap-1 border-l border-border pl-2">
+        <ul className={cn("mx-2 mb-2 flex flex-col gap-0.5 rounded-lg p-1.5", tone.submenu)}>
           {group.subItems.map((item) => (
             <li key={item.href}>
-              <SubMenuItemLinkWithSuspense
-                item={item}
-                pendingCount={item.href === "/risk-trace" ? pendingRiskWorkOrderCount : undefined}
-                pendingCountJumpKey={item.href === "/risk-trace" ? pendingRiskWorkOrderJumpKey : undefined}
-              />
+              <Suspense fallback={<div className="h-10" />}>
+                <SubMenuItemLinkInner
+                  item={item}
+                  tone={tone}
+                  pendingCount={item.href === "/risk-trace" ? pendingRiskWorkOrderCount : undefined}
+                  pendingCountJumpKey={item.href === "/risk-trace" ? pendingRiskWorkOrderJumpKey : undefined}
+                />
+              </Suspense>
             </li>
           ))}
         </ul>
       )}
-    </div>
-  )
-}
-
-function MenuGroupItemWithSuspense(props: {
-  group: MenuGroup
-  isExpanded: boolean
-  onToggle: () => void
-  collapsed: boolean
-  onExpand: () => void
-  pendingRiskWorkOrderCount: number
-  pendingRiskWorkOrderJumpKey: number
-}) {
-  return (
-    <Suspense fallback={
-      <button className={cn(
-        "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70",
-        props.collapsed && "justify-center px-0"
-      )}>
-        <props.group.icon className="h-4 w-4 shrink-0" />
-        {!props.collapsed && <span className="font-bold">{props.group.label}</span>}
-      </button>
-    }>
-      <MenuGroupItem {...props} />
-    </Suspense>
+    </section>
   )
 }
 
 export function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [expandedGroups, setExpandedGroups] = useState<boolean[]>([true, true, true, true, false])
+  const [expandedGroups, setExpandedGroups] = useState([true, true, true, true, false])
   const [collapsed, setCollapsed] = useState(false)
   const [pendingRiskWorkOrderCount, setPendingRiskWorkOrderCount] = useState(0)
   const [pendingRiskWorkOrderJumpKey, setPendingRiskWorkOrderJumpKey] = useState(0)
-  const riskNotificationStateRef = useRef<RiskWorkOrderNotificationState>(
-    EMPTY_RISK_WORK_ORDER_NOTIFICATION_STATE,
-  )
+  const riskNotificationStateRef = useRef<RiskWorkOrderNotificationState>(EMPTY_RISK_WORK_ORDER_NOTIFICATION_STATE)
   const riskNotificationInitializedRef = useRef(false)
 
   const persistRiskNotificationState = useCallback((state: RiskWorkOrderNotificationState) => {
-    try {
-      window.localStorage.setItem(RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY, JSON.stringify(state))
-    } catch {
-      // The in-memory notification state still works when browser storage is unavailable.
-    }
+    try { window.localStorage.setItem(RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY, JSON.stringify(state)) } catch { /* In-memory state remains available. */ }
   }, [])
 
   const acknowledgeRiskNotifications = useCallback(() => {
@@ -322,136 +283,71 @@ export function DashboardSidebar() {
       const payload = await response.json()
       if (!response.ok) return
       const nextCount = Math.max(0, Number(payload.data?.count) || 0)
-
       if (!riskNotificationInitializedRef.current) {
         try {
           const storedValue = window.localStorage.getItem(RISK_WORK_ORDER_NOTIFICATION_STORAGE_KEY)
-          if (storedValue) {
-            const storedState = JSON.parse(storedValue) as Partial<RiskWorkOrderNotificationState>
-            riskNotificationStateRef.current = {
-              pendingTotal: Math.max(0, Number(storedState.pendingTotal) || 0),
-              unseenCount: Math.max(0, Number(storedState.unseenCount) || 0),
-            }
-          } else {
-            riskNotificationStateRef.current = { pendingTotal: nextCount, unseenCount: 0 }
-          }
-        } catch {
-          riskNotificationStateRef.current = { pendingTotal: nextCount, unseenCount: 0 }
-        }
+          riskNotificationStateRef.current = storedValue
+            ? { pendingTotal: Math.max(0, Number(JSON.parse(storedValue).pendingTotal) || 0), unseenCount: Math.max(0, Number(JSON.parse(storedValue).unseenCount) || 0) }
+            : { pendingTotal: nextCount, unseenCount: 0 }
+        } catch { riskNotificationStateRef.current = { pendingTotal: nextCount, unseenCount: 0 } }
         riskNotificationInitializedRef.current = true
       }
-
       const previousState = riskNotificationStateRef.current
-      const nextState = reconcileRiskWorkOrderNotifications(
-        previousState,
-        nextCount,
-        pathname === "/risk-trace",
-      )
-      if (nextState.unseenCount > previousState.unseenCount) {
-        setPendingRiskWorkOrderJumpKey((current) => current + 1)
-      }
+      const nextState = reconcileRiskWorkOrderNotifications(previousState, nextCount, pathname === "/risk-trace")
+      if (nextState.unseenCount > previousState.unseenCount) setPendingRiskWorkOrderJumpKey((current) => current + 1)
       riskNotificationStateRef.current = nextState
       setPendingRiskWorkOrderCount(nextState.unseenCount)
       persistRiskNotificationState(nextState)
-    } catch {
-      // Keep the last known count while the network or database is temporarily unavailable.
-    }
+    } catch { /* Keep the last known count during a transient network failure. */ }
   }, [pathname, persistRiskNotificationState])
 
   useEffect(() => {
-    const priorityRoutes = menuGroups
-      .flatMap((group) => group.subItems)
-      .map((item) => item.href)
-    const prefetchTimer = window.setTimeout(() => {
-      priorityRoutes.forEach((href) => router.prefetch(href))
-    }, 300)
-
-    return () => window.clearTimeout(prefetchTimer)
+    const timer = window.setTimeout(() => menuGroups.flatMap((group) => group.subItems).forEach((item) => router.prefetch(item.href)), 300)
+    return () => window.clearTimeout(timer)
   }, [router])
 
   useEffect(() => {
     const initialTimer = window.setTimeout(refreshPendingRiskWorkOrderCount, 0)
     const timer = window.setInterval(refreshPendingRiskWorkOrderCount, 15_000)
     const handleChange = () => void refreshPendingRiskWorkOrderCount()
-    const handleViewed = () => acknowledgeRiskNotifications()
     window.addEventListener("risk-work-orders:changed", handleChange)
-    window.addEventListener("risk-work-orders:viewed", handleViewed)
+    window.addEventListener("risk-work-orders:viewed", acknowledgeRiskNotifications)
     window.addEventListener("focus", handleChange)
     return () => {
       window.clearTimeout(initialTimer)
       window.clearInterval(timer)
       window.removeEventListener("risk-work-orders:changed", handleChange)
-      window.removeEventListener("risk-work-orders:viewed", handleViewed)
+      window.removeEventListener("risk-work-orders:viewed", acknowledgeRiskNotifications)
       window.removeEventListener("focus", handleChange)
     }
   }, [acknowledgeRiskNotifications, refreshPendingRiskWorkOrderCount])
 
   useEffect(() => {
-    if (pathname === "/risk-trace" && riskNotificationInitializedRef.current) {
-      acknowledgeRiskNotifications()
-    }
+    if (pathname === "/risk-trace" && riskNotificationInitializedRef.current) acknowledgeRiskNotifications()
   }, [acknowledgeRiskNotifications, pathname])
-  
-  const toggleGroup = (index: number) => {
-    setExpandedGroups(prev => prev.map((expanded, i) => i === index ? !expanded : expanded))
-  }
 
   return (
     <aside className={cn(
-      "flex h-full flex-col border-r border-border bg-sidebar transition-all duration-300 ease-in-out",
-      collapsed ? "w-16" : "w-64"
+      "relative m-3 mr-0 flex h-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-[linear-gradient(160deg,#ffffff_0%,#fbfaff_58%,#f7f9ff_100%)] shadow-[0_6px_18px_rgba(31,41,55,0.08)] transition-[width] duration-200 ease-out",
+      collapsed ? "w-16" : "w-[18.5rem]"
     )}>
-      {/* Logo & Collapse Toggle */}
-      <div className="flex items-center border-b border-border px-3 py-3">
-        {!collapsed && (
-          <span className="text-sm font-bold text-foreground">导航栏</span>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            "ml-auto rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
-            collapsed && "mx-auto"
-          )}
-          aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
-        >
-          {collapsed ? (
-            <PanelLeft className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
+      <div className={cn("flex min-h-[76px] items-center border-b border-slate-200/90 px-5", collapsed && "justify-center px-2")}>
+        {!collapsed && <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-100 text-primary"><Sparkles className="h-5 w-5" /></span><span className="text-lg font-bold tracking-tight text-slate-900">导航栏</span></div>}
+        <button onClick={() => setCollapsed((value) => !value)} className={cn("ml-auto grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 outline-none transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40", collapsed && "ml-0")} aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}>
+          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="flex flex-col gap-2">
-          {menuGroups.map((group, index) => (
-            <li key={group.label}>
-              <MenuGroupItemWithSuspense
-                group={group}
-                isExpanded={expandedGroups[index]}
-                onToggle={() => toggleGroup(index)}
-                collapsed={collapsed}
-                onExpand={() => setCollapsed(false)}
-                pendingRiskWorkOrderCount={pendingRiskWorkOrderCount}
-                pendingRiskWorkOrderJumpKey={pendingRiskWorkOrderJumpKey}
-              />
-            </li>
-          ))}
+      <nav className={cn("flex-1 overflow-y-auto py-4", collapsed ? "px-2" : "px-3")} aria-label="主导航">
+        <ul className="flex flex-col gap-3">
+          {menuGroups.map((group, index) => <li key={group.label}><Suspense fallback={<div className="h-12" />}><MenuGroupItem group={group} groupIndex={index} isExpanded={expandedGroups[index]} onToggle={() => setExpandedGroups((previous) => previous.map((expanded, itemIndex) => itemIndex === index ? !expanded : expanded))} collapsed={collapsed} onExpand={() => setCollapsed(false)} pendingRiskWorkOrderCount={pendingRiskWorkOrderCount} pendingRiskWorkOrderJumpKey={pendingRiskWorkOrderJumpKey} /></Suspense></li>)}
         </ul>
       </nav>
 
-      <div className={cn(
-        "border-t border-border p-3 transition-all duration-300",
-        collapsed ? "px-1" : "px-3"
-      )}>
-        <div className={cn(
-          "flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2",
-          collapsed && "justify-center px-0"
-        )}>
-          <span className="h-2 w-2 rounded-full bg-success" />
-          {!collapsed && (
-            <span className="text-xs text-muted-foreground">系统运行正常</span>
-          )}
+      <div className={cn("border-t border-slate-200/90 p-3", collapsed && "p-2")}>
+        <div className={cn("flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-emerald-800", collapsed && "justify-center px-0")}>
+          <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" /></span>
+          {!collapsed && <span className="text-xs font-medium">系统运行正常</span>}
         </div>
       </div>
     </aside>
