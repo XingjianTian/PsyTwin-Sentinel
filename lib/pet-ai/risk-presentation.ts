@@ -72,6 +72,17 @@ export function highestRiskLevel(first?: string | null, second?: string | null):
   return riskRank[right] > riskRank[left] ? right : left
 }
 
+export function highestConversationRisk(
+  messages: ReadonlyArray<{ role: string; content: string; riskLevel?: string | null }>,
+): RiskLevel {
+  return messages
+    .filter((message) => message.role === "student")
+    .reduce(
+      (level, message) => highestRiskLevel(level, highestRiskLevel(message.riskLevel, classifyMessageRisk(message.content))),
+      "LOW" as RiskLevel,
+    )
+}
+
 export function getRiskPresentation(level?: string | null) {
   return riskPresentation[normalizeRiskLevel(level)]
 }

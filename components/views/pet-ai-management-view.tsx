@@ -17,7 +17,7 @@ import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-pr
 import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
 import { parsePetAiProfileMarkdown } from "@/lib/pet-ai/profile-markdown"
 import { getReachySessionEntryPresentation, type ReachyServiceAvailability } from "@/lib/pet-ai/reachy-session-entry"
-import { classifyMessageRisk, getRiskPresentation, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
+import { classifyMessageRisk, getRiskPresentation, highestConversationRisk, highestRiskLevel, normalizeRiskLevel } from "@/lib/pet-ai/risk-presentation"
 import { isStudentReachyTranscriptRole } from "@/lib/pet-ai/transcript-role"
 import { cn } from "@/lib/utils"
 
@@ -249,15 +249,28 @@ export function PetAiManagementView() {
         liveSessionBaselineReadyRef.current = true
         setReachy((current) => ({ ...current, transcript: { cursor: 0, items: [] }, events: { cursor: 0, items: [] } }))
       }
+      if (action === "stop") {
+        const detailResponse = await fetch(`/api/pet-ai/students/${detail.student.id}`, { cache: "no-store" })
+        const detailPayload = await readPayload(detailResponse)
+        if (!detailResponse.ok) throw new Error(detailPayload.message || "对话记录加载失败")
+        setDetail(detailPayload.data)
+      }
       toast.success(action === "start" ? "心宠对话已启动" : "心宠对话已停止")
       void pollReachy()
     } catch (error) { toast.error((error as Error).message) }
   }
 
   const ocean = useMemo(() => detail?.pet.personality || null, [detail])
+  const recordedRiskLevel = useMemo(
+    () => highestConversationRisk(detail?.conversations || []),
+    [detail?.conversations],
+  )
   const sessionRiskLevel = useMemo(
-    () => reachy.student_id === selectedId ? highestRiskLevel(detail?.student.riskLevel, reachy.risk_level) : normalizeRiskLevel(detail?.student.riskLevel),
-    [detail?.student.riskLevel, reachy.risk_level, reachy.student_id, selectedId],
+    () => highestRiskLevel(
+      highestRiskLevel(detail?.student.riskLevel, recordedRiskLevel),
+      reachy.student_id === selectedId ? reachy.risk_level : "LOW",
+    ),
+    [detail?.student.riskLevel, reachy.risk_level, reachy.student_id, recordedRiskLevel, selectedId],
   )
   const sessionRisk = getRiskPresentation(sessionRiskLevel)
 
@@ -296,7 +309,9 @@ export function PetAiManagementView() {
           <div className="border-b p-3"><div className="flex items-center gap-2 font-medium"><PawPrint className="size-4 text-primary" />学生与心宠</div><div className="relative mt-3"><Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索姓名或学号" className="pl-8" /></div><div className="mt-2 grid grid-cols-2 gap-2"><select aria-label="班级筛选" value={className} onChange={(event) => setClassName(event.target.value)} className="h-9 rounded-md border bg-background px-2 text-sm"><option value="">全部班级</option>{classes.map((item) => <option key={item}>{item}</option>)}</select><select aria-label="风险筛选" value={riskLevel} onChange={(event) => setRiskLevel(event.target.value)} className="h-9 rounded-md border bg-background px-2 text-sm"><option value="">全部风险</option><option value="LOW">低风险</option><option value="MEDIUM">中风险</option><option value="HIGH">高风险</option><option value="CRITICAL">危机</option></select></div></div>
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {loading ? Array.from({ length: 6 }, (_, index) => <div key={index} className="mb-2 h-16 animate-pulse rounded-lg bg-muted" />) : students.map((student) => {
-              const displayedRiskLevel = reachy.student_id === student.id ? highestRiskLevel(student.riskLevel, reachy.risk_level) : normalizeRiskLevel(student.riskLevel)
+              const displayedRiskLevel = student.id === selectedId
+                ? highestRiskLevel(student.riskLevel, sessionRiskLevel)
+                : reachy.student_id === student.id ? highestRiskLevel(student.riskLevel, reachy.risk_level) : normalizeRiskLevel(student.riskLevel)
               const displayedRisk = getRiskPresentation(displayedRiskLevel)
               return <button key={student.id} onClick={() => selectStudent(student.id)} className={cn("mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", selectedId === student.id ? "bg-primary/10 text-primary" : "hover:bg-muted")}><div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold">{student.name.slice(0, 1)}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="truncate text-sm font-medium text-foreground">{student.name}</span><span className={cn("size-2 shrink-0 rounded-full", student.pet?.isOnline ? "bg-success" : "bg-border")} /></div><p className="truncate text-xs text-muted-foreground">{student.className} · {student.pet?.name || "待生成"}</p></div><Badge variant="outline" aria-label={`${student.name}${displayedRisk.label}`} className={cn("px-1.5", displayedRisk.badgeClassName)}>{displayedRisk.label}</Badge></button>
             })}
