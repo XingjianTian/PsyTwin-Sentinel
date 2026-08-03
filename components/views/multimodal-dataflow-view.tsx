@@ -440,7 +440,10 @@ export function MultimodalDataFlowView({
 }: MultimodalDataFlowViewProps) {
   const showAllStreams = streamMode === "full"
   const isUnityStream = videoSource === "unity"
+  const isReachyRelayStream = !isUnityStream && process.env.NEXT_PUBLIC_REACHY_RELAY_ENABLED !== "false"
+  const isRemoteImageStream = isUnityStream || isReachyRelayStream
   const unityStreamUrl = process.env.NEXT_PUBLIC_UNITY_STREAM_URL || "http://127.0.0.1:8081/unity-stream"
+  const relayStreamUrl = "/api/pet-ai/reachy/network?stream=1"
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const lastUnityNegativeExpressionAtRef = useRef(0)
@@ -544,9 +547,9 @@ export function MultimodalDataFlowView({
   }
 
   useEffect(() => {
-    if (isUnityStream) {
+    if (isRemoteImageStream) {
       setCameraStatus("loading")
-      setCameraLabel("Unity 游戏画面")
+      setCameraLabel(isUnityStream ? "Unity 游戏画面" : "心宠直播主机")
       setCameraError("")
       return
     }
@@ -624,10 +627,10 @@ export function MultimodalDataFlowView({
         streamRef.current = null
       }
     }
-  }, [isUnityStream])
+  }, [isRemoteImageStream, isUnityStream])
 
   useEffect(() => {
-    if (!isUnityStream || cameraStatus === "streaming") return
+    if (!isRemoteImageStream || cameraStatus === "streaming") return
 
     const retryTimer = window.setTimeout(() => {
       setCameraStatus("loading")
@@ -635,7 +638,7 @@ export function MultimodalDataFlowView({
     }, 3000)
 
     return () => window.clearTimeout(retryTimer)
-  }, [cameraStatus, isUnityStream, unityStreamAttempt])
+  }, [cameraStatus, isRemoteImageStream, unityStreamAttempt])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1069,11 +1072,11 @@ export function MultimodalDataFlowView({
           >
             <CardContent className="flex min-h-0 flex-1 p-0">
               <div className={`relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-950 ${showAllStreams ? "min-h-[300px]" : "min-h-[360px]"}`}>
-                {isUnityStream ? (
+                {isRemoteImageStream ? (
                   <img
                     key={unityStreamAttempt}
-                    src={`${unityStreamUrl}${unityStreamUrl.includes("?") ? "&" : "?"}attempt=${unityStreamAttempt}`}
-                    alt="Unity 实时游戏画面"
+                    src={`${isUnityStream ? unityStreamUrl : relayStreamUrl}${(isUnityStream ? unityStreamUrl : relayStreamUrl).includes("?") ? "&" : "?"}attempt=${unityStreamAttempt}`}
+                    alt={isUnityStream ? "Unity 实时游戏画面" : "心宠直播主机实时画面"}
                     decoding="async"
                     draggable={false}
                     className="h-full max-h-full w-full object-contain"
@@ -1083,7 +1086,9 @@ export function MultimodalDataFlowView({
                     }}
                     onError={() => {
                       setCameraStatus("error")
-                      setCameraError("请运行 Unity，进入游戏后画面会自动连接。")
+                      setCameraError(isUnityStream
+                        ? "请运行 Unity，进入游戏后画面会自动连接。"
+                        : "请先运行视频中继服务，系统将在 3 秒后自动重连。")
                     }}
                   />
                 ) : (
@@ -1119,12 +1124,16 @@ export function MultimodalDataFlowView({
                       <p className="text-base font-medium text-white">
                         {isUnityStream
                           ? cameraStatus === "loading" ? "正在连接 Unity 游戏画面..." : "Unity 游戏画面暂未连接"
-                          : cameraStatus === "loading" ? "正在自动连接摄像头..." : "摄像头暂未连接"}
+                          : isReachyRelayStream
+                            ? cameraStatus === "loading" ? "正在连接心宠直播主机..." : "心宠直播主机暂未连接"
+                            : cameraStatus === "loading" ? "正在自动连接摄像头..." : "摄像头暂未连接"}
                       </p>
                       <p className="mt-2 max-w-md text-sm text-zinc-400">
                         {cameraError || (isUnityStream
                           ? "默认读取 127.0.0.1:8081，连接失败后每 3 秒自动重试。"
-                          : "系统将优先选择心宠摄像头，未连接时使用本机摄像头。")}
+                          : isReachyRelayStream
+                            ? "通过 Sentinel 同源代理读取直播主机视频，连接失败后每 3 秒自动重试。"
+                            : "系统将优先选择心宠摄像头，未连接时使用本机摄像头。")}
                       </p>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ const publicRoutes = [
 ];
 
 const lightRagProxyRoute = "/api/lightrag-proxy";
-const reachyDeviceRoute = "/api/pet-ai/reachy/device";
+const reachyDeviceRoute = "/api/pet-ai/reachy";
 const reachyOperatorRoles = new Set(["ADMIN", "COUNSELOR", "TEACHER"]);
 const staffProvisioningRoutes = ["/api/users", "/api/teachers"];
 const staffProvisioningMutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
