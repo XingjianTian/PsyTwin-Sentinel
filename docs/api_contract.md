@@ -578,6 +578,41 @@ Sentinel 必须将 `sad` 固定映射到已登记的 `emotion/sad1` 动作，不
 
 ---
 
+### 8.4 Sentinel 推送心宠求助事件
+
+指挥中心创建原有学生温馨通知后，同时向心宠同步服务器写入一条求助事件。共享 `demo_pet` 的在线客户端通过现有 `pet_status` 广播立即收到完整状态；离线客户端通过现有事件列表或权威状态接口读取。
+
+默认 HTTP 目标复用 `NEXT_PUBLIC_PET_SYNC_HOST` 并固定使用端口 `13002`；`PET_SYNC_URL` 仅作为 HTTPS、反向代理或自定义端口的高级覆盖项。
+
+```http
+POST {PET_SYNC_URL}/api/pet/events/notify
+Content-Type: application/json
+X-Pet-Sync-Key: <PET_SYNC_INTERNAL_KEY>
+```
+
+```json
+{
+  "userId": "demo_pet",
+  "event": {
+    "sourceId": "openclaw-request-id",
+    "category": "emotion",
+    "severity": "high",
+    "title": "最近有点担心你",
+    "description": "如果感到焦虑或疲惫，可以和咨询师聊聊天。",
+    "deadline": 1785926400000
+  }
+}
+```
+
+`sourceId` 是幂等键；相同 `userId + sourceId` 不得重复创建。服务端生成 `id`，并补充 `type`、`source: "sentinel"`、`status: "pending"` 与 `createdAt`。内部密钥错误返回 HTTP 401；参数非法返回 HTTP 400。心宠服务器不可用时不得回滚已经创建的学生通知。
+
+**状态追踪**:
+- [x] 心宠同步服务器支持鉴权、幂等地接收 Sentinel 求助事件并持久化。*(已于 2026-08-04 完成)*
+- [x] OpenClaw 温馨通知演示链路追加心宠求助事件同步，保留原通知逻辑。*(已于 2026-08-04 完成)*
+- [x] 现有事件列表返回全部未解决且未过期事件，并通过权威状态广播在线客户端。*(已于 2026-08-04 完成)*
+
+---
+
 ## 9. 枚举定义
 
 ### RoomStatus

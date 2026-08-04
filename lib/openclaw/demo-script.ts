@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { AGENTS } from "@/lib/openclaw/agents.config"
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
+import { sendPetHelpEvent } from "@/lib/openclaw/pet-help-event"
 
 const db = prisma as any
 
@@ -174,7 +175,7 @@ async function upsertTaskState(
   return task
 }
 
-async function createDemoNotifications() {
+async function createDemoNotifications(requestId: string) {
   const student = await db.student.findFirst({
     where: { phone: DEMO_NOTIFICATION_TARGET_PHONE },
     select: { id: true, name: true, phone: true },
@@ -185,6 +186,9 @@ async function createDemoNotifications() {
       count: 0,
       studentName: null,
       studentPhone: DEMO_NOTIFICATION_TARGET_PHONE,
+      helpEventId: null,
+      helpEventCreated: false,
+      helpEventError: null,
     }
   }
 
@@ -199,10 +203,32 @@ async function createDemoNotifications() {
     },
   })
 
+  let helpEventId: string | null = null
+  let helpEventCreated = false
+  let helpEventError: string | null = null
+  try {
+    const helpEvent = await sendPetHelpEvent({
+      sourceId: requestId,
+      category: "emotion",
+      severity: "high",
+      title: "最近有点担心你",
+      description: DEMO_NOTIFICATION_CONTENT,
+      deadline: Date.now() + 24 * 60 * 60 * 1000,
+    })
+    helpEventId = helpEvent.id
+    helpEventCreated = helpEvent.created
+  } catch (error) {
+    helpEventError = error instanceof Error ? error.message : "心宠求助事件发送失败"
+    console.error("[OpenClaw Demo] 心宠求助事件发送失败:", error)
+  }
+
   return {
     count: 1,
     studentName: student.name,
     studentPhone: student.phone,
+    helpEventId,
+    helpEventCreated,
+    helpEventError,
   }
 }
 
@@ -308,7 +334,7 @@ export async function runOpenClawDemoWorkflow({ requestId, agentId }: DemoContex
   })
 
   await sleep(1200)
-  const notificationResult = await createDemoNotifications()
+  const notificationResult = await createDemoNotifications(requestId)
   await emitWorkflowEvent({
     requestId,
     taskId: task.id,
@@ -317,12 +343,15 @@ export async function runOpenClawDemoWorkflow({ requestId, agentId }: DemoContex
     state: "completed",
     message:
       notificationResult.count > 0
-        ? `温馨通知已写入数据库，已向 ${notificationResult.studentName || "目标学生"}（${notificationResult.studentPhone}）创建 1 条未读通知，可直接用于小程序侧演示。`
+        ? `温馨通知已写入数据库，已向 ${notificationResult.studentName || "目标学生"}（${notificationResult.studentPhone}）创建 1 条未读通知。${notificationResult.helpEventId ? "心宠求助事件也已同步到服务器，可由各小程序端直接显示。" : `心宠求助事件同步未完成：${notificationResult.helpEventError || "未知错误"}`}`
         : `未找到手机号为 ${notificationResult.studentPhone} 的学生，通知写库步骤已跳过。`,
     payload: {
       notificationCount: notificationResult.count,
       studentPhone: notificationResult.studentPhone,
       studentName: notificationResult.studentName,
+      helpEventId: notificationResult.helpEventId,
+      helpEventCreated: notificationResult.helpEventCreated,
+      helpEventError: notificationResult.helpEventError,
     },
   })
 
@@ -341,7 +370,7 @@ export async function runOpenClawDemoWorkflow({ requestId, agentId }: DemoContex
     message: "主智能体正在汇总子代理结果，生成演示版总览结论并同步到指挥中心。",
   })
 
-  const finalResponse = `收到，演示链路已按预设流程完成。\n\n🛡️ **PsyTwin 全链路任务执行中（演示脚本）**\n\n| 子系统 | 状态 | 结果 |\n|--------|------|------|\n| **DBA** | ✅ 已完成 | 已筛出 10 名心理波动明显学生 |\n| **分析师** | ✅ 已完成 | 完成高 / 中 / 观察三级风险分层 |\n| **咨询师** | ✅ 已待命 | 通知话术、接待预案与小明通知写库已完成 |\n\n**演示结论**\n- 建议先批量发送温馨通知，观察学生是否主动接入。\n- 对高关注学生保留人工复核窗口，必要时直接转入咨询师跟进。\n- 本轮演示会在结束阶段固定向手机号 ${notificationResult.studentPhone} 的学生追加 1 条未读 student_notifications 记录，便于小程序侧直接展示。\n- 当前页面动态为演示脚本驱动，适合现场展示，不依赖真实网关即时响应。\n\n如果需要，我可以继续模拟“学生收到通知后接入咨询师”的下一段演示。`
+  const finalResponse = `收到，演示链路已按预设流程完成。\n\n🛡️ **PsyTwin 全链路任务执行中（演示脚本）**\n\n| 子系统 | 状态 | 结果 |\n|--------|------|------|\n| **DBA** | ✅ 已完成 | 已筛出 10 名心理波动明显学生 |\n| **分析师** | ✅ 已完成 | 完成高 / 中 / 观察三级风险分层 |\n| **咨询师** | ✅ 已待命 | 通知话术、接待预案与小明通知写库已完成 |\n\n**演示结论**\n- 建议先批量发送温馨通知，观察学生是否主动接入。\n- 对高关注学生保留人工复核窗口，必要时直接转入咨询师跟进。\n- 本轮演示会在结束阶段固定向手机号 ${notificationResult.studentPhone} 的学生追加 1 条未读 student_notifications 记录，并向共享心宠同步服务器写入对应求助事件。\n- 当前页面动态为演示脚本驱动，适合现场展示，不依赖真实网关即时响应。\n\n如果需要，我可以继续模拟“学生收到通知后接入咨询师”的下一段演示。`
 
   const completedAt = new Date()
   await upsertTaskState(requestId, {

@@ -8,6 +8,8 @@ Sentinel 的 `stu-test` 心宠页面通过 WebSocket 只读观察 Pocket 仓库�
 
 ```dotenv
 NEXT_PUBLIC_PET_SYNC_HOST="127.0.0.1"
+PET_SYNC_INTERNAL_KEY="replace-with-a-private-pet-sync-key"
+PET_SYNC_DEMO_USER_ID="demo_pet"
 ```
 
 心宠服务器在另一台电脑时，改为对方的局域网 IP：
@@ -21,6 +23,16 @@ NEXT_PUBLIC_PET_SYNC_HOST="192.168.1.100"
 ```dotenv
 NEXT_PUBLIC_PET_SYNC_WS_URL="wss://pet-sync.example.com/ws/pet"
 ```
+
+启动心宠同步服务器时设置相同的内部密钥：
+
+```powershell
+$env:PET_SYNC_INTERNAL_KEY="replace-with-a-private-pet-sync-key"
+node server/pet-server.js
+```
+
+`PET_SYNC_INTERNAL_KEY` 只用于 Sentinel 服务端与心宠同步服务器之间的事件写入，不得使用 `NEXT_PUBLIC_` 前缀。
+Sentinel 的服务端事件请求会自动复用 `NEXT_PUBLIC_PET_SYNC_HOST` 并拼接 HTTP 端口 `13002`；只有使用 HTTPS、反向代理或自定义端口时才额外设置 `PET_SYNC_URL`。
 
 修改环境变量后重启 Sentinel：
 
