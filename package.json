@@ -12,7 +12,7 @@
     "test:pet-diary": "node --test lib/pet-diary.test.mjs",
     "test:pet-migration": "node --test lib/pet-system-migration.test.mjs",
     "test:seed:incremental": "node --test lib/incremental-core-data.test.mjs",
-    "relay:install": "python -m venv .venv-video-relay && .venv-video-relay\\Scripts\\python.exe -m pip install -r scripts\\reachy-video-relay-requirements.txt",
+    "relay:install": "py -3.11 -m venv .venv-video-relay && .venv-video-relay\\Scripts\\python.exe -m pip install -r scripts\\reachy-video-relay-requirements.txt",
     "relay:start": ".venv-video-relay\\Scripts\\python.exe -m uvicorn scripts.reachy_video_relay:app --host 0.0.0.0 --port 7862",
     "seed:incremental": "tsx prisma/seed/incremental-core-data.ts",
     "seed:pet-diary": "tsx prisma/seed-pet-diary-templates.ts",
