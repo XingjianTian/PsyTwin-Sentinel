@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ReachyDebugConsole } from "@/components/views/pet-ai-management/reachy-debug-console"
 import { GeminiLiveConsole } from "@/components/views/pet-ai-management/gemini-live-console"
 import { getCollaborationEventPresentation } from "@/lib/pet-ai/collaboration-presentation"
-import { mergeUniqueById, newestFirstById } from "@/lib/pet-ai/event-stream"
+import { mergeUniqueById, oldestFirstById } from "@/lib/pet-ai/event-stream"
 import { buildGeminiLiveCollaborationEvents, type GeminiLiveMessage } from "@/lib/pet-ai/gemini-live"
 import { parsePetAiProfileMarkdown } from "@/lib/pet-ai/profile-markdown"
 import { classifyMessageRisk, getRiskPresentation, highestConversationRisk, highestRiskLevel, normalizeRiskLevel, type RiskLevel } from "@/lib/pet-ai/risk-presentation"
@@ -61,6 +61,7 @@ export function PetAiManagementView() {
   const [activeTab, setActiveTab] = useState("info")
   const [reachy, setReachy] = useState<ReachyStatus>({ state: "offline" })
   const [liveRiskLevel, setLiveRiskLevel] = useState<RiskLevel>("LOW")
+  const [liveGeminiMessage, setLiveGeminiMessage] = useState<GeminiLiveMessage | null>(null)
   const transcriptCursorRef = useRef(0)
   const eventCursorRef = useRef(0)
   const liveSessionBaselineReadyRef = useRef(false)
@@ -171,6 +172,7 @@ export function PetAiManagementView() {
     eventCursorRef.current = 0
     liveSessionBaselineReadyRef.current = false
     setLiveRiskLevel("LOW")
+    setLiveGeminiMessage(null)
     setReachy((current) => ({ ...current, transcript: { cursor: 0, items: [] }, events: { cursor: 0, items: [] } }))
     setSelectedId(studentId)
   }
@@ -256,7 +258,11 @@ export function PetAiManagementView() {
   const handleLiveRiskLevelChange = useCallback((level: RiskLevel) => {
     setLiveRiskLevel((current) => highestRiskLevel(current, level))
   }, [])
+  const handleLiveInputMessage = useCallback((message: GeminiLiveMessage | null) => {
+    setLiveGeminiMessage(message)
+  }, [])
   const handleLiveConversationsSaved = useCallback((messages: GeminiLiveMessage[]) => {
+    setLiveGeminiMessage(null)
     setDetail((current) => {
       if (!current) return current
       const saved = messages.map((message) => ({
@@ -287,8 +293,9 @@ export function PetAiManagementView() {
       createdAt: message.createdAt,
       seq: index,
     }))
+    if (liveGeminiMessage) messages.push(liveGeminiMessage)
     return buildGeminiLiveCollaborationEvents(messages)
-  }, [detail])
+  }, [detail, liveGeminiMessage])
   const collaborationEvents = useMemo(
     () => mergeUniqueById<ReachyEvent>(reachy.events?.items || [], geminiLiveEvents),
     [geminiLiveEvents, reachy.events?.items],
@@ -411,9 +418,9 @@ export function PetAiManagementView() {
             </TabsContent>
             <TabsContent value="live" className="min-h-0 overflow-y-auto p-4" data-risk-label={riskLabel}>
               {/* 实时风险继续显示在原“开始对话”入口卡片中 */}
-              {detail && <GeminiLiveConsole key={selectedId} studentId={detail.student.id} studentName={detail.student.name} petName={detail.pet.name} canStart={detail.isDemoStudent} personality={detail.pet.personality} riskLevel={sessionRiskLevel} onRiskLevelChange={handleLiveRiskLevelChange} onConversationSaved={handleLiveConversationsSaved} />}
+              {detail && <GeminiLiveConsole key={selectedId} studentId={detail.student.id} studentName={detail.student.name} petName={detail.pet.name} canStart={detail.isDemoStudent} personality={detail.pet.personality} riskLevel={sessionRiskLevel} onRiskLevelChange={handleLiveRiskLevelChange} onLiveInputMessage={handleLiveInputMessage} onConversationSaved={handleLiveConversationsSaved} />}
 
-              <section className="mt-5 border-t pt-4"><div className="mb-3 flex items-start justify-between gap-3"><div><h3 className="text-sm font-medium">协作过程</h3><p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">显示风险识别、预警入队、咨询师智能体专业建议、心宠回应和语音播放状态；不展示模型原始思维链，最新状态置顶。</p></div><Badge variant="outline">Gemini Live</Badge></div>{collaborationEvents.length === 0 ? <div className="rounded-lg border border-dashed p-4 text-xs leading-5 text-muted-foreground">开始对话并完成一轮语音后，这里会显示学生表达识别、风险工单、心宠性格化回应和 Gemini Live 播放状态。</div> : <div className="space-y-2">{newestFirstById(collaborationEvents).map((event) => {
+              <section className="mt-5 border-t pt-4"><div className="mb-3 flex items-start justify-between gap-3"><div><h3 className="text-sm font-medium">协作过程</h3><p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">按风险识别、关注队列、咨询师建议、心宠回应和语音播放的顺序实时展示；不展示模型原始思维链。</p></div><Badge variant="outline">Gemini Live</Badge></div>{collaborationEvents.length === 0 ? <div className="rounded-lg border border-dashed p-4 text-xs leading-5 text-muted-foreground">开始说话后，识别到风险会立即显示黄色协作阶段；随后补充心宠回应和 Gemini Live 播放状态。</div> : <div className="space-y-2">{oldestFirstById(collaborationEvents).map((event) => {
                 const EventIcon = event.kind === "emotion" ? CircleAlert : event.kind === "professional" ? BrainCircuit : event.kind === "tts" ? Volume2 : event.kind === "relay" ? PawPrint : Bot
                 const eventPresentation = getCollaborationEventPresentation(event.kind, event.title)
                 const eventRiskLevel = normalizeRiskLevel(event.risk_level || sessionRiskLevel)

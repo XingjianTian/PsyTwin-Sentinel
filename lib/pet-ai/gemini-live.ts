@@ -32,6 +32,7 @@ function safeCreatedAt(value: string) {
 export function buildGeminiLiveCollaborationEvents(messages: ReadonlyArray<GeminiLiveMessage>) {
   const events: GeminiLiveCollaborationEvent[] = []
   let sequence = 0
+  const activeCareSuggestion = "近期开展一次主动关怀。"
 
   messages.forEach((message, index) => {
     if (message.role !== "student") return
@@ -67,8 +68,8 @@ export function buildGeminiLiveCollaborationEvents(messages: ReadonlyArray<Gemin
         status: "complete",
         title: "咨询师智能体专业建议",
         summary: riskLevel === "HIGH" || riskLevel === "CRITICAL"
-          ? "已生成关注建议：立即联系学生，完成安全确认和危机风险评估，必要时启动校内危机干预流程。"
-          : "已生成关注建议：尽快关注学生，并安排心理咨询或持续跟进。",
+          ? `已生成关注建议：立即联系学生，完成安全确认和危机风险评估，必要时启动校内危机干预流程。${activeCareSuggestion}`
+          : `已生成关注建议：尽快关注学生，并安排心理咨询或持续跟进。${activeCareSuggestion}`,
         risk_level: riskLevel,
         created_at: createdAt,
       })

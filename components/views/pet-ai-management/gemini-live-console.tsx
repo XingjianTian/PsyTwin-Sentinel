@@ -198,10 +198,11 @@ type GeminiLiveConsoleProps = {
   personality: PetPersonality
   riskLevel?: RiskLevel
   onRiskLevelChange?: (level: RiskLevel) => void
+  onLiveInputMessage?: (message: GeminiLiveMessage | null) => void
   onConversationSaved?: (messages: GeminiLiveMessage[]) => void
 }
 
-export function GeminiLiveConsole({ studentId, studentName, petName, canStart, personality, riskLevel, onRiskLevelChange, onConversationSaved }: GeminiLiveConsoleProps) {
+export function GeminiLiveConsole({ studentId, studentName, petName, canStart, personality, riskLevel, onRiskLevelChange, onLiveInputMessage, onConversationSaved }: GeminiLiveConsoleProps) {
   const [state, setState] = useState<SessionState>("idle")
   const [stage, setStage] = useState("")
   const [error, setError] = useState("")
@@ -231,6 +232,7 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
   const handshakeTimerRef = useRef<number | null>(null)
   const turnActionExecutedRef = useRef(false)
   const inputTurnOpenRef = useRef(false)
+  const liveTurnCreatedAtRef = useRef("")
   const liveSessionKeyRef = useRef("")
   const turnSequenceRef = useRef(0)
   const pendingPersistenceRef = useRef<GeminiLiveMessage[]>([])
@@ -305,7 +307,10 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
     setInputDraft("")
     setOutputDraft("")
     inputTurnOpenRef.current = false
-    if (!studentMessage && !petMessage) return
+    if (!studentMessage && !petMessage) {
+      onLiveInputMessage?.(null)
+      return
+    }
 
     const sequence = turnSequenceRef.current + 1
     turnSequenceRef.current = sequence
@@ -333,7 +338,7 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
     setMessages((current) => [...current, ...savedMessages.map(({ id, role, content, riskLevel }) => ({ id, role, content, riskLevel }))].slice(-20))
     pendingPersistenceRef.current = [...pendingPersistenceRef.current, ...savedMessages]
     void flushPersistedMessages()
-  }, [flushPersistedMessages])
+  }, [flushPersistedMessages, onLiveInputMessage])
 
   const closeSession = useCallback((nextState: SessionState = "idle") => {
     connectionErrorRef.current = nextState === "error"
@@ -502,10 +507,19 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
               if (!inputTurnOpenRef.current) {
                 inputTurnOpenRef.current = true
                 turnActionExecutedRef.current = false
+                liveTurnCreatedAtRef.current = new Date().toISOString()
               }
               inputDraftRef.current += inputText
               setInputDraft(inputDraftRef.current)
               reportInputRisk(inputDraftRef.current)
+              onLiveInputMessage?.({
+                id: `gemini-live-${liveSessionKeyRef.current || "before-session"}-live-student`,
+                role: "student",
+                content: inputDraftRef.current,
+                riskLevel: classifyMessageRisk(inputDraftRef.current),
+                createdAt: liveTurnCreatedAtRef.current || new Date().toISOString(),
+                seq: turnSequenceRef.current * 2,
+              })
             }
             if (outputText) {
               outputDraftRef.current += outputText
@@ -590,7 +604,7 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
       setError(message)
       closeSession("error")
     }
-  }, [canStart, closeSession, executePetEmotion, finalizeCurrentTurn, flushPersistedMessages, personality, playAudio, reportInputRisk, setProcessingMotion, state, studentId])
+  }, [canStart, closeSession, executePetEmotion, finalizeCurrentTurn, flushPersistedMessages, onLiveInputMessage, personality, playAudio, reportInputRisk, setProcessingMotion, state, studentId])
 
   useEffect(() => () => {
     finalizeCurrentTurn()
@@ -601,6 +615,8 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
   const statusLabel = state === "active" ? "已连接" : state === "connecting" ? "连接中" : state === "error" ? "连接失败" : "未连接"
   const statusIcon = state === "active" ? <Wifi className="size-3" /> : state === "connecting" ? <LoaderCircle className="size-3 animate-spin" /> : state === "error" ? <WifiOff className="size-3" /> : <MicOff className="size-3" />
   const liveRisk = getRiskPresentation(liveRiskLevel)
+  const inputDraftRiskLevel = classifyMessageRisk(inputDraft)
+  const inputDraftRisk = getRiskPresentation(inputDraftRiskLevel)
 
   return (
     <section className="rounded-lg bg-muted/70 p-3" aria-label="Gemini Live 实时语音对话">
@@ -630,7 +646,7 @@ export function GeminiLiveConsole({ studentId, studentName, petName, canStart, p
       <div className="mt-3 space-y-2 rounded-lg border border-dashed bg-background/70 p-3" aria-live="polite">
         {messages.length === 0 && !inputDraft && !outputDraft ? <p className="text-center text-xs text-muted-foreground">点击“开始对话”后允许麦克风，和{petName}说一句话。</p> : <>
           {messages.map((message) => { const messageRisk = getRiskPresentation(message.riskLevel); return <div key={message.id} className={cn("flex", message.role === "student" ? "justify-end" : "justify-start")}><div className={cn("max-w-[88%] rounded-xl px-3 py-2 text-xs leading-5", message.role === "student" ? messageRisk.studentMessageClassName : messageRisk.petMessageClassName)}><span className="mb-1 flex items-center gap-1.5 text-[10px] font-medium text-current/70">{message.role === "student" ? studentName : petName}{message.riskLevel !== "LOW" && <Badge variant="outline" className={cn("h-4 px-1 text-[9px]", messageRisk.badgeClassName)}>{messageRisk.label}</Badge>}</span>{message.content}</div></div> })}
-          {inputDraft && <div className="flex justify-end"><div className="max-w-[88%] rounded-xl rounded-br-sm bg-primary/10 px-3 py-2 text-xs leading-5"><span className="mb-1 block text-[10px] font-medium text-muted-foreground">{studentName} · 实时转写</span>{inputDraft}</div></div>}
+          {inputDraft && <div className="flex justify-end"><div className={cn("max-w-[88%] rounded-xl rounded-br-sm px-3 py-2 text-xs leading-5", inputDraftRisk.studentMessageClassName)}><span className="mb-1 flex items-center gap-1.5 text-[10px] font-medium text-current/70">{studentName} · 实时转写{inputDraftRiskLevel !== "LOW" && <Badge variant="outline" className={cn("h-4 px-1 text-[9px]", inputDraftRisk.badgeClassName)}>{inputDraftRisk.label}</Badge>}</span>{inputDraft}</div></div>}
           {outputDraft && <div className="flex justify-start"><div className="max-w-[88%] rounded-xl rounded-bl-sm bg-muted px-3 py-2 text-xs leading-5"><span className="mb-1 flex items-center gap-1 text-[10px] font-medium text-muted-foreground"><Volume2 className="size-3" />{petName} · 语音输出</span>{outputDraft}</div></div>}
         </>}
       </div>

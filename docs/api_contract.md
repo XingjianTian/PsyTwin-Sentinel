@@ -596,9 +596,9 @@ X-Pet-Sync-Key: <PET_SYNC_INTERNAL_KEY>
   "event": {
     "sourceId": "openclaw-request-id",
     "category": "emotion",
-    "severity": "high",
-    "title": "最近有点担心你",
-    "description": "如果感到焦虑或疲惫，可以和咨询师聊聊天。",
+    "severity": "low",
+    "title": "💚 温馨通知",
+    "description": "如果感到焦虑或疲惫，欢迎来到线下体验空间，预约一场 VR 放松活动和 AI 咨询服务，让自己慢下来、放松一下吧。",
     "deadline": 1785926400000
   }
 }
@@ -608,7 +608,7 @@ X-Pet-Sync-Key: <PET_SYNC_INTERNAL_KEY>
 
 **状态追踪**:
 - [x] 心宠同步服务器支持鉴权、幂等地接收 Sentinel 求助事件并持久化。*(已于 2026-08-04 完成)*
-- [x] OpenClaw 温馨通知演示链路追加心宠求助事件同步，保留原通知逻辑。*(已于 2026-08-04 完成)*
+- [x] OpenClaw 温馨通知演示链路追加心宠求助事件同步，保留原通知逻辑，并以低级别温馨通知发送。*(已于 2026-08-05 修复高危标签误用，补充线下放松邀请)*
 - [x] 现有事件列表返回全部未解决且未过期事件，并通过权威状态广播在线客户端。*(已于 2026-08-04 完成)*
 
 ---

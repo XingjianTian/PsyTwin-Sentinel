@@ -11,9 +11,9 @@ export const OPENCLAW_COMPLEX_DEMO_MESSAGE =
 const DEMO_TASK_TITLE = "本月心理状况不佳学生筛查与温馨通知联动"
 const DEMO_TASK_DETAIL = "演示模式：检索学生名单、生成风险分析、准备通知话术并安排咨询师待命。"
 const DEMO_NOTIFICATION_TARGET_PHONE = "13800138001"
-const DEMO_NOTIFICATION_TITLE = "💚 温馨提醒"
+const DEMO_NOTIFICATION_TITLE = "💚 温馨通知"
 const DEMO_NOTIFICATION_CONTENT =
-  "亲爱的小明，最近学习压力大吗？如果感到焦虑或疲惫，可以来和我们的线上咨询师聊聊天，也可以预约没课的时间来线下体验VR游戏和AI咨询服务哦。"
+  "亲爱的小明，最近学习压力大吗？如果感到焦虑或疲惫，欢迎来到线下体验空间，预约一场 VR 放松活动和 AI 咨询服务，让自己慢下来、放松一下吧。"
 
 type DemoContext = {
   requestId: string
@@ -210,8 +210,8 @@ async function createDemoNotifications(requestId: string) {
     const helpEvent = await sendPetHelpEvent({
       sourceId: requestId,
       category: "emotion",
-      severity: "high",
-      title: "最近有点担心你",
+      severity: "low",
+      title: DEMO_NOTIFICATION_TITLE,
       description: DEMO_NOTIFICATION_CONTENT,
       deadline: Date.now() + 24 * 60 * 60 * 1000,
     })

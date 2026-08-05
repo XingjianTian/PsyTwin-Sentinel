@@ -30,6 +30,7 @@ test("sends an idempotent help event to the shared demo pet", async () => {
 
   const result = await sendPetHelpEvent({
     sourceId: "req-1",
+    severity: "low",
     title: "最近有点担心你",
     description: "如果感到焦虑或疲惫，可以和咨询师聊聊天。",
   }, request as typeof fetch)
@@ -40,6 +41,7 @@ test("sends an idempotent help event to the shared demo pet", async () => {
     userId: "demo_pet",
     event: {
       sourceId: "req-1",
+      severity: "low",
       title: "最近有点担心你",
       description: "如果感到焦虑或疲惫，可以和咨询师聊聊天。",
     },

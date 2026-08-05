@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import { buildDemoConversations, buildRiskDemo, prioritizeDemoStudent } from "./demo-data"
-import { mergeUniqueById, newestFirstById } from "./event-stream"
+import { mergeUniqueById, newestFirstById, oldestFirstById } from "./event-stream"
 import { buildPetRuntimeIdentity, petAiProfileInputSchema } from "./profile"
 
 test("demo conversations are stable and distinct per student", () => {
@@ -157,4 +157,11 @@ test("collaboration events display newest first without mutating polling order",
 
   assert.deepEqual(newestFirstById(events).map((event) => event.id), [3, 2, 1])
   assert.deepEqual(events.map((event) => event.id), [1, 2, 3])
+})
+
+test("collaboration events can display the risk pipeline in chronological order", () => {
+  const events = [{ id: 3, title: "语音" }, { id: 1, title: "风险" }, { id: 2, title: "咨询师" }]
+
+  assert.deepEqual(oldestFirstById(events).map((event) => event.id), [1, 2, 3])
+  assert.deepEqual(events.map((event) => event.id), [3, 1, 2])
 })

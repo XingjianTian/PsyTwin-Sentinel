@@ -17,7 +17,16 @@ test("Gemini Live collaboration records the full medium-risk handoff pipeline", 
   assert.ok(events.every((event) => event.risk_level === "MEDIUM"))
   assert.equal(events.find((event) => event.kind === "handoff")?.title, "已进入咨询师关注队列")
   assert.equal(events.find((event) => event.kind === "professional")?.title, "咨询师智能体专业建议")
+  assert.match(events.find((event) => event.kind === "professional")?.summary || "", /近期开展一次主动关怀。/)
   assert.match(events.find((event) => event.kind === "tts")?.summary || "", /未播放 Reachy 动作库音效/)
+})
+
+test("medium-risk collaboration appears before the pet reply arrives", () => {
+  const [student] = makeTurn("我晚上总是睡不好。")
+  const events = buildGeminiLiveCollaborationEvents([student])
+
+  assert.deepEqual(events.map((event) => event.kind), ["emotion", "handoff", "professional"])
+  assert.ok(events.every((event) => event.risk_level === "MEDIUM"))
 })
 
 test("low-risk Gemini Live turns still show reply and native audio stages without a handoff", () => {
