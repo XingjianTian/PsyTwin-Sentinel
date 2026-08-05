@@ -62,7 +62,13 @@ export function extractReachyConversationCandidates({
 
     const sourceKey = [studentId, String(item.id ?? ""), String(item.created_at ?? ""), role, content].join("|")
     const digest = createHash("sha256").update(sourceKey).digest("hex").slice(0, 24)
-    const seq = Number.isFinite(Number(item.id)) ? Math.max(0, Math.trunc(Number(item.id))) : 0
+    const declaredSeq = Number(item.seq)
+    const fallbackSeq = Number(item.id)
+    const seq = Number.isFinite(declaredSeq)
+      ? Math.max(0, Math.trunc(declaredSeq))
+      : Number.isFinite(fallbackSeq)
+        ? Math.max(0, Math.trunc(fallbackSeq))
+        : 0
     return [{
       id: `pet-live-msg-${digest}`,
       role,

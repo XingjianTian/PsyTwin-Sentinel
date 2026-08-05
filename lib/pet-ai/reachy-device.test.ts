@@ -121,6 +121,7 @@ test("Host Bridge only exposes its fixed device API surface", async () => {
     '"/v1/device/stop"',
     '"/v1/device/restart"',
     '"/v1/device/action"',
+    '"/v1/device/processing"',
     '"/v1/device/choreography"',
     '"/v1/device/pose"',
     '"/v1/device/volume"',

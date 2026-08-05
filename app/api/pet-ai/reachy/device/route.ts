@@ -21,11 +21,13 @@ const commandSchema: z.ZodType<ReachyDeviceCommand> = z.discriminatedUnion("acti
       deviceAction: z.enum(["wake_up", "goto_sleep", "center", "antenna_test", "test_sound"]),
     })
     .strict(),
+  z.object({ action: z.literal("processing"), enabled: z.boolean() }).strict(),
   z
     .object({
       action: z.literal("choreography"),
       kind: z.enum(["emotion", "dance", "music"]),
       move: z.string(),
+      playSound: z.boolean().optional(),
     })
     .strict(),
   z
@@ -357,10 +359,19 @@ async function runCommand(command: ReachyDeviceCommand) {
         method: "POST",
         body: JSON.stringify({ action: command.deviceAction }),
       }))
+    case "processing":
+      return publicDeviceStatus(await requestHostBridge("/v1/device/processing", {
+        method: "POST",
+        body: JSON.stringify({ enabled: command.enabled }),
+      }))
     case "choreography":
       return publicDeviceStatus(await requestHostBridge("/v1/device/choreography", {
         method: "POST",
-        body: JSON.stringify({ kind: command.kind, move: command.move }),
+        body: JSON.stringify({
+          kind: command.kind,
+          move: command.move,
+          ...(command.playSound === undefined ? {} : { play_sound: command.playSound }),
+        }),
       }))
     case "pose":
       return publicDeviceStatus(await requestHostBridge("/v1/device/pose", {

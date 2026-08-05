@@ -44,7 +44,7 @@ export async function GET(_request: NextRequest, context: Context) {
         where: { sessionId: buildPetLiveChatSessionId(studentId, petSnapshot.id) },
         orderBy: { createdAt: "desc" },
         take: 200,
-        select: { id: true, senderId: true, content: true, emotionTag: true, createdAt: true },
+        select: { id: true, senderId: true, content: true, emotionTag: true, cbtCard: true, createdAt: true },
       })).reverse()
     : []
 
@@ -59,15 +59,22 @@ export async function GET(_request: NextRequest, context: Context) {
       },
       aiProfile,
       conversations: isDemoStudent
-        ? liveMessages.map((message) => ({
-            id: message.id,
-            role: message.senderId === studentId ? "student" : "pet",
-            content: message.content,
-            createdAt: message.createdAt.toISOString(),
-            topic: "实体心宠联调",
-            demo: false,
-            riskLevel: message.emotionTag || "LOW",
-          }))
+        ? liveMessages.map((message) => {
+            const isGeminiLive = typeof message.cbtCard === "object"
+              && message.cbtCard !== null
+              && !Array.isArray(message.cbtCard)
+              && (message.cbtCard as { source?: unknown }).source === "gemini-live"
+            return {
+              id: message.id,
+              role: message.senderId === studentId ? "student" : "pet",
+              content: message.content,
+              createdAt: message.createdAt.toISOString(),
+              topic: isGeminiLive ? "Gemini Live 实时对话" : "实体心宠联调",
+              demo: false,
+              riskLevel: message.emotionTag || "LOW",
+              source: isGeminiLive ? "gemini-live" as const : "reachy" as const,
+            }
+          })
         : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
       isDemoStudent,
     },

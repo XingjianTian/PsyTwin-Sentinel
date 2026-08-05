@@ -61,8 +61,11 @@ export function normalizeRiskLevel(level?: string | null): RiskLevel {
 }
 
 export function classifyMessageRisk(message: string): RiskLevel {
-  if (highRiskPatterns.some((pattern) => pattern.test(message))) return "HIGH"
-  if (mediumRiskPatterns.some((pattern) => pattern.test(message))) return "MEDIUM"
+  const normalizedMessage = message
+    .normalize("NFKC")
+    .replace(/[\s\p{P}\p{S}]+/gu, "")
+  if (highRiskPatterns.some((pattern) => pattern.test(normalizedMessage))) return "HIGH"
+  if (mediumRiskPatterns.some((pattern) => pattern.test(normalizedMessage))) return "MEDIUM"
   return "LOW"
 }
 

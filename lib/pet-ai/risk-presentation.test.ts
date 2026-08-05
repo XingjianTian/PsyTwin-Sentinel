@@ -25,8 +25,11 @@ test("session risk keeps the highest observed level", () => {
 test("message risk classifier distinguishes pressure from immediate danger", () => {
   assert.equal(classifyMessageRisk("今天在操场走了一圈，感觉轻松了一点。"), "LOW")
   assert.equal(classifyMessageRisk("最近复习任务好多，我有点跟不上。"), "MEDIUM")
+  assert.equal(classifyMessageRisk("我晚上总是睡不好，感觉有点累。"), "MEDIUM")
+  assert.equal(classifyMessageRisk("我 买 上 总 是 睡 不 好 。"), "MEDIUM")
   assert.equal(classifyMessageRisk("我不知道怎么和室友说自己的感受。"), "MEDIUM")
   assert.equal(classifyMessageRisk("我不想活了，想结束这一切。"), "HIGH")
+  assert.equal(classifyMessageRisk("我 不 想 活 了 ，想 结 束 这 一 切。"), "HIGH")
 })
 
 test("conversation risk keeps the highest student-message risk after a live session stops", () => {

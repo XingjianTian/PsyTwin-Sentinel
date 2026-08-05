@@ -814,6 +814,10 @@ CLAWBODY_SERVICE_URL="http://127.0.0.1:7860"
 CLAWBODY_SERVICE_KEY="<clawbody-service-key>"
 HOST_BRIDGE_URL="http://127.0.0.1:7861"
 HOST_BRIDGE_API_KEY="<host-bridge-key>"
+GEMINI_API_KEY="<gemini-api-key>"
+GEMINI_LIVE_MODEL="gemini-3.1-flash-live-preview"
+# 先在 Google AI Studio Voice Library 试听，再填写官方 Voice 名称；默认 Kore
+GEMINI_LIVE_VOICE="Kore"
 ```
 
 `CLAWBODY_SERVICE_KEY` 必须与 ClawBody 的 `SERVICE_API_KEY` 相同，Sentinel 与 ClawBody 两侧的 `HOST_BRIDGE_API_KEY` 也必须相同。这两组密钥都是服务端机密，禁止改成 `NEXT_PUBLIC_*` 变量或传入浏览器。`7860` 是 Sentinel 访问的 ClawBody 内部服务端口，`7861` 是只监听 Windows 回环地址的 Host Bridge 端口；不要将 Host Bridge 发布到局域网或公网。
@@ -829,7 +833,7 @@ clawbody-host status
 
 `install` 创建或更新固定任务 `PsyTwin ClawBody Host Bridge`；`restart` 用于安装后立即启动，否则它会在下次登录时启动；`status` 查看任务状态。不要同时运行计划任务实例和前台 `clawbody-host-bridge`。更完整的安装、前台诊断与卸载说明以 ClawBody 仓库 README 为准。
 
-日常使用前必须完全退出设备控制程序，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
+日常使用前必须完全退出设备控制程序，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；Gemini Live 实体语音对话还要求浏览器能识别心宠的麦克风和扬声器，并使用已配置的 Gemini API Key。日常流程为：
 
 ```text
 启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备 → 返回实时联调 → 开始对话
@@ -840,7 +844,7 @@ clawbody-host status
 3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
 4. 设备显示 `Ready` 后点击“返回实时联调”；页面会自动回到“心宠管理”并打开“实时联调”页签。
 5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体心宠对话；其他学生只能使用文本联调。
-6. 学生对着实体心宠说话后，“实时对话”会显示百度 ASR 转写与心宠 TTS 回复，“协作过程”会显示风险识别和双层 AI 摘要。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
+6. 学生对着实体心宠说话后，“实时对话”会显示 Gemini Live 输入/输出转写，回答音频从实体心宠扬声器播放，不会回退到电脑扬声器；会话固定使用服务端配置的 Gemini Voice，已保存的语气、回复风格、主动程度、身份约束、知识范围和 OCEAN 画像会在会话建立时锁定。点击“开始对话”后桥接层只下发耳朵字段，不向头部和身体发送姿态命令，左右耳朵以约 12°轻幅无声摆动；Gemini 开始播放回答时会同步执行一次按性格画像确定的固定官方表情动作，动作请求关闭动作库自带的 `.ogg` 音效，只保留 Gemini 语音。输入转写按统一风险规则累计判级，并会先移除 ASR 插入的空格和标点，因此“我晚上总是睡不好”和“我 买 上 总 是 睡 不 好 。”都会显示中风险。每轮转写会保存到真实对话记录，中高风险会同步待处理预警工单，“协作过程”显示风险识别、咨询师关注、心宠回应和原生语音阶段。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
 
 以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
 

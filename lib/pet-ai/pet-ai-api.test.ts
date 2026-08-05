@@ -97,6 +97,18 @@ test("student detail API returns the persisted OCEAN pet personality", async () 
   assert.match(source, /buildDemoConversations\(studentId, petSnapshot\.name, student\.riskLevel\)/)
 })
 
+test("Gemini Live sync persists messages, marks their source, and reuses risk work-order sync", async () => {
+  const syncSource = await readFile(new URL("../../app/api/pet-ai/gemini/sync/route.ts", import.meta.url), "utf8")
+  const detailSource = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/route.ts", import.meta.url), "utf8")
+
+  assert.match(syncSource, /syncReachyConversation/)
+  assert.match(syncSource, /syncReachyRiskWorkOrders/)
+  assert.match(syncSource, /cbtCard: \{ source: "gemini-live" \}/)
+  assert.match(syncSource, /classifyMessageRisk/)
+  assert.match(syncSource, /仅测试学生可以同步 Gemini Live 实时对话/)
+  assert.match(detailSource, /source: isGeminiLive \? "gemini-live" as const : "reachy" as const/)
+})
+
 test("Reachy defaults to the Pocket test student", async () => {
   const sessionSource = await readFile(new URL("../../app/api/pet-ai/reachy/session/route.ts", import.meta.url), "utf8")
   const listSource = await readFile(new URL("../../app/api/pet-ai/students/route.ts", import.meta.url), "utf8")
@@ -171,6 +183,7 @@ test("Reachy device API exposes only the protected typed proxy surface", async (
     "/v1/device/stop",
     "/v1/device/restart",
     "/v1/device/action",
+    "/v1/device/processing",
     "/v1/device/choreography",
     "/v1/device/pose",
     "/v1/device/volume",
@@ -594,6 +607,11 @@ test("Reachy typed actions translate browser fields to exact Host Bridge bodies"
       input: { action: "choreography", kind: "emotion", move: "loving1" },
       path: "/v1/device/choreography",
       body: { kind: "emotion", move: "loving1" },
+    },
+    {
+      input: { action: "choreography", kind: "emotion", move: "loving1", playSound: false },
+      path: "/v1/device/choreography",
+      body: { kind: "emotion", move: "loving1", play_sound: false },
     },
     {
       input: { action: "pose", headPitch: 1, headRoll: 2, headYaw: 3, bodyYaw: 4, leftAntenna: 0.5, rightAntenna: -0.5, duration: 1 },
