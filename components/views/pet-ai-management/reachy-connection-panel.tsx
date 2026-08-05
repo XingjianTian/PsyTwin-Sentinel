@@ -15,11 +15,13 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   getReachyPhasePresentation,
   type ReachyDevicePhase,
   type ReachyDeviceSnapshot,
 } from "@/lib/pet-ai/reachy-device"
+import { DEFAULT_REACHY_NETWORK_PORT, type ReachyNetworkConnection } from "@/lib/pet-ai/reachy-network"
 import { cn } from "@/lib/utils"
 
 type ConnectionStageId = "starting" | "connecting" | "healthchecking" | "loading_apps"
@@ -60,7 +62,11 @@ type ReachyConnectionPanelProps = {
   snapshot: ReachyDeviceSnapshot
   commandPending: boolean
   commandError: string
+  wifiPending: boolean
+  wifiError: string
+  wifiConnection: ReachyNetworkConnection | null
   onDiscover: () => void
+  onConnectWifi: (host: string, port: number) => void
   onRetry: (serialPort?: string) => void
   onStart: (serialPort: string) => void
 }
@@ -69,12 +75,19 @@ export function ReachyConnectionPanel({
   snapshot,
   commandPending,
   commandError,
+  wifiPending,
+  wifiError,
+  wifiConnection,
   onDiscover,
+  onConnectWifi,
   onRetry,
   onStart,
 }: ReachyConnectionPanelProps) {
   const [selectedPortChoice, setSelectedPortChoice] = useState("")
   const [copied, setCopied] = useState(false)
+  const [connectionKind, setConnectionKind] = useState<"usb" | "wifi">("usb")
+  const [wifiHost, setWifiHost] = useState("127.0.0.1")
+  const [wifiPort, setWifiPort] = useState(String(DEFAULT_REACHY_NETWORK_PORT))
   const selectedPort = (snapshot.devices.some((device) => device.port === selectedPortChoice) ? selectedPortChoice : "")
     || (snapshot.devices.some((device) => device.port === snapshot.serial_port) ? snapshot.serial_port : "")
     || (snapshot.devices.length === 1 ? snapshot.devices[0].port : "")
@@ -111,7 +124,7 @@ export function ReachyConnectionPanel({
       <div className="flex flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">连接 Reachy Mini Lite</h2>
+            <h2 className="text-base font-semibold">连接实体心宠</h2>
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium",
@@ -131,7 +144,9 @@ export function ReachyConnectionPanel({
             </span>
           </div>
           <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-            选择 Windows 已识别的 USB 串口，Sentinel 将依次启动 daemon、连接机器人并完成健康检查。
+            {connectionKind === "wifi"
+              ? "连接运行视频中继服务的直播室电脑，并通过 RPC 启动和检查视频流。"
+              : "选择 Windows 已识别的 USB 串口，Sentinel 将依次启动 daemon、连接机器人并完成健康检查。"}
           </p>
         </div>
         <Button
@@ -190,15 +205,18 @@ export function ReachyConnectionPanel({
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-lg border" role="group" aria-label="Reachy 连接方式">
+        <div className="overflow-hidden rounded-lg border" role="group" aria-label="心宠连接方式">
           {snapshot.devices.map((device) => {
-            const selected = selectedPort === device.port
+            const selected = connectionKind === "usb" && selectedPort === device.port
             return (
               <button
                 key={device.port}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => setSelectedPortChoice(device.port)}
+                onClick={() => {
+                  setSelectedPortChoice(device.port)
+                  setConnectionKind("usb")
+                }}
                 disabled={commandPending || lifecycleBusy}
                 className={cn(
                   "flex w-full items-center gap-3 border-b px-3 py-3 text-left outline-none last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4",
@@ -233,7 +251,7 @@ export function ReachyConnectionPanel({
                   <Cable className="size-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium">没有找到 USB Reachy</p>
+                  <p className="text-sm font-medium">没有找到 USB 心宠设备</p>
                   <p className="mt-1 max-w-[65ch] text-xs leading-5 text-muted-foreground">
                     请检查机器人电源、USB 数据线和 Windows 串口驱动，并在设备管理器中确认 COM 端口已出现。
                   </p>
@@ -244,17 +262,31 @@ export function ReachyConnectionPanel({
 
           <button
             type="button"
-            disabled
-            aria-label="Wi-Fi 连接，首版暂不可用"
-            className="flex w-full cursor-not-allowed items-center gap-3 border-b bg-muted/30 px-3 py-3 text-left opacity-65 sm:px-4"
+            aria-pressed={connectionKind === "wifi"}
+            onClick={() => setConnectionKind("wifi")}
+            disabled={commandPending || lifecycleBusy}
+            className={cn(
+              "flex w-full items-center gap-3 border-b px-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4",
+              connectionKind === "wifi" ? "bg-primary/8" : "bg-card hover:bg-muted/60",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            )}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <span className={cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-md",
+              connectionKind === "wifi" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+            )}>
               <Wifi className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Wi-Fi</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">首版暂不可用</span>
+              <span className="block text-sm font-medium">直播主机</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {wifiConnection ? `${wifiConnection.host}:${wifiConnection.port} · RPC 已连接` : "通过局域网接收另一台电脑的心宠视频"}
+              </span>
             </span>
+            <span className={cn(
+              "size-4 shrink-0 rounded-full border-2",
+              connectionKind === "wifi" ? "border-primary bg-primary ring-2 ring-primary/20 ring-offset-2" : "border-muted-foreground/40",
+            )} />
           </button>
           <button
             type="button"
@@ -271,6 +303,72 @@ export function ReachyConnectionPanel({
             </span>
           </button>
         </div>
+
+        {connectionKind === "wifi" ? (
+          <form
+            className="mt-4 rounded-lg bg-muted/45 p-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              onConnectWifi(wifiHost, Number(wifiPort))
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">连接直播主机</p>
+              <p className="max-w-[65ch] text-xs leading-5 text-muted-foreground">
+                单机测试填写 127.0.0.1；两台电脑使用时填写连接心宠 USB 的电脑局域网 IPv4 地址。
+              </p>
+            </div>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className="min-w-0 flex-1 text-xs font-medium" htmlFor="reachy-wifi-host">
+                主机名或 IP 地址
+                <Input
+                  id="reachy-wifi-host"
+                  className="mt-1.5 bg-card"
+                  value={wifiHost}
+                  onChange={(event) => setWifiHost(event.target.value)}
+                  placeholder="例如：127.0.0.1 或 192.168.1.36"
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={wifiPending}
+                />
+              </label>
+              <label className="w-full text-xs font-medium sm:w-28" htmlFor="reachy-wifi-port">
+                RPC 端口
+                <Input
+                  id="reachy-wifi-port"
+                  className="mt-1.5 bg-card"
+                  type="number"
+                  min={1}
+                  max={65535}
+                  inputMode="numeric"
+                  value={wifiPort}
+                  onChange={(event) => setWifiPort(event.target.value)}
+                  disabled={wifiPending}
+                />
+              </label>
+              <Button type="submit" className="w-full sm:w-auto" disabled={wifiPending || !wifiHost.trim() || !wifiPort}>
+                {wifiPending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : <Wifi />}
+                {wifiPending ? "正在检测" : "连接并检测"}
+              </Button>
+            </div>
+            {wifiConnection ? (
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800" role="status">
+                <Check className="mt-0.5 size-4 shrink-0" />
+                <span>
+                已连接 {wifiConnection.host}:{wifiConnection.port}，视频中继
+                {wifiConnection.running ? "正在运行" : "已响应但尚未输出画面"}，
+                {wifiConnection.width}×{wifiConnection.height} · {wifiConnection.fps} FPS。
+                </span>
+              </div>
+            ) : null}
+            {wifiError ? (
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 px-3 py-2.5 text-sm text-red-700" role="alert">
+                <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                <span>{wifiError}</span>
+              </div>
+            ) : null}
+          </form>
+        ) : null}
 
         {snapshot.phase === "error" && snapshot.error ? (
           <div className="mt-4 rounded-lg bg-destructive/8 px-4 py-3 text-red-700" role="alert">
@@ -315,12 +413,14 @@ export function ReachyConnectionPanel({
 
         <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            {selectedPort ? `已选择串口：${selectedPort}` : "请选择一个已检测到的 USB 串口"}
+            {connectionKind === "wifi"
+              ? wifiConnection ? `已选择直播主机：${wifiConnection.host}:${wifiConnection.port}` : "请先连接并检测直播主机"
+              : selectedPort ? `已选择串口：${selectedPort}` : "请选择一个已检测到的 USB 串口"}
           </p>
           <Button
             type="button"
-            onClick={() => selectedPort && onStart(selectedPort)}
-            disabled={!selectedPort || commandPending || lifecycleBusy || snapshot.phase === "error"}
+            onClick={() => connectionKind === "usb" && selectedPort && onStart(selectedPort)}
+            disabled={connectionKind === "wifi" || !selectedPort || commandPending || lifecycleBusy || snapshot.phase === "error"}
             className="w-full sm:w-auto"
           >
             {isStarting || commandPending ? (
@@ -328,7 +428,7 @@ export function ReachyConnectionPanel({
             ) : (
               <Cable />
             )}
-            {isStarting ? "正在启动设备" : "启动设备"}
+            {connectionKind === "wifi" ? "等待媒体接入" : isStarting ? "正在启动设备" : "启动设备"}
           </Button>
         </div>
       </div>

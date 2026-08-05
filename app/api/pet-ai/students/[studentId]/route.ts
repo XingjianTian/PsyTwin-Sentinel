@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getStudentPetSnapshot } from "@/app/actions/pet-snapshot"
 import { buildDemoConversations, buildStableOceanPersonality, DEMO_PET_NAME } from "@/lib/pet-ai/demo-data"
 import { DEFAULT_PET_AI_PROFILE, petAiProfileInputSchema } from "@/lib/pet-ai/profile"
+import { buildPetLiveChatSessionId } from "@/lib/pet-ai/reachy-conversation"
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
@@ -38,6 +39,14 @@ export async function GET(_request: NextRequest, context: Context) {
   const aiProfile = profile
     ? { tone: profile.tone, responseStyle: profile.responseStyle, initiative: profile.initiative, systemPrompt: profile.systemPrompt, knowledgeScope: profile.knowledgeScope }
     : DEFAULT_PET_AI_PROFILE
+  const liveMessages = isDemoStudent
+    ? (await prisma.chatMessage.findMany({
+        where: { sessionId: buildPetLiveChatSessionId(studentId, petSnapshot.id) },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: { id: true, senderId: true, content: true, emotionTag: true, cbtCard: true, createdAt: true },
+      })).reverse()
+    : []
 
   return NextResponse.json({
     data: {
@@ -49,7 +58,24 @@ export async function GET(_request: NextRequest, context: Context) {
         personality,
       },
       aiProfile,
-      conversations: isDemoStudent ? [] : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
+      conversations: isDemoStudent
+        ? liveMessages.map((message) => {
+            const isGeminiLive = typeof message.cbtCard === "object"
+              && message.cbtCard !== null
+              && !Array.isArray(message.cbtCard)
+              && (message.cbtCard as { source?: unknown }).source === "gemini-live"
+            return {
+              id: message.id,
+              role: message.senderId === studentId ? "student" : "pet",
+              content: message.content,
+              createdAt: message.createdAt.toISOString(),
+              topic: isGeminiLive ? "Gemini Live 实时对话" : "实体心宠联调",
+              demo: false,
+              riskLevel: message.emotionTag || "LOW",
+              source: isGeminiLive ? "gemini-live" as const : "reachy" as const,
+            }
+          })
+        : buildDemoConversations(studentId, petSnapshot.name, student.riskLevel),
       isDemoStudent,
     },
   })

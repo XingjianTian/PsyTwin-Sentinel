@@ -1,5 +1,5 @@
-import { VrDashboardView } from "@/components/views/vr-dashboard-view"
+import { MultimodalDataFlowView } from "@/components/views/multimodal-dataflow-view"
 
 export default function VrDashboardPage() {
-  return <VrDashboardView />
+  return <MultimodalDataFlowView videoSource="unity" />
 }

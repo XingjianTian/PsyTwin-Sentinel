@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import { getGridVisualization, GRID_POINTS } from "@/lib/openclaw/grid-paths"
 import { AgentGridLabel, type AgentGridItem } from "./agent-grid-label"
@@ -28,6 +27,7 @@ export function AgentGridOffice({ agents, onSelectAgent, showGrid = true, select
             src="/map.jpg"
             alt="Office Map"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain"
             style={{ zIndex: 0 }}
             priority

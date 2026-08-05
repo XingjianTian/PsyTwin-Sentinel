@@ -4,9 +4,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 图片优化配置（静态导出时需要）
+  // 由 Next.js 按实际显示尺寸生成 WebP/AVIF，避免直接传输多 MB 场景原图
   images: {
-    unoptimized: true,
+    unoptimized: false,
   },
   // 生产环境性能优化
   poweredByHeader: false, // 隐藏 X-Powered-By 头

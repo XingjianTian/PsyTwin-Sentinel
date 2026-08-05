@@ -45,6 +45,18 @@ export interface ReachyCameraPreviewController {
   dispose: () => void
 }
 
+export function isStreamUsingCamera(
+  stream: MediaStream,
+  device: VisionCameraDevice,
+) {
+  const track = stream.getVideoTracks()[0]
+  if (!track) return false
+
+  const activeDeviceId = track.getSettings().deviceId
+  return activeDeviceId === device.deviceId
+    || /reachy|mini/i.test(track.label)
+}
+
 export function createReachyCameraPreviewController(
   adapter: Pick<ReachyMiniCameraAdapter, "start">,
   setVideoStream: (stream: MediaStream | null) => void,
@@ -83,7 +95,7 @@ export function createReachyCameraPreviewController(
         if (requestGeneration !== requestId) return { status: "stale" }
         return {
           status: "error",
-          message: error instanceof Error ? error.message : "无法打开 Reachy Mini 摄像头",
+          message: error instanceof Error ? error.message : "无法打开心宠摄像头",
         }
       }
     },
@@ -112,18 +124,18 @@ function mapReachyCameraError(error: unknown): Error {
     : (error as { name?: unknown } | null)?.name
 
   if (errorName === "NotReadableError") {
-    return new Error("Reachy Mini 摄像头正被 daemon 或其他程序占用")
+    return new Error("心宠摄像头正被设备服务或其他程序占用")
   }
   if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
-    return new Error("Reachy Mini 摄像头未被浏览器识别")
+    return new Error("心宠摄像头未被浏览器识别")
   }
   if (errorName === "NotAllowedError" || errorName === "SecurityError") {
     return new Error("摄像头权限未授予，请在浏览器设置中允许访问")
   }
-  if (error instanceof Error && error.message === "Reachy Mini 摄像头未被浏览器识别") {
+  if (error instanceof Error && error.message === "心宠摄像头未被浏览器识别") {
     return error
   }
-  return new Error("无法打开 Reachy Mini 摄像头")
+  return new Error("无法打开心宠摄像头")
 }
 
 export const localBrowserCameraAdapter: VisionCameraAdapter = {
@@ -161,7 +173,7 @@ export const localBrowserCameraAdapter: VisionCameraAdapter = {
 
 export const reachyMiniCameraAdapter: ReachyMiniCameraAdapter = {
   id: "reachy-mini-camera",
-  label: "Reachy Mini 摄像头",
+  label: "心宠摄像头",
   kind: "reachy-mini",
   async start() {
     assertMediaDevicesAvailable()
@@ -178,7 +190,7 @@ export const reachyMiniCameraAdapter: ReachyMiniCameraAdapter = {
         (device) => device.kind === "videoinput" && /reachy|mini/i.test(device.label),
       )
       if (!selected) {
-        throw new Error("Reachy Mini 摄像头未被浏览器识别")
+        throw new Error("心宠摄像头未被浏览器识别")
       }
 
       stopMediaStream(permissionStream)

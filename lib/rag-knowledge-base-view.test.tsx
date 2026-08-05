@@ -5,10 +5,13 @@ import { renderToStaticMarkup } from "react-dom/server"
 
 import { RagKnowledgeBaseView } from "../components/ai-config/rag-knowledge-base-view"
 
-test("knowledge base header uses one concise product title", () => {
+test("knowledge base view renders only the full-width LightRAG console", () => {
   const html = renderToStaticMarkup(<RagKnowledgeBaseView />)
 
-  assert.match(html, />心图心理学知识库</)
-  assert.doesNotMatch(html, />心理学知识库管理台</)
-  assert.equal((html.match(/>心图心理学知识库</g) ?? []).length, 1)
+  assert.match(html, /id="lightrag-console"/)
+  assert.match(html, /allow-popups allow-popups-to-escape-sandbox/)
+  assert.match(html, /h-full w-full border-0/)
+  assert.doesNotMatch(html, />已接入</)
+  assert.doesNotMatch(html, />文档管理</)
+  assert.doesNotMatch(html, />连接状态</)
 })

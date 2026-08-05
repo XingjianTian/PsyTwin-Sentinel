@@ -10,6 +10,8 @@ const hostBridgePaths = [
   "/v1/device/stop",
   "/v1/device/restart",
   "/v1/device/action",
+  "/v1/device/processing",
+  "/v1/device/choreography",
   "/v1/device/pose",
   "/v1/device/volume",
 ] as const

@@ -1,0 +1,32 @@
+=== Task 9 - Data integrity & build ===
+
+--- Check 1: Table counts ---
+          t           | count 
+----------------------+-------
+ students             |    10
+ work_orders          |    10
+ alerts               |    10
+ devices              |     6
+ vr_sessions          |    10
+ vital_signs          |    60
+ faculties            |     6
+ psych_profiles       |    10
+ timeline_events      |    30
+ intervention_records |     5
+ vr_scenes            |     4
+ consultation_rooms   |     4
+ room_devices         |     6
+ voice_analyses       |    60
+ expression_data      |    60
+ ai_documents         |     5
+ ai_prompt_presets    |     4
+(17 rows)
+
+
+RESULT: PASS - All 17 tables have data (count > 0)
+
+--- Check 2: npm run build ---
+Build output: Next.js 16.1.6 (Turbopack)
+Compiled successfully in 4.6s
+Generating static pages (3/3) in 383.4ms
+RESULT: PASS - Build succeeded

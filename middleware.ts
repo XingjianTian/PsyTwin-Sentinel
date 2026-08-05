@@ -14,7 +14,8 @@ const publicRoutes = [
   "/api/multimodal/sensors/stream",
 ];
 
-const reachyDeviceRoute = "/api/pet-ai/reachy/device";
+const lightRagProxyRoute = "/api/lightrag-proxy";
+const reachyDeviceRoute = "/api/pet-ai/reachy";
 const reachyOperatorRoles = new Set(["ADMIN", "COUNSELOR", "TEACHER"]);
 const staffProvisioningRoutes = ["/api/users", "/api/teachers"];
 const staffProvisioningMutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -26,6 +27,10 @@ function isPublicRoute(pathname: string): boolean {
 
 function isReachyDeviceRoute(pathname: string): boolean {
   return pathname === reachyDeviceRoute || pathname.startsWith(`${reachyDeviceRoute}/`);
+}
+
+function isLightRagProxyRoute(pathname: string): boolean {
+  return pathname === lightRagProxyRoute || pathname.startsWith(`${lightRagProxyRoute}/`);
 }
 
 function isStaffProvisioningMutation(pathname: string, method: string): boolean {
@@ -47,14 +52,16 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/")) {
     // 首先尝试从 Header 获取 token
     const authHeader = request.headers.get("authorization");
-    let token = authHeader?.startsWith("Bearer ")
+    const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
       : null;
+    const cookieToken = request.cookies.get("token")?.value || null;
 
-    // 如果没有 Header，尝试从 Cookie 获取
-    if (!token) {
-      token = request.cookies.get("token")?.value || null;
-    }
+    // LightRAG WebUI uses its own guest Bearer token. For the same-origin proxy,
+    // authenticate the Sentinel session cookie first so the two JWT domains do not collide.
+    const token = isLightRagProxyRoute(pathname)
+      ? cookieToken || bearerToken
+      : bearerToken || cookieToken;
 
     if (!token) {
       return NextResponse.json(
@@ -73,7 +80,7 @@ export async function middleware(request: NextRequest) {
 
     if (isReachyDeviceRoute(pathname) && !reachyOperatorRoles.has(payload.role)) {
       return NextResponse.json(
-        { code: 403, message: "无权操作 Reachy 设备", data: null },
+        { code: 403, message: "无权操作心宠设备", data: null },
         { status: 403 }
       );
     }

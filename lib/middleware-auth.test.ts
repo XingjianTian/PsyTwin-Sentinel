@@ -75,6 +75,12 @@ function reachyRequest(token?: string, transport: "bearer" | "cookie" = "bearer"
   return new NextRequest("http://sentinel.local/api/pet-ai/reachy/device", { headers })
 }
 
+function lightRagProxyRequest(sessionToken?: string, lightRagToken = "lightrag-guest-token") {
+  const headers = new Headers({ Authorization: `Bearer ${lightRagToken}` })
+  if (sessionToken) headers.set("Cookie", `token=${sessionToken}`)
+  return new NextRequest("http://sentinel.local/api/lightrag-proxy/documents/status_counts", { headers })
+}
+
 function issueToken(role: string): string {
   return generateToken({
     userId: `${role.toLowerCase()}-1`,
@@ -203,6 +209,20 @@ test("middleware accepts a valid JWT from the session cookie", async () => {
   assert.equal(response.status, 200)
   assert.equal(response.headers.get("x-middleware-request-x-user-id"), "teacher-1")
   assert.equal(response.headers.get("x-middleware-request-x-user-role"), "TEACHER")
+})
+
+test("LightRAG proxy authenticates the Sentinel session cookie instead of the embedded guest bearer token", async () => {
+  const response = await middleware(lightRagProxyRequest(signToken()))
+
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get("x-middleware-request-x-user-id"), "teacher-1")
+  assert.equal(response.headers.get("x-middleware-request-x-user-role"), "TEACHER")
+})
+
+test("LightRAG proxy remains protected when only an untrusted guest bearer token is present", async () => {
+  const response = await middleware(lightRagProxyRequest())
+
+  assert.equal(response.status, 401)
 })
 
 test("JWT boundaries reject an explicitly configured one-byte secret", async () => {

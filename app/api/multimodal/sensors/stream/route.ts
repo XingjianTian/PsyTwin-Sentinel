@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       let redisSubscriber: Redis | null = null
+      let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+      let closed = false
       
       const sendEvent = (event: string, data: object) => {
         const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
@@ -27,6 +29,23 @@ export async function GET(request: NextRequest) {
         }
         sendEvent("heartbeat", heartbeat)
       }
+
+      const closeStream = () => {
+        if (closed) return
+        closed = true
+        if (heartbeatInterval) clearInterval(heartbeatInterval)
+        heartbeatInterval = null
+        redisSubscriber?.disconnect()
+        controller.close()
+      }
+
+      const startHeartbeat = () => {
+        if (heartbeatInterval || closed) return
+        sendHeartbeat()
+        heartbeatInterval = setInterval(sendHeartbeat, 30000)
+      }
+
+      request.signal.addEventListener("abort", closeStream)
 
       try {
         const redisUrl = process.env.REDIS_URL || "redis://localhost:6379"
@@ -73,20 +92,21 @@ export async function GET(request: NextRequest) {
           }
         })
 
-        const heartbeatInterval = setInterval(sendHeartbeat, 30000)
+        startHeartbeat()
 
-        request.signal.addEventListener("abort", () => {
-          clearInterval(heartbeatInterval)
-          redisSubscriber?.disconnect()
-          controller.close()
+      } catch {
+        if (closed) return
+        console.warn("[SSE] Redis unavailable; keeping the realtime stream alive in degraded mode.")
+        redisSubscriber?.disconnect()
+        redisSubscriber = null
+        sendEvent("connected", {
+          status: "degraded",
+          channel: REDIS_CHANNEL,
+          studentIdFilter: studentId,
+          realtimeAvailable: false,
+          timestamp: new Date().toISOString(),
         })
-
-      } catch (error) {
-        console.error("[SSE] Error:", error)
-        sendEvent("error", { 
-          message: error instanceof Error ? error.message : "SSE connection failed",
-        })
-        controller.close()
+        startHeartbeat()
       }
     },
     cancel() {

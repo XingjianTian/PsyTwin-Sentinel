@@ -1,5 +1,8 @@
 # PsyTwin Sentinel
 
+> 同事首次拉取或需要复现当前本地环境时，请先阅读
+> [本地一致性配置指南](./docs/LOCAL_ENV_SETUP.md)。
+
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" />
@@ -19,6 +22,8 @@
 - [项目简介](#项目简介)
 - [近期功能更新概览](#近期功能更新概览)
 - [项目生态](#项目生态)
+- [功能全景与页面入口](#功能全景与页面入口)
+- [关键业务闭环](#关键业务闭环)
 - [核心功能模块](#核心功能模块)
   - [🎯 实时多模态直播舱](#实时多模态直播舱)
   - [🧠 心图·AI助手与 LightRAG 知识库](#心图ai助手与-lightrag-知识库)
@@ -57,6 +62,10 @@ PsyTwin Sentinel 是基于 **数字孪生** 理念构建的校园心理健康管
 | **设备与预约管理** | 合并“线上预约管理”和“线下设备管理”，形成统一页面；顶部提供窄长双段切换按钮，在同一业务台内切换预约排期与设备状态。 | `/device-appointments` |
 | **实时多模态直播舱** | 将原“心图·直播视窗”的摄像头直播能力并入多模态监测页；视觉、语音、生理、交互四路信号同屏展示，顶部状态卡适配 110% 演示缩放。 | `/multimodal` |
 | **LightRAG 心理学知识库** | RAG 页面接入真实 LightRAG WebUI，支持文档管理、知识图谱、检索问答和 API 调试；OpenClaw 对话可附加 LightRAG 检索上下文。 | `/ai-config?tab=rag` |
+| **知识引用追溯** | LightRAG 检索结果中的 Markdown 来源可直接打开为 Sentinel 同源只读文档页，保留后台视觉与访问控制。 | `/knowledge-document` |
+| **心宠 AI 管理** | 按学生管理差异化 OCEAN 性格、语气、主动程度、提示词与知识范围；支持双层 AI 对话演示、风险升级和真实会话持久化。 | `/pet-ai-management` |
+| **实体心宠联调** | 提供设备发现、启动、停止、诊断、姿态、表情、舞蹈、音量和摄像头预览；固定测试学生用于安全联调。 | `/pet-ai-management?tab=debug` |
+| **学生详情性能优化** | 学生详情、心理画像、时间线、干预和心宠页签复用同一学生上下文，减少重复查询；心宠快照避免全表扫描。 | `/students/[id]` |
 | **数据库与种子数据** | 增加非破坏性增量种子脚本；补充宠物系统运行表迁移与测试，便于多人同步数据库结构而不清空本地业务数据。 | `npm run seed:incremental` |
 | **工程化检查** | 补齐 ESLint 9 + Next.js 规则配置，`npm run lint` 成为可执行的基础质量检查。 | `eslint.config.mjs` |
 
@@ -191,6 +200,73 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 
 ---
 
+## 功能全景与页面入口
+
+Sentinel 面向心理教师、咨询师、学校管理人员和系统运维人员，覆盖“监测—识别—预警—干预—复盘—知识沉淀”的完整后台工作流。
+
+| 业务域 | 页面入口 | 关键能力 | 主要数据或服务 |
+| --- | --- | --- | --- |
+| 全域态势 | `/dashboard` | 核心指标、风险分布、趋势、待办与校园心理态势总览 | PostgreSQL、Redis |
+| 风险溯源 | `/risk-trace` | 风险工单筛选、学生证据链、AI 评估、确认干预和处置跟踪 | 风险工单、评估记录 |
+| 心宠状态预警 | `/pet-alerts` | 接收心宠服务上报、按风险和状态筛选、查看快照、标记处理 | `pet_alerts`、Pocket/心宠服务 |
+| 学生管理 | `/students` | 按姓名、学号、班级和风险等级检索，进入学生数字孪生档案 | 学生、班级、风险等级 |
+| 学生详情 | `/students/[id]` | 基础信息、心理画像、生命周期时间线、干预记录、心宠状态五类视图 | 学生全域关联数据 |
+| 评估干预记录 | `/interventions` | 汇总干预方案、执行状态、责任人、效果评估和后续跟进 | 干预记录、风险工单 |
+| 无人咨询直播室 | `/multimodal` | A01/A02/A03 咨询室切换、视频直播、表情识别和实时语音 | 摄像头、语音流、多模态接口 |
+| 心图 VR 实时看板 | `/vr-dashboard` | 完整复用视频、会话状态及视觉、语音、生理、交互四路实时数据 | Companion、Redis、SSE/WebSocket |
+| 设备与预约 | `/device-appointments` | 在线预约与线下设备双页签、咨询师排班、咨询室和设备状态管理 | 预约、教师、房间、设备 |
+| Pocket 数据记录 | `/pocket-records` | 心墙动态、心宠动态、活跃时段和学生端行为汇总 | Pocket API、帖子、心宠事件 |
+| 心图·AI 助手 | `/ai-config` | 主智能体对话、多 Agent 编排过程、活动日志、服务与数据库状态 | OpenClaw Gateway |
+| 心理学知识库 | `/ai-config?tab=rag` | 文档入库、处理状态、知识图谱、检索问答、引用来源阅读 | LightRAG |
+| 心宠 AI 管理 | `/pet-ai-management` | 学生心宠浏览、OCEAN 性格配置、提示词、演示对话和会话管理 | Qwen、PetAiProfile、聊天记录 |
+| 心宠设备调试 | `/pet-ai-management?tab=debug` | USB 设备发现、四阶段状态、启停诊断、动作表情、音量和摄像头 | ClawBody、Host Bridge、Reachy Mini |
+| 系统设置 | `/system-settings` | 服务连通性、缓存指标和系统运行状态查看 | Redis、OpenClaw、内部状态 API |
+
+旧入口 `/consultation-room` 与 `/device-management` 仍保留兼容跳转。管理后台代码只使用 Next.js/React；Pocket 小程序代码不在本仓库维护。
+
+### 用户与权限边界
+
+- **心理教师/咨询师**：查看授权学生档案、风险证据、预约和干预记录，执行风险处置。
+- **学校管理人员**：查看聚合态势、群体趋势、资源使用与运营指标。
+- **系统运维人员**：配置数据库、Redis、OpenClaw、LightRAG、ClawBody 和 Host Bridge，检查服务状态。
+- **实体设备操作**：Reachy 启停与动作接口执行角色校验；首版实体会话固定使用 `stu-test`，避免误操作真实学生设备。
+- **敏感数据**：真实密钥只进入本机 `.env`；LightRAG、ClawBody 与 Host Bridge 密钥均仅由服务端读取。
+
+---
+
+## 关键业务闭环
+
+### 风险发现与干预
+
+1. Companion、Pocket、心宠或咨询现场产生多模态与行为数据。
+2. Sentinel 聚合学生风险等级、时间线、心宠提醒和多模态证据。
+3. 风险溯源中心生成或展示 AI 评估，形成待处理工单。
+4. 心理教师确认风险、登记干预方案并跟踪执行效果。
+5. 处置结果回写学生档案与时间线，供后续趋势分析和复盘。
+
+### 心宠双层 AI 与风险升级
+
+1. 第一层心宠模型依据学生保存的 OCEAN 性格、语气、主动程度和系统提示词生成个性化回复。
+2. 普通话题由心宠直接回应；负面或高风险表达进入“情绪识别—主智能体/专业 Agent—心宠人格化转述”协作链。
+3. 测试学生可在管理页查看协作阶段、活动日志和实时设备表现。
+4. 中高风险学生原话写入真实预警工单；对话采用幂等写入，避免重复记录。
+
+### RAG 知识沉淀与可追溯问答
+
+1. 管理人员在心理学知识库上传 Markdown、TXT、PDF 或 Word 文档。
+2. LightRAG 完成切分、实体关系抽取、向量化和知识图谱构建。
+3. 检索问题通过 Sentinel 同源代理发送，服务端自动附加 API Key。
+4. OpenClaw 对话可注入检索上下文；回答中的 Markdown 来源可打开独立只读页面核验。
+
+### 预约与设备协同
+
+1. 学生通过 Pocket 选择咨询师、时间和咨询室并提交预约。
+2. Sentinel 统一处理预约确认、资源排期、咨询室与设备状态。
+3. 咨询时可进入无人咨询直播室或 VR 实时看板查看实时信号。
+4. 会话与设备使用结果进入学生时间线和干预记录。
+
+---
+
 ## 核心功能模块
 
 ### 🎯 实时多模态直播舱
@@ -250,7 +326,7 @@ PsyTwin 是一套完整的**校园心理健康数字孪生解决方案**，由�
 - **自动语音转写**: VAD 检测静音 → 百度 ASR 识别 → 实时显示转写文本
 - **数据持久化**: 所有原始数据存入 PostgreSQL，支持历史回溯
 - **智能过滤**: 支持按学生 ID 订阅，只接收关注学生的数据
-- **直播融合**: 摄像头窗口优先使用 Reachy Mini 摄像头，未连接时回退到本机摄像头；状态只在视频画面内显示，避免顶部信息重复
+- **直播融合**: 摄像头窗口优先使用心宠摄像头，未连接时回退到本机摄像头；状态只在视频画面内显示，避免顶部信息重复
 - **演示友好布局**: 顶部学生、咨询室、会话状态、LIVE 状态和“学生列表 / 实时测试”切换保持单行；异常长时长会被格式化为 `HH:mm:ss` / `99:59:59+`
 - **四流同屏**: 视觉流展示主要表情和焦虑/悲伤/愤怒指标，语音流展示波形与转写，生理流轮播心率/皮电/HRV/压力，交互流展示频率、反应延迟、震颤和回避行为
 
@@ -345,6 +421,7 @@ Sentinel 的 `AI 配置 -> 心理学知识库` 页面已经从本地模拟列表
 ```env
 NEXT_PUBLIC_LIGHTRAG_WEBUI_URL="http://42.121.14.189:9621"
 LIGHTRAG_API_URL="http://42.121.14.189:9621"
+LIGHTRAG_API_KEY="<与 LightRAG 服务端一致的密钥>"
 NEXT_PUBLIC_LIGHTRAG_API_KEY_HINT="psytwin-local-rag-key"
 ```
 
@@ -679,10 +756,11 @@ npm run seed:incremental -- --dry-run
 
 ### 环境要求
 
-- **Node.js**: 18+
+- **Node.js**: 24（本地验证版本 24.15.0）
+- **npm**: 11（本地验证版本 11.12.1）
 - **PostgreSQL**: 15+
 - **Redis**: 7+
-- **Docker**: (可选，用于部署)
+- **Docker Desktop**: 推荐，用于一键启动 PostgreSQL 与 Redis
 
 ### 安装步骤
 
@@ -691,37 +769,38 @@ npm run seed:incremental -- --dry-run
 git clone https://github.com/XingjianTian/PsyTwin-Sentinel.git
 cd PsyTwin-Sentinel
 
-# 2. 安装依赖
-npm install
+# 2. 按锁文件安装依赖
+npm ci
 
 # 3. 配置环境变量
 cp .env.example .env
 # 编辑 .env 配置数据库连接、OpenClaw Gateway、LightRAG 服务地址等
 
-# 4. 数据库迁移
-npx prisma migrate dev
+# 4. 启动本地 PostgreSQL 与 Redis
+docker compose --env-file .env -f docker-compose.dev.yml up -d
 
-# 5. 生成 Prisma Client
+# 5. 应用已提交的数据库迁移并生成 Prisma Client
+npx prisma migrate deploy
 npx prisma generate
 
-# 6. 填充测试数据 (可选，完整重建演示数据)
-npx prisma db seed
-
-# 7. 非破坏性补齐核心数据 (推荐，适合 pull 新迁移后执行)
+# 6. 非破坏性补齐核心数据
 npm run seed:incremental
 
-# 8. 运行基础质量检查
+# 7. 运行基础质量检查
 npm run lint
 
-# 9. 启动开发服务器
+# 8. 启动开发服务器
 npm run dev
 ```
 
 访问 http://localhost:3000
 
-### Reachy Mini 心宠调试（Windows Host Bridge）
+环境变量逐项说明、密钥交接清单和故障排查见
+[《本地一致性配置指南》](./docs/LOCAL_ENV_SETUP.md)。
 
-首次部署或交付其他开发者时，请先阅读[《心宠调试与 Reachy Mini 实时联调完整配置教程》](./docs/REACHY_MINI_SETUP_GUIDE.md)。该教程包含两仓库拉取、Windows Host Bridge、Docker、Sentinel、首次验收、日常操作和完整故障排查步骤。
+### 实体心宠调试（Windows Host Bridge）
+
+首次部署或交付其他开发者时，请先阅读[《实体心宠实时联调完整配置教程》](./docs/REACHY_MINI_SETUP_GUIDE.md)。该教程包含两仓库拉取、Windows Host Bridge、Docker、Sentinel、首次验收、日常操作和完整故障排查步骤。若项目已经拉取完成、但页面仍无法连接实体心宠，请直接使用[《拉取项目后仍无法连接：Windows 本机配置与排障手册》](./docs/REACHY_MINI_POST_CLONE_CONNECTION.md)。
 
 Sentinel 只通过服务端访问 ClawBody 和 Windows Host Bridge；浏览器只调用 Sentinel 同源 API。将下列配置分别写入两个仓库的本地 `.env`，不要提交密钥：
 
@@ -735,11 +814,15 @@ CLAWBODY_SERVICE_URL="http://127.0.0.1:7860"
 CLAWBODY_SERVICE_KEY="<clawbody-service-key>"
 HOST_BRIDGE_URL="http://127.0.0.1:7861"
 HOST_BRIDGE_API_KEY="<host-bridge-key>"
+GEMINI_API_KEY="<gemini-api-key>"
+GEMINI_LIVE_MODEL="gemini-3.1-flash-live-preview"
+# 先在 Google AI Studio Voice Library 试听，再填写官方 Voice 名称；默认 Kore
+GEMINI_LIVE_VOICE="Kore"
 ```
 
 `CLAWBODY_SERVICE_KEY` 必须与 ClawBody 的 `SERVICE_API_KEY` 相同，Sentinel 与 ClawBody 两侧的 `HOST_BRIDGE_API_KEY` 也必须相同。这两组密钥都是服务端机密，禁止改成 `NEXT_PUBLIC_*` 变量或传入浏览器。`7860` 是 Sentinel 访问的 ClawBody 内部服务端口，`7861` 是只监听 Windows 回环地址的 Host Bridge 端口；不要将 Host Bridge 发布到局域网或公网。
 
-在 Windows 10/11 上，先按 ClawBody 仓库 README 完成 `.venv`、Reachy Mini SDK 和 `.env` 配置。然后仅需在 ClawBody 仓库根目录安装一次当前用户的隐藏登录任务：
+在 Windows 10/11 上，先按 ClawBody 仓库 README 完成 `.venv`、设备 SDK 和 `.env` 配置。然后仅需在 ClawBody 仓库根目录安装一次当前用户的隐藏登录任务：
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -750,7 +833,7 @@ clawbody-host status
 
 `install` 创建或更新固定任务 `PsyTwin ClawBody Host Bridge`；`restart` 用于安装后立即启动，否则它会在下次登录时启动；`status` 查看任务状态。不要同时运行计划任务实例和前台 `clawbody-host-bridge`。更完整的安装、前台诊断与卸载说明以 ClawBody 仓库 README 为准。
 
-日常使用前必须完全退出 Reachy Mini Control，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；学生在线对话仍需要 ClawBody 中已配置的阿里云和百度服务。日常流程为：
+日常使用前必须完全退出设备控制程序，避免它占用 USB 串口或 `8000` daemon 端口。本地设备启动不需要 VPN；Gemini Live 实体语音对话还要求浏览器能识别心宠的麦克风和扬声器，并使用已配置的 Gemini API Key。日常流程为：
 
 ```text
 启动 Docker → 打开 Sentinel → 心宠调试 → 启动设备 → 返回实时联调 → 开始对话
@@ -760,8 +843,8 @@ clawbody-host status
 2. 如需确认 Host Bridge，在 ClawBody 仓库根目录运行 `.\.venv\Scripts\clawbody-host.exe status`；任务未运行时运行 `.\.venv\Scripts\clawbody-host.exe restart`。这两条命令不依赖当前 PowerShell 已激活虚拟环境。
 3. 启动 Sentinel 并打开 `/pet-ai-management`，切换到“心宠调试”，选择检测到的 USB 设备后点击“启动设备”。
 4. 设备显示 `Ready` 后点击“返回实时联调”；页面会自动回到“心宠管理”并打开“实时联调”页签。
-5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体 Reachy 对话；其他学生只能使用文本联调。
-6. 学生对着 Reachy 说话后，“实时对话”会显示百度 ASR 转写与心宠 TTS 回复，“协作过程”会显示风险识别和双层 AI 摘要。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
+5. 选择“测试学生”，点击“开始对话”。首版仅允许测试学生启动实体心宠对话；其他学生只能使用文本联调。
+6. 学生对着实体心宠说话后，“实时对话”会显示 Gemini Live 输入/输出转写，回答音频从实体心宠扬声器播放，不会回退到电脑扬声器；会话固定使用服务端配置的 Gemini Voice，已保存的语气、回复风格、主动程度、身份约束、知识范围和 OCEAN 画像会在会话建立时锁定。点击“开始对话”后桥接层只下发耳朵字段，不向头部和身体发送姿态命令，左右耳朵以约 12°轻幅无声摆动；Gemini 开始播放回答时会同步执行一次按性格画像确定的固定官方表情动作，动作请求关闭动作库自带的 `.ogg` 音效，只保留 Gemini 语音。输入转写按统一风险规则累计判级，并会先移除 ASR 插入的空格和标点，因此“我晚上总是睡不好”和“我 买 上 总 是 睡 不 好 。”都会显示中风险。每轮转写会保存到真实对话记录，中高风险会同步待处理预警工单，“协作过程”显示风险识别、咨询师关注、心宠回应和原生语音阶段。结束时先点击“停止”，需要关闭硬件时再进入“心宠调试”点击“关机”。
 
 以下命令只读取任务、服务、设备状态和 USB 发现结果，不会启动 daemon 或移动机器人：
 
@@ -779,8 +862,8 @@ Invoke-RestMethod http://127.0.0.1:7861/v1/device/discover -Headers $headers
 |------|------|
 | “心宠设备控制桥未运行” | 在 ClawBody 仓库根目录执行 `.\.venv\Scripts\clawbody-host.exe status`，必要时执行 `.\.venv\Scripts\clawbody-host.exe restart`，再用 `/health` 只读检查。 |
 | Host Bridge 返回 `401` 或 Sentinel 显示设备请求失败 | 确认 Sentinel 和 ClawBody 的 `HOST_BRIDGE_API_KEY` 完全一致，修改后重启对应服务；不要将密钥放入 URL、日志或前端变量。 |
-| 未发现 Reachy Mini Lite USB | 确认 Reachy Mini Control 已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
-| daemon 启动失败或 `8000` 端口冲突 | 退出 Reachy Mini Control 和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
+| 未发现实体心宠 USB | 确认设备控制程序已退出，检查电源、USB 数据线、Windows 设备管理器和串口驱动；有多个候选串口时在页面明确选择。 |
+| daemon 启动失败或 `8000` 端口冲突 | 退出设备控制程序和单独启动的 daemon，查看“心宠调试”日志后重试。Host Bridge 只管理它启动的 daemon，不会代理任意命令或强制终止不明进程。 |
 | Docker/ClawBody 未连接 | USB、daemon 和基础硬件调试仍可用；学生会话入口保持不可用。检查 `docker compose ps`、`http://127.0.0.1:7860/health` 以及 `SERVICE_API_KEY`/`CLAWBODY_SERVICE_KEY` 是否匹配。 |
 
 Sentinel 设备 API 只接受预定义的发现、启停、重启、动作、姿态和音量命令，不接收 shell 命令、可执行文件路径或任意上游 URL。设备启动链路本身不访问 Hugging Face、GitHub、OpenAI 或应用商店。
@@ -819,8 +902,11 @@ docker-compose up -d
 
 # 3. 启动 Sentinel (本仓库)
 cd ../PsyTwin-Sentinel
-npm install
-npx prisma migrate dev
+npm ci
+docker compose --env-file .env -f docker-compose.dev.yml up -d
+npx prisma migrate deploy
+npx prisma generate
+npm run seed:incremental
 npm run dev
 
 # 4. 启动 Pocket (微信小程序)
@@ -850,7 +936,9 @@ PsyTwin-Sentinel/
 │   │   ├── multimodal/           # 多模态数据流监控
 │   │   ├── device-appointments/  # 设备与预约统一管理
 │   │   ├── students/             # 学生档案管理
-│   │   ├── warnings/             # 预警中心
+│   │   ├── risk-trace/            # 风险预警与溯源
+│   │   ├── pet-alerts/            # 心宠状态预警
+│   │   ├── pet-ai-management/     # 心宠 AI 管理与设备调试
 │   │   ├── interventions/        # 干预记录
 │   │   └── ai-config/            # 心图·AI助手与知识库配置
 │   ├── api/                      # API 路由
@@ -860,6 +948,9 @@ PsyTwin-Sentinel/
 │   │   │       └── my/
 │   │   │           └── notifications/
 │   │   ├── openclaw/             # AI 编排与 RAG 增强 API
+│   │   ├── lightrag-proxy/        # LightRAG 同源安全代理
+│   │   ├── lightrag-document/     # 知识引用文档读取 API
+│   │   ├── pet-ai/                # 心宠画像、对话与 Reachy API
 │   │   ├── appointments/         # 预约 API
 │   │   ├── devices/              # 设备 API
 │   │   └── students/             # 学生管理 API
@@ -884,6 +975,8 @@ PsyTwin-Sentinel/
 ├── docs/                         # 项目文档
 │   ├── CHANGELOG.md             # 变更日志
 │   ├── PRD.md                   # 产品需求文档
+│   ├── LOCAL_ENV_SETUP.md       # 本地一致性配置与密钥交接
+│   ├── REACHY_MINI_SETUP_GUIDE.md # 实体心宠联调指南
 │   ├── LIGHTRAG_INTEGRATION.md  # LightRAG 集成说明
 │   ├── LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md
 │   ├── api_contract.md          # API 契约
@@ -899,11 +992,13 @@ PsyTwin-Sentinel/
 ### 本仓库文档
 
 - **[产品需求文档 (PRD)](./docs/PRD.md)** - 系统设计和功能规格
+- **[本地一致性配置指南](./docs/LOCAL_ENV_SETUP.md)** - 版本基线、环境变量、服务拓扑、初始化、验收和密钥交接
 - **[API 契约文档](./docs/api_contract.md)** - 前后端 API 规范 (Pocket 端)
-- **[OpenClaw 集成文档](./docs/OPENCLAW_AGENT_IMPLEMENTATION.md)** - AI 编排中心集成指南
+- **[AI 编排工程师技能演示](./docs/AI编排工程师-技能演示.md)** - OpenClaw 多 Agent 编排与演示说明
 - **[LightRAG 集成说明](./docs/LIGHTRAG_INTEGRATION.md)** - 心理学知识库页面、模型配置、验证命令和常见问题
 - **[LightRAG 迁移部署教程](./docs/LIGHTRAG_MIGRATION_DEPLOYMENT_GUIDE.md)** - 从零部署 PsyTwin 定制版 LightRAG 与迁移知识库
-- **[技术规范文档](./docs/PsyTwin%20Sentinel%20技术规范文档.md)** - 编码规范和架构决策
+- **[实体心宠联调指南](./docs/REACHY_MINI_SETUP_GUIDE.md)** - Windows Host Bridge、ClawBody、Reachy Mini 启停与故障排查
+- **[项目文档索引](./docs/README.md)** - PRD、API、架构与跨端文档导航
 - **[Prisma 数据库迁移说明](./prisma/README.md)** - 迁移、增量种子和宠物系统表说明
 - **[变更日志](./docs/CHANGELOG.md)** - 版本更新记录
 
@@ -944,7 +1039,7 @@ PsyTwin-Sentinel/
 
 ## 许可证
 
-[MIT License](./LICENSE)
+本仓库当前未提供公开许可证文件，默认按内部项目管理；对外分发或复用前请先联系项目负责人确认授权范围。
 
 ---
 
