@@ -2,6 +2,7 @@ import { RiskLevel, WorkOrderStatus } from "@prisma/client"
 
 import { cacheDeletePattern } from "@/lib/cache"
 import { extractReachyRiskWorkOrderCandidates } from "@/lib/pet-ai/reachy-risk-work-order"
+import { appendActiveCareSuggestion } from "@/lib/pet-ai/risk-assessment"
 import { prisma } from "@/lib/prisma"
 
 export async function syncReachyRiskWorkOrders({
@@ -37,7 +38,7 @@ export async function syncReachyRiskWorkOrders({
         date: candidate.occurredAt,
         detail: `来源：心宠实时对话\n风险等级：${riskLabel}\n学生原话：${candidate.sourceText}`,
         summary: candidate.sourceText.slice(0, 160),
-        aiAssessment: [
+        aiAssessment: appendActiveCareSuggestion([
           `【心宠实时对话风险预警 - ${student.name}】`,
           "",
           `在心宠实体对话中检测到${riskLabel}表达：`,
@@ -45,7 +46,7 @@ export async function syncReachyRiskWorkOrders({
           "",
           `【风险等级评估】：${isHigh ? "高危" : "中危"}（实时对话风险评分 ${score}/100）`,
           `【建议干预方案】：${isHigh ? "请立即联系学生，完成安全确认和危机风险评估，必要时启动校内危机干预流程。" : "建议辅导员尽快关注，并安排心理咨询或持续跟进。"}`,
-        ].join("\n"),
+        ].join("\n")),
       }
     }),
     skipDuplicates: true,
