@@ -19,7 +19,7 @@ $settings = New-ScheduledTaskSettingsSet `
     -RestartCount 999 `
     -RestartInterval (New-TimeSpan -Minutes 1) `
     -ExecutionTimeLimit ([TimeSpan]::Zero)
-$principal = New-ScheduledTaskPrincipal -UserId $principalUser -LogonType Interactive -RunLevel Highest
+$principal = New-ScheduledTaskPrincipal -UserId $principalUser -LogonType Interactive -RunLevel Limited
 
 Register-ScheduledTask `
     -TaskName $taskName `
