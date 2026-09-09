@@ -14,6 +14,8 @@
     "test:seed:incremental": "node --test lib/incremental-core-data.test.mjs",
     "relay:install": "py -3.11 -m venv .venv-video-relay && .venv-video-relay\\Scripts\\python.exe -m pip install -r scripts\\reachy-video-relay-requirements.txt",
     "relay:start": ".venv-video-relay\\Scripts\\python.exe -m uvicorn scripts.reachy_video_relay:app --host 0.0.0.0 --port 7862",
+    "relay:install-task": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\install-reachy-video-relay-task.ps1",
+    "relay:setup": "npm run relay:install && npm run relay:install-task",
     "seed:incremental": "tsx prisma/seed/incremental-core-data.ts",
     "seed:pet-diary": "tsx prisma/seed-pet-diary-templates.ts",
     "changelog:generate": "auto-changelog -p --commit-limit 20 --template keepachangelog --output docs/CHANGELOG.md"

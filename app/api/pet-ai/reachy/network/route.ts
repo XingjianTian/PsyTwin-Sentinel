@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import {
+  DEFAULT_REACHY_NETWORK_PORT,
   isPrivateIpv4,
   normalizeReachyNetworkHost,
   normalizeReachyNetworkPort,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/pet-ai/reachy-network"
 
 export const dynamic = "force-dynamic"
+const relayFetchTimeoutMs = 5_000
 
 const requestSchema = z.object({
   host: z.string().max(253),
@@ -74,19 +76,19 @@ function relayHeaders() {
 }
 
 function configuredRelayUrl() {
-  if (process.env.REACHY_RELAY_URL) return process.env.REACHY_RELAY_URL.replace(/\/$/, "")
   const host = process.env.REACHY_RELAY_HOST?.trim() || "127.0.0.1"
-  const port = process.env.REACHY_RELAY_PORT?.trim() || "7862"
-  return `http://${host}:${port}`
+  return `http://${host}:${DEFAULT_REACHY_NETWORK_PORT}`
 }
 
 export async function GET(request: NextRequest) {
   if (request.nextUrl.searchParams.get("stream") !== "1") return json({ message: "未指定视频流" }, 400)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), relayFetchTimeoutMs)
   try {
     const upstream = await fetch(`${configuredRelayUrl()}/stream.mjpeg`, {
       cache: "no-store",
       headers: { "X-Relay-Key": process.env.REACHY_RELAY_API_KEY || "dev-only-change-me" },
-      signal: request.signal,
+      signal: AbortSignal.any([request.signal, controller.signal]),
     })
     if (!upstream.ok || !upstream.body) return json({ message: "直播主机暂未输出视频" }, 502)
     return new NextResponse(upstream.body, {
@@ -98,6 +100,8 @@ export async function GET(request: NextRequest) {
     })
   } catch {
     return json({ message: "无法连接直播主机视频流" }, 502)
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

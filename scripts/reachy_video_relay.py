@@ -27,11 +27,20 @@ load_dotenv(".env", override=False)
 
 SERVICE_NAME = "psytwin-reachy-video-relay"
 API_KEY = os.getenv("REACHY_RELAY_API_KEY", "dev-only-change-me")
-CAMERA_INDEX = int(os.getenv("REACHY_RELAY_CAMERA_INDEX", "0"))
-WIDTH = int(os.getenv("REACHY_RELAY_WIDTH", "960"))
-HEIGHT = int(os.getenv("REACHY_RELAY_HEIGHT", "540"))
-FPS = max(1, min(30, int(os.getenv("REACHY_RELAY_FPS", "24"))))
-JPEG_QUALITY = max(25, min(90, int(os.getenv("REACHY_RELAY_JPEG_QUALITY", "65"))))
+
+
+def read_int_env(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+
+
+CAMERA_INDEX = max(0, read_int_env("REACHY_RELAY_CAMERA_INDEX", 1))
+WIDTH = max(160, read_int_env("REACHY_RELAY_WIDTH", 960))
+HEIGHT = max(120, read_int_env("REACHY_RELAY_HEIGHT", 540))
+FPS = max(1, min(30, read_int_env("REACHY_RELAY_FPS", 24)))
+JPEG_QUALITY = max(25, min(90, read_int_env("REACHY_RELAY_JPEG_QUALITY", 65)))
 
 
 class RpcRequest(BaseModel):
