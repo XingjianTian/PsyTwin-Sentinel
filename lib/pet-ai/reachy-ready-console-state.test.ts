@@ -8,9 +8,39 @@ import {
   isDeviceActionAvailable,
   isMotorControlAvailable,
   mergeReachyLogs,
+  sanitizePetFacingDeviceSnapshot,
+  toPetFacingText,
   scheduleSafePoseCommand,
   type ReachyPose,
 } from "./reachy-ready-console-state"
+
+test("removes hardware brand names from every user-facing device field", () => {
+  assert.equal(toPetFacingText("Reachy Mini Lite is ready"), "心宠 is ready")
+  assert.equal(toPetFacingText("reachy_mini.media connected"), "心宠.media connected")
+  assert.equal(toPetFacingText("Reachy camera"), "心宠 camera")
+
+  const safe = sanitizePetFacingDeviceSnapshot({
+    phase: "error",
+    operation_id: null,
+    devices: [{ port: "COM5", label: "Reachy Mini Lite (COM5)", vid: "1A86", pid: "55D3" }],
+    serial_port: null,
+    daemon_owned: false,
+    daemon_pid: null,
+    daemon_version: null,
+    daemon_state: "error",
+    motor_mode: null,
+    media: { camera: "unknown", microphone: "unknown", speaker: "unknown", input_volume: null, output_volume: null },
+    clawbody_reachable: false,
+    session: { running: false, state: "idle" },
+    error: { code: "DEVICE_ERROR", phase: "error", message: "Reachy device failed", detail: "reachy_mini detail" },
+    logs: { cursor: 1, items: [{ id: 1, level: "error", message: "reachymini_webrtc stopped", created_at: "2026-07-23T00:00:00Z" }] },
+  })
+
+  assert.equal(safe.devices[0].label, "心宠 (COM5)")
+  assert.equal(safe.error?.message, "心宠 device failed")
+  assert.equal(safe.error?.detail, "心宠 detail")
+  assert.equal(safe.logs.items[0].message, "心宠_webrtc stopped")
+})
 
 const neutralPose: ReachyPose = {
   headPitch: 0,

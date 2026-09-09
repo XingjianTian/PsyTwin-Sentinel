@@ -3,6 +3,8 @@ import { z } from "zod"
 
 import { isClawBodyUnavailable, requestClawBody } from "@/lib/pet-ai/clawbody-client"
 import { buildPetRuntimeIdentity, DEFAULT_PET_AI_PROFILE, type PetAiProfileInput } from "@/lib/pet-ai/profile"
+import { syncReachyConversation } from "@/lib/pet-ai/reachy-conversation-sync"
+import { syncReachyRiskWorkOrders } from "@/lib/pet-ai/reachy-risk-work-order-sync"
 import { prisma } from "@/lib/prisma"
 
 const inputSchema = z.object({
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ message: "会话参数无效" }, { status: 400 })
   const demoStudentId = process.env.PET_AI_DEMO_STUDENT_ID || "stu-test"
   if (parsed.data.action === "start" && parsed.data.studentId !== demoStudentId) {
-    return NextResponse.json({ message: "首版仅允许测试学生绑定实体 Reachy" }, { status: 403 })
+    return NextResponse.json({ message: "首版仅允许测试学生绑定实体心宠" }, { status: 403 })
   }
   try {
     let identity = ""
@@ -30,6 +32,22 @@ export async function POST(request: NextRequest) {
         ? { ...pet.aiProfile, knowledgeScope: Array.isArray(pet.aiProfile.knowledgeScope) ? pet.aiProfile.knowledgeScope.filter((item): item is string => typeof item === "string") : DEFAULT_PET_AI_PROFILE.knowledgeScope }
         : DEFAULT_PET_AI_PROFILE
       identity = buildPetRuntimeIdentity({ petName: pet.name, profile })
+    }
+    if (parsed.data.action === "stop") {
+      try {
+        const [status, transcript] = await Promise.all([
+          requestClawBody<Record<string, unknown>>("/v1/status"),
+          requestClawBody<Record<string, unknown>>("/v1/transcript?after=0"),
+        ])
+        if (status.student_id === parsed.data.studentId) {
+          await Promise.all([
+            syncReachyConversation({ studentId: parsed.data.studentId, transcript }),
+            syncReachyRiskWorkOrders({ studentId: parsed.data.studentId, transcript }),
+          ])
+        }
+      } catch (syncError) {
+        console.error("[心宠] 停止会话前的最终同步失败:", syncError)
+      }
     }
     const data = await requestClawBody(`/v1/session/${parsed.data.action}`, {
       method: "POST",

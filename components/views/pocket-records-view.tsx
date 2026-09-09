@@ -29,6 +29,12 @@ import { AnimatePresence, motion } from "framer-motion"
 
 const kpiIcons = [FileText, MessageCircle, Bot, Calendar]
 const kpiLabels = ["心墙发帖数", "评论互动数", "AI咨询次数", "预约咨询数"]
+const kpiTones = [
+  { card: "border-violet-200/80 bg-violet-50/60 hover:border-violet-300", icon: "bg-violet-100 text-violet-600", label: "text-violet-800/75" },
+  { card: "border-fuchsia-200/75 bg-fuchsia-50/55 hover:border-fuchsia-300", icon: "bg-fuchsia-100 text-fuchsia-600", label: "text-fuchsia-800/75" },
+  { card: "border-indigo-200/80 bg-indigo-50/60 hover:border-indigo-300", icon: "bg-indigo-100 text-indigo-600", label: "text-indigo-800/75" },
+  { card: "border-purple-200/80 bg-purple-50/60 hover:border-purple-300", icon: "bg-purple-100 text-purple-600", label: "text-purple-800/75" },
+] as const
 
 const dashboardColumns = "xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.9fr)]"
 const dynamicCardClass = "flex h-[560px] flex-col gap-0 border-border bg-card py-0 shadow-sm"
@@ -185,21 +191,23 @@ export function PocketRecordsView() {
       <div className="grid content-start gap-3 sm:grid-cols-2">
         {kpiValues.map((value, i) => {
           const Icon = kpiIcons[i]
+          const tone = kpiTones[i]
           return (
             <Card
               key={kpiLabels[i]}
               className={cn(
-                "gap-0 rounded-lg py-0 transition-all duration-500 hover:-translate-y-1 hover:shadow-lg",
+                "gap-0 rounded-lg border py-0 transition-[background-color,border-color,transform] duration-500 hover:-translate-y-0.5",
+                tone.card,
                 animatedCards ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
               )}
               style={{ transitionDelay: `${i * 100}ms` }}
             >
               <CardContent className="flex min-h-[72px] items-center gap-3 p-3">
-                <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+                <div className={cn("rounded-lg p-2.5", tone.icon)}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-muted-foreground">{kpiLabels[i]}</p>
+                  <p className={cn("truncate text-xs font-medium", tone.label)}>{kpiLabels[i]}</p>
                   <p className="text-xl font-bold text-foreground">{value.toLocaleString()}</p>
                   <p className="truncate text-xs text-muted-foreground">{kpiChanges[i]}</p>
                 </div>

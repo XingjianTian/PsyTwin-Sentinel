@@ -13,6 +13,7 @@
 import { RiskLevel, WorkOrderStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { cacheAside, cacheDeletePattern } from "@/lib/cache"
+import { appendActiveCareSuggestion } from "@/lib/pet-ai/risk-assessment"
 
 export interface RiskWorkOrder {
   id: string
@@ -48,7 +49,7 @@ function formatOrderTime(date: Date): string {
  * - TTL：3 分钟（风险数据需要较频繁更新）
  */
 export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
-  return cacheAside(
+  const orders = await cacheAside(
     "risk:workorders:pending:v4",
     async () => {
       const orders = await prisma.workOrder.findMany({
@@ -92,6 +93,12 @@ export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
     },
     180 // 3 分钟 TTL
   )
+
+  // 旧工单和缓存中的评估文本也统一补齐主动关怀建议。
+  return orders.map((order) => ({
+    ...order,
+    aiAssessment: appendActiveCareSuggestion(order.aiAssessment),
+  }))
 }
 
 /**

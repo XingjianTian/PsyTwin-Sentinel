@@ -97,6 +97,18 @@ test("student detail API returns the persisted OCEAN pet personality", async () 
   assert.match(source, /buildDemoConversations\(studentId, petSnapshot\.name, student\.riskLevel\)/)
 })
 
+test("Gemini Live sync persists messages, marks their source, and reuses risk work-order sync", async () => {
+  const syncSource = await readFile(new URL("../../app/api/pet-ai/gemini/sync/route.ts", import.meta.url), "utf8")
+  const detailSource = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/route.ts", import.meta.url), "utf8")
+
+  assert.match(syncSource, /syncReachyConversation/)
+  assert.match(syncSource, /syncReachyRiskWorkOrders/)
+  assert.match(syncSource, /cbtCard: \{ source: "gemini-live" \}/)
+  assert.match(syncSource, /classifyMessageRisk/)
+  assert.match(syncSource, /仅测试学生可以同步 Gemini Live 实时对话/)
+  assert.match(detailSource, /source: isGeminiLive \? "gemini-live" as const : "reachy" as const/)
+})
+
 test("Reachy defaults to the Pocket test student", async () => {
   const sessionSource = await readFile(new URL("../../app/api/pet-ai/reachy/session/route.ts", import.meta.url), "utf8")
   const listSource = await readFile(new URL("../../app/api/pet-ai/students/route.ts", import.meta.url), "utf8")
@@ -106,16 +118,20 @@ test("Reachy defaults to the Pocket test student", async () => {
   assert.match(listSource, /stu-test/)
 })
 
-test("Pocket test student is pinned, renamed, and has no demo history", async () => {
+test("Pocket test student is pinned, renamed, and reads persisted physical-pet history", async () => {
   const listSource = await readFile(new URL("../../app/api/pet-ai/students/route.ts", import.meta.url), "utf8")
   const detailSource = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/route.ts", import.meta.url), "utf8")
   const viewSource = await readFile(new URL("../../components/views/pet-ai-management-view.tsx", import.meta.url), "utf8")
+  const snapshotSource = await readFile(new URL("../../app/actions/pet-snapshot.ts", import.meta.url), "utf8")
 
   assert.match(listSource, /prioritizeDemoStudent/)
   assert.match(listSource, /DEMO_PET_NAME/)
   assert.match(detailSource, /DEMO_PET_NAME/)
-  assert.match(detailSource, /isDemoStudent\s*\?\s*\[\]/)
-  assert.match(viewSource, /测试心宠还没有历史对话/)
+  assert.match(snapshotSource, /const demoStudentId = process\.env\.PET_AI_DEMO_STUDENT_ID \|\| "stu-test"/)
+  assert.match(snapshotSource, /const desiredName = pet\.ownerId === demoStudentId \? DEMO_PET_NAME : pet\.name/)
+  assert.match(detailSource, /buildPetLiveChatSessionId/)
+  assert.match(detailSource, /chatMessage\.findMany/)
+  assert.match(viewSource, /自动保存在这里/)
 })
 
 test("Reachy routes load the persisted profile instead of trusting browser identity", async () => {
@@ -136,6 +152,21 @@ test("Reachy status proxies the two-layer event cursor", async () => {
   assert.match(statusSource, /eventAfter/)
   assert.match(statusSource, /\/v1\/events\?after=/)
   assert.match(statusSource, /events/)
+  assert.match(statusSource, /syncReachyRiskWorkOrders/)
+  assert.match(statusSource, /workOrderSync/)
+  assert.match(statusSource, /syncReachyConversation/)
+  assert.match(statusSource, /conversationSync/)
+})
+
+test("only the Pocket test student can clear persisted physical-pet conversations", async () => {
+  const routeSource = await readFile(new URL("../../app/api/pet-ai/students/[studentId]/conversations/route.ts", import.meta.url), "utf8")
+  const viewSource = await readFile(new URL("../../components/views/pet-ai-management-view.tsx", import.meta.url), "utf8")
+
+  assert.match(routeSource, /studentId !== demoStudentId/)
+  assert.match(routeSource, /status: 403/)
+  assert.match(routeSource, /chatSession\.deleteMany/)
+  assert.match(viewSource, /detail\?\.isDemoStudent && detail\.conversations\.length > 0/)
+  assert.match(viewSource, /清空测试学生的对话记录/)
 })
 
 test("Reachy device API exposes only the protected typed proxy surface", async () => {
@@ -152,6 +183,8 @@ test("Reachy device API exposes only the protected typed proxy surface", async (
     "/v1/device/stop",
     "/v1/device/restart",
     "/v1/device/action",
+    "/v1/device/processing",
+    "/v1/device/choreography",
     "/v1/device/pose",
     "/v1/device/volume",
     "/v1/status",
@@ -427,6 +460,8 @@ test("Reachy device POST rejects unknown and extra command fields before proxyin
     { action: "discover", command: "whoami" },
     { action: "start", serialPort: "C:/robot.exe" },
     { action: "volume", target: "speaker", volume: 50, key: "secret" },
+    { action: "choreography", kind: "emotion", move: "../../wake_up" },
+    { action: "choreography", kind: "music", move: "loving1" },
     { action: "pose", headPitch: 0, headRoll: 0, headYaw: 66, bodyYaw: 0, leftAntenna: 0, rightAntenna: 0, duration: 1 },
   ]) {
     const { route, NextRequest, calls } = await loadDeviceRoute(() => {
@@ -567,6 +602,16 @@ test("Reachy typed actions translate browser fields to exact Host Bridge bodies"
       input: { action: "device_action", deviceAction: "center" },
       path: "/v1/device/action",
       body: { action: "center" },
+    },
+    {
+      input: { action: "choreography", kind: "emotion", move: "loving1" },
+      path: "/v1/device/choreography",
+      body: { kind: "emotion", move: "loving1" },
+    },
+    {
+      input: { action: "choreography", kind: "emotion", move: "loving1", playSound: false },
+      path: "/v1/device/choreography",
+      body: { kind: "emotion", move: "loving1", play_sound: false },
     },
     {
       input: { action: "pose", headPitch: 1, headRoll: 2, headYaw: 3, bodyYaw: 4, leftAntenna: 0.5, rightAntenna: -0.5, duration: 1 },

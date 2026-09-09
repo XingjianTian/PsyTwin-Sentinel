@@ -3,21 +3,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   ArrowLeft,
-  Bot,
-  Cable,
   Check,
   CircleAlert,
   Copy,
-  Crosshair,
   LoaderCircle,
   Mic,
-  Moon,
-  Radio,
   RotateCcw,
   SlidersHorizontal,
   Sparkles,
   Speaker,
-  Sun,
   Volume2,
 } from "lucide-react"
 
@@ -43,6 +37,11 @@ import {
 } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Slider } from "@/components/ui/slider"
+import {
+  REACHY_DANCES,
+  REACHY_EMOTIONS,
+  type ReachyChoreographyItem,
+} from "@/lib/pet-ai/reachy-choreographies"
 import type {
   ReachyDeviceCommand,
   ReachyDeviceSnapshot,
@@ -50,7 +49,6 @@ import type {
 import {
   clampPose,
   clampVolume,
-  isDeviceActionAvailable,
   isMotorControlAvailable,
   scheduleSafePoseCommand,
   type ReachyPose,
@@ -132,33 +130,80 @@ function StatusBadge({ healthy, children }: { healthy: boolean; children: React.
   )
 }
 
-function RobotStage({ snapshot }: { snapshot: ReachyDeviceSnapshot }) {
+function ExpressionAndMotionCard({
+  commandPending,
+  motorControlsEnabled,
+  runCommand,
+}: {
+  commandPending: boolean
+  motorControlsEnabled: boolean
+  runCommand: RunCommand
+}) {
+  const [library, setLibrary] = useState<"emotion" | "dance">("emotion")
+  const [selected, setSelected] = useState<string | null>(null)
+  const items = library === "emotion" ? REACHY_EMOTIONS : REACHY_DANCES
+
+  const play = async (item: ReachyChoreographyItem) => {
+    setSelected(item.name)
+    try {
+      await runCommand({ action: "choreography", kind: item.kind, move: item.name })
+    } finally {
+      setSelected(null)
+    }
+  }
+
   return (
-    <Card className="gap-0 overflow-hidden py-0 shadow-none">
-      <div className="flex items-center gap-3 bg-primary/7 px-4 py-3.5">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-white/90 text-primary shadow-sm">
-            <Bot className="size-7" strokeWidth={1.5} aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">Reachy Mini Lite</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">设备连接概览</p>
+    <Card className="flex h-full min-h-0 flex-col gap-3 overflow-hidden py-4 shadow-none">
+      <CardHeader className="gap-3 px-4">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Sparkles className="size-4 text-primary" aria-hidden="true" />表情与动作
+          </CardTitle>
+          <CardDescription className="mt-1">选择官方表情或舞蹈，由安全命令链路执行。</CardDescription>
+        </div>
+        <div className="grid grid-cols-2 rounded-lg bg-muted p-1" aria-label="表情与动作分类">
+          {(["emotion", "dance"] as const).map((value) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={cn("h-8", library === value && "bg-background text-foreground shadow-sm hover:bg-background")}
+              aria-pressed={library === value}
+              onClick={() => setLibrary(value)}
+            >
+              {value === "emotion" ? `表情 ${REACHY_EMOTIONS.length}` : `舞蹈 ${REACHY_DANCES.length}`}
+            </Button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-4">
+        <ScrollArea className="h-0 min-h-60 flex-1 pr-3" aria-label={`${library === "emotion" ? "表情" : "舞蹈"}动作列表`}>
+          <div className="grid grid-cols-3 gap-2 pb-1 sm:grid-cols-4">
+            {items.map((item) => (
+              <Button
+                key={`${item.kind}:${item.name}`}
+                type="button"
+                variant="outline"
+                className="h-auto min-h-16 flex-col gap-1 px-2 py-2 text-center"
+                title={item.name}
+                disabled={!motorControlsEnabled || commandPending}
+                onClick={() => void play(item)}
+              >
+                {selected === item.name && commandPending ? (
+                  <LoaderCircle className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                ) : (
+                  <span className="text-xl leading-none" aria-hidden="true">{item.emoji}</span>
+                )}
+                <span className="w-full truncate text-[11px] font-medium">{item.label}</span>
+              </Button>
+            ))}
           </div>
-        </div>
-      </div>
-      <dl className="grid grid-cols-2 divide-x border-t bg-card">
-        <div className="px-4 py-2.5">
-          <dt className="text-xs text-muted-foreground">USB 连接</dt>
-          <dd className="mt-0.5 flex items-center gap-1.5 text-sm font-medium">
-            <Cable className="size-3.5 text-primary" aria-hidden="true" />
-            {snapshot.serial_port || "已连接"}
-          </dd>
-        </div>
-        <div className="px-4 py-2.5">
-          <dt className="text-xs text-muted-foreground">电机模式</dt>
-          <dd className="mt-0.5 text-sm font-medium">{snapshot.motor_mode || "未知"}</dd>
-        </div>
-      </dl>
+        </ScrollArea>
+        {!motorControlsEnabled ? (
+          <p className="text-xs leading-5 text-muted-foreground">电机未启用，表情和舞蹈已安全禁用。</p>
+        ) : null}
+      </CardContent>
     </Card>
   )
 }
@@ -263,7 +308,7 @@ export function ReachyReadyConsole({
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold">Reachy Mini Lite</h3>
+                <h3 className="text-base font-semibold">实体心宠</h3>
                 <StatusBadge healthy>Ready</StatusBadge>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">设备已通过启动、连接与健康检查。</p>
@@ -286,7 +331,7 @@ export function ReachyReadyConsole({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>确认关闭 Reachy 设备？</AlertDialogTitle>
+                <AlertDialogTitle>确认关闭心宠设备？</AlertDialogTitle>
                 <AlertDialogDescription>
                   {sessionRunning
                     ? "检测到当前学生会话，学生对话将先停止，随后机器人休眠并关闭 daemon。"
@@ -343,132 +388,17 @@ export function ReachyReadyConsole({
 
       <div
         data-layout="reachy-compact-console"
-        className="grid items-start gap-3 lg:grid-cols-2"
+        className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:grid-rows-[auto_auto]"
       >
-        <div className="space-y-3">
-          <RobotStage snapshot={snapshot} />
-          <Card
-            data-layout="reachy-audio-and-live-link"
-            className="gap-0 overflow-hidden py-0 shadow-none"
-          >
-            <CardHeader className="gap-1 border-b px-4 py-3">
-              <CardTitle className="text-sm">音频与联调</CardTitle>
-              <CardDescription>调整本机音频，或返回学生会话联调。</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 px-4 py-3">
-              <div className="grid gap-2 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-center">
-                <div className="flex items-center justify-between gap-2 sm:block">
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
-                  </p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
-                    <span>{speakerVolume}%</span>
-                  </div>
-                </div>
-                <Slider
-                  aria-label="扬声器音量"
-                  value={[speakerVolume]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!speaker.healthy || commandPending}
-                  onValueChange={([value]) => {
-                    const next = clampVolume(value)
-                    setSpeakerVolume(next)
-                    queueVolume("speaker", next)
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!speaker.healthy || commandPending}
-                  onClick={() => performDeviceAction("test_sound")}
-                >
-                  <Volume2 aria-hidden="true" />测试声音
-                </Button>
-              </div>
-
-              <div className="grid gap-2 border-t pt-3 sm:grid-cols-[7rem_minmax(0,1fr)] sm:items-center">
-                <div className="flex items-center justify-between gap-2 sm:block">
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
-                  </p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
-                    <span>{microphoneVolume}%</span>
-                  </div>
-                </div>
-                <Slider
-                  aria-label="麦克风音量"
-                  value={[microphoneVolume]}
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!microphone.healthy || commandPending}
-                  onValueChange={([value]) => {
-                    const next = clampVolume(value)
-                    setMicrophoneVolume(next)
-                    queueVolume("microphone", next)
-                  }}
-                />
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={onReturnToManagement}
-              >
-                <ArrowLeft aria-hidden="true" />返回实时联调
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="min-w-0 overflow-hidden lg:row-span-2 lg:h-full lg:[contain:size]">
+          <ExpressionAndMotionCard
+            commandPending={commandPending}
+            motorControlsEnabled={motorControlsEnabled}
+            runCommand={runCommand}
+          />
         </div>
 
-        <div className="space-y-3">
-          <Card className="gap-3 py-4 shadow-none">
-            <CardHeader className="gap-1 px-4">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Sparkles className="size-4 text-primary" aria-hidden="true" />表情与动作
-              </CardTitle>
-              <CardDescription>所有动作均通过 Sentinel 安全命令执行。</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 px-4">
-              {[
-                { label: "唤醒", action: "wake_up" as const, icon: Sun },
-                { label: "休眠", action: "goto_sleep" as const, icon: Moon },
-                { label: "头部归中", action: "center" as const, icon: Crosshair },
-                { label: "天线测试", action: "antenna_test" as const, icon: Radio },
-              ].map(({ label, action, icon: Icon }) => {
-                const actionAvailable = isDeviceActionAvailable(
-                  action,
-                  snapshot.phase,
-                  snapshot.motor_mode,
-                )
-                return (
-                  <Button
-                    key={action}
-                    type="button"
-                    variant="outline"
-                    className="justify-start"
-                    disabled={!actionAvailable || commandPending}
-                    onClick={() => performDeviceAction(action)}
-                  >
-                    <Icon aria-hidden="true" />{label}
-                  </Button>
-                )
-              })}
-              {!motorControlsEnabled ? (
-                <p className="col-span-2 mt-1 text-xs leading-5 text-muted-foreground">
-                  电机未启用，仅保留唤醒；其余动作和姿态控制已安全禁用。
-                </p>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="gap-3 py-4 shadow-none">
+          <Card className="min-w-0 gap-3 py-4 shadow-none">
             <CardHeader className="gap-1 px-4">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />机器人控制器
@@ -507,7 +437,84 @@ export function ReachyReadyConsole({
               </Button>
             </CardContent>
           </Card>
-        </div>
+
+          <Card
+            data-layout="reachy-audio-and-live-link"
+            className="min-w-0 gap-0 overflow-hidden py-0 shadow-none"
+          >
+            <CardContent className="space-y-3 px-4 py-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Speaker className="size-4 text-primary" aria-hidden="true" />扬声器
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge healthy={speaker.healthy}>{speaker.label}</StatusBadge>
+                    <span className="w-9 text-right tabular-nums">{speakerVolume}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    aria-label="扬声器音量"
+                    value={[speakerVolume]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    disabled={!speaker.healthy || commandPending}
+                    onValueChange={([value]) => {
+                      const next = clampVolume(value)
+                      setSpeakerVolume(next)
+                      queueVolume("speaker", next)
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    disabled={!speaker.healthy || commandPending}
+                    onClick={() => performDeviceAction("test_sound")}
+                  >
+                    <Volume2 aria-hidden="true" />测试
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <Mic className="size-4 text-primary" aria-hidden="true" />麦克风
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <StatusBadge healthy={microphone.healthy}>{microphone.label}</StatusBadge>
+                    <span className="w-9 text-right tabular-nums">{microphoneVolume}%</span>
+                  </div>
+                </div>
+                <Slider
+                  aria-label="麦克风音量"
+                  value={[microphoneVolume]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={!microphone.healthy || commandPending}
+                  onValueChange={([value]) => {
+                    const next = clampVolume(value)
+                    setMicrophoneVolume(next)
+                    queueVolume("microphone", next)
+                  }}
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onReturnToManagement}
+              >
+                <ArrowLeft aria-hidden="true" />返回实时联调
+              </Button>
+            </CardContent>
+          </Card>
       </div>
 
       <Card className="gap-0 overflow-hidden py-0 shadow-none">
@@ -521,7 +528,7 @@ export function ReachyReadyConsole({
             {copied ? "已复制" : "复制日志"}
           </Button>
         </div>
-        <ScrollArea ref={logAreaRef} className="h-44 bg-muted/35" aria-label="Reachy 实时日志">
+        <ScrollArea ref={logAreaRef} className="h-44 bg-muted/35" aria-label="心宠实时日志">
           <ol className="min-w-max divide-y px-4 font-mono text-xs" role="log" aria-live="off">
             {snapshot.logs.items.length ? snapshot.logs.items.map((entry) => (
               <li key={entry.id} className="grid grid-cols-[5rem_4.5rem_minmax(20rem,1fr)] gap-2 py-2.5">

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { getPetVariantAppearance } from "@/lib/pet-appearance.mjs"
+import { DEMO_PET_NAME } from "@/lib/pet-ai/demo-data"
 
 export interface StudentPetSnapshot {
   id: string
@@ -73,6 +74,8 @@ const petNames = [
   "棉花",
   "晴晴",
 ]
+
+const demoStudentId = process.env.PET_AI_DEMO_STUDENT_ID || "stu-test"
 const petColors = ["雪白", "浅蓝", "奶油白", "薄荷绿", "月光银"]
 const petAccessories = ["蓝色水手帽", "星星领巾", "圆框护目镜", "轻便背包", "铃铛挂饰"]
 const petExpressions = ["平静", "好奇", "开心", "专注", "有点困"]
@@ -281,17 +284,24 @@ async function ensureUniquePetNames() {
     select: { id: true, ownerId: true, name: true },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   })
+  const orderedPets = [...pets].sort((left, right) => {
+    if (left.ownerId === demoStudentId) return -1
+    if (right.ownerId === demoStudentId) return 1
+    return 0
+  })
   const unavailableNames = new Set(pets.map((pet) => pet.name))
   const retainedNames = new Set<string>()
   const updates: Array<{ id: string; name: string }> = []
 
-  for (const pet of pets) {
-    if (!retainedNames.has(pet.name)) {
-      retainedNames.add(pet.name)
+  for (const pet of orderedPets) {
+    const desiredName = pet.ownerId === demoStudentId ? DEMO_PET_NAME : pet.name
+    if (!retainedNames.has(desiredName)) {
+      retainedNames.add(desiredName)
+      if (pet.name !== desiredName) updates.push({ id: pet.id, name: desiredName })
       continue
     }
 
-    const name = pickUniquePetName(pet.name, pet.ownerId, unavailableNames)
+    const name = pickUniquePetName(desiredName, pet.ownerId, unavailableNames)
     unavailableNames.add(name)
     retainedNames.add(name)
     updates.push({ id: pet.id, name })
@@ -384,11 +394,13 @@ async function ensurePet(student: StudentInfo) {
 
   const seed = hashString(`${student.id}:${student.studentNo}:${student.name}`)
   const existingNames = await prisma.pet.findMany({ select: { name: true } })
-  const name = pickUniquePetName(
-    pick(petNames, seed),
-    student.id,
-    new Set(existingNames.map((pet) => pet.name)),
-  )
+  const name = student.id === demoStudentId
+    ? DEMO_PET_NAME
+    : pickUniquePetName(
+        pick(petNames, seed),
+        student.id,
+        new Set(existingNames.map((pet) => pet.name)),
+      )
   return prisma.pet.create({
     data: {
       id: `pet-${student.id}`,
@@ -422,7 +434,16 @@ async function ensurePet(student: StudentInfo) {
 const activityLabelsList = Object.values(activityLabels)
 
 export async function getStudentPetSnapshot(studentId: string): Promise<StudentPetSnapshot> {
-  await ensureUniquePetNames()
+  const existingPet = await findPet(studentId)
+  if (existingPet) {
+    if (existingPet.diaryEntries.length > 0 && existingPet.events.length > 0) {
+      return toSnapshot(existingPet)
+    }
+
+    await ensurePetHistory(existingPet)
+    return toSnapshot(await findPet(studentId))
+  }
+
   const student = await prisma.student.findUnique({
     where: { id: studentId },
     select: {

@@ -8,6 +8,36 @@ export const MAX_LOG_ITEMS = 300
 
 export type ReachyLogBuffer = ReachyDeviceSnapshot["logs"]
 
+export function toPetFacingText(value: string) {
+  return value
+    .replace(/reachy[\s_-]*mini(?:\s*lite)?/gi, "心宠")
+    .replace(/\breachy\b/gi, "心宠")
+}
+
+export function sanitizePetFacingDeviceSnapshot(
+  snapshot: ReachyDeviceSnapshot,
+): ReachyDeviceSnapshot {
+  return {
+    ...snapshot,
+    devices: snapshot.devices.map((device) => ({
+      ...device,
+      label: toPetFacingText(device.label),
+    })),
+    error: snapshot.error ? {
+      ...snapshot.error,
+      message: toPetFacingText(snapshot.error.message),
+      detail: snapshot.error.detail ? toPetFacingText(snapshot.error.detail) : snapshot.error.detail,
+    } : null,
+    logs: {
+      ...snapshot.logs,
+      items: snapshot.logs.items.map((entry) => ({
+        ...entry,
+        message: toPetFacingText(entry.message),
+      })),
+    },
+  }
+}
+
 export type ReachyPose = {
   headPitch: number
   headRoll: number

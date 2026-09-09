@@ -7,7 +7,7 @@ const mediumRiskPatterns = [
   /心情不好/,
   /不想吃饭|没胃口/,
   /很难受|很难过|很焦虑|有些焦虑/,
-  /睡不着|很晚才睡|脑子.{0,4}乱/,
+  /睡不着|睡不好|失眠|很晚才睡|脑子.{0,4}乱/,
   /复习任务.{0,6}(多|重)|有点跟不上|学习压力/,
   /不知道怎么.{0,10}(说|沟通|表达)/,
   /不想说话|不想见人|不想社交/,
@@ -61,8 +61,11 @@ export function normalizeRiskLevel(level?: string | null): RiskLevel {
 }
 
 export function classifyMessageRisk(message: string): RiskLevel {
-  if (highRiskPatterns.some((pattern) => pattern.test(message))) return "HIGH"
-  if (mediumRiskPatterns.some((pattern) => pattern.test(message))) return "MEDIUM"
+  const normalizedMessage = message
+    .normalize("NFKC")
+    .replace(/[\s\p{P}\p{S}]+/gu, "")
+  if (highRiskPatterns.some((pattern) => pattern.test(normalizedMessage))) return "HIGH"
+  if (mediumRiskPatterns.some((pattern) => pattern.test(normalizedMessage))) return "MEDIUM"
   return "LOW"
 }
 
@@ -70,6 +73,17 @@ export function highestRiskLevel(first?: string | null, second?: string | null):
   const left = normalizeRiskLevel(first)
   const right = normalizeRiskLevel(second)
   return riskRank[right] > riskRank[left] ? right : left
+}
+
+export function highestConversationRisk(
+  messages: ReadonlyArray<{ role: string; content: string; riskLevel?: string | null }>,
+): RiskLevel {
+  return messages
+    .filter((message) => message.role === "student")
+    .reduce(
+      (level, message) => highestRiskLevel(level, highestRiskLevel(message.riskLevel, classifyMessageRisk(message.content))),
+      "LOW" as RiskLevel,
+    )
 }
 
 export function getRiskPresentation(level?: string | null) {

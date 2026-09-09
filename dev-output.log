@@ -1,0 +1,39 @@
+
+> psytwin-sentinel@0.1.0 dev
+> next dev --hostname 0.0.0.0
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+✓ Ready in 1256ms
+ GET /multimodal 200 in 2.0s (compile: 1510ms, proxy.ts: 103ms, render: 435ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 337ms (compile: 157ms, proxy.ts: 17ms, render: 163ms)
+ GET /api/multimodal/sensors/stream?studentId=stu-test 200 in 3.1s (compile: 255ms, proxy.ts: 12ms, render: 2.9s)
+ GET /multimodal 200 in 193ms (compile: 10ms, proxy.ts: 8ms, render: 176ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 59ms (compile: 25ms, proxy.ts: 19ms, render: 15ms)
+ GET /vr-dashboard 200 in 122ms (compile: 87ms, proxy.ts: 6ms, render: 30ms)
+ GET /api/multimodal/sensors/stream?studentId=stu-test 200 in 13.7s (compile: 14ms, proxy.ts: 11ms, render: 13.7s)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 20ms (compile: 4ms, proxy.ts: 5ms, render: 12ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 16ms (compile: 4ms, proxy.ts: 5ms, render: 8ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 15ms (compile: 3ms, proxy.ts: 4ms, render: 8ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 18ms (compile: 4ms, proxy.ts: 4ms, render: 10ms)
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 15ms (compile: 4ms, proxy.ts: 4ms, render: 7ms)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."work_orders"."id" FROM "public"."work_orders" WHERE ("public"."work_orders"."risk_level" IN (CAST($1::text AS "public"."RiskLevel"),CAST($2::text AS "public"."RiskLevel")) AND "public"."work_orders"."status" = CAST($3::text AS "public"."WorkOrderStatus")) OFFSET $4) AS "sub"
+ GET /api/risk-work-orders/pending-count 200 in 16ms (compile: 3ms, proxy.ts: 4ms, render: 8ms)
+[?25h

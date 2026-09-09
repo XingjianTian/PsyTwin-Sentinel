@@ -534,8 +534,82 @@ ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
 - [x] Pocket HTTP 与 WebSocket 共用权威位置应用逻辑。*(已于 2026-07-20 完成代码与自动化测试)*
 - [x] Unity HUD 消费并显示原始 `sceneId`。*(已于 2026-07-20 完成代码与 Unity EditMode 测试)*
 - [x] Pocket 兼容旧版状态直接位于 `data` 下的响应。*(已于 2026-07-20 根据线上接口完成回归测试)*
+- [x] Sentinel `stu-test` 心宠页固定观察 `demo_pet`，实时同步 mood、energy、social、sceneId 与 activity。*(已于 2026-07-22 通过本地 WebSocket 联调，三项状态值持续更新)*
+- [x] Sentinel `demo_pet` 页面消费服务端 `activityLog`，展示最近的场景切换、行为事件与状态变化，并补充事件发生地点。*(已于 2026-07-22 完成本地联调与 8 项适配器自动化测试)*
+- [x] Sentinel 心宠日志采用实时信息流展示：新日志从顶部进入，既有日志向下移动，并兼容系统减少动态效果设置。*(已于 2026-07-22 完成浏览器动效联调)*
 - [ ] 线上心宠服务部署 `data.state`、`stateVersion`、`updatedAt` 与 `serverTime`。*(2026-07-20 核对线上接口仍为旧结构)*
 - [ ] Pocket、Unity 与心宠服务完成同一 `userId` 的端到端运行联调。*(等待线上契约升级与运行环境联调)*
+
+### 8.3 Pocket 触发心宠难过表情
+
+```http
+POST /api/pocket/pet/expression
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+请求体仅接受固定语义化枚举，不允许 Pocket 提交底层动作名：
+
+```json
+{
+  "expression": "sad"
+}
+```
+
+成功响应（HTTP 200）：
+
+```json
+{
+  "code": 0,
+  "message": "心宠表情请求已发送",
+  "data": {
+    "expression": "sad"
+  }
+}
+```
+
+错误响应：未登录返回 HTTP 401；请求体非法返回 HTTP 400；设备服务不可用或动作执行失败返回 HTTP 502。
+Sentinel 必须将 `sad` 固定映射到已登记的 `emotion/sad1` 动作，不得接受任意动作路径或命令。
+
+**状态追踪**:
+- [x] Sentinel 提供 Pocket 专用难过表情接口并固定映射安全动作白名单。*(已于 2026-07-27 完成接口、契约与自动化验证)*
+- [x] Pocket 创建演示求助事件后调用难过表情接口。*(已于 2026-07-27 完成请求封装与交互接入)*
+- [ ] 实体心宠执行 `sad1` 表情的连机验收。*(需要心宠设备与 Host Bridge 在线)*
+
+---
+
+### 8.4 Sentinel 推送心宠求助事件
+
+指挥中心创建原有学生温馨通知后，同时向心宠同步服务器写入一条求助事件。共享 `demo_pet` 的在线客户端通过现有 `pet_status` 广播立即收到完整状态；离线客户端通过现有事件列表或权威状态接口读取。
+
+默认 HTTP 目标复用 `NEXT_PUBLIC_PET_SYNC_HOST` 并固定使用端口 `13002`；`PET_SYNC_URL` 仅作为 HTTPS、反向代理或自定义端口的高级覆盖项。
+
+```http
+POST {PET_SYNC_URL}/api/pet/events/notify
+Content-Type: application/json
+X-Pet-Sync-Key: <PET_SYNC_INTERNAL_KEY>
+```
+
+```json
+{
+  "userId": "demo_pet",
+  "event": {
+    "sourceId": "openclaw-request-id",
+    "category": "emotion",
+    "severity": "low",
+    "title": "💚 温馨通知",
+    "description": "如果感到焦虑或疲惫，欢迎来到线下体验空间，预约一场 VR 放松活动和 AI 咨询服务，让自己慢下来、放松一下吧。",
+    "deadline": 1785926400000
+  }
+}
+```
+
+`sourceId` 是幂等键；相同 `userId + sourceId` 不得重复创建。服务端生成 `id`，并补充 `type`、`source: "sentinel"`、`status: "pending"` 与 `createdAt`。内部密钥错误返回 HTTP 401；参数非法返回 HTTP 400。心宠服务器不可用时不得回滚已经创建的学生通知。
+
+**状态追踪**:
+- [x] 心宠同步服务器支持鉴权、幂等地接收 Sentinel 求助事件并持久化。*(已于 2026-08-04 完成)*
+- [x] OpenClaw 温馨通知演示链路追加心宠求助事件同步，保留原通知逻辑，并以低级别温馨通知发送。*(已于 2026-08-05 修复高危标签误用，补充线下放松邀请)*
+- [x] 现有事件列表返回全部未解决且未过期事件，并通过权威状态广播在线客户端。*(已于 2026-08-04 完成)*
 
 ---
 
@@ -577,3 +651,6 @@ ws://{pet-sync-host}:13002/ws/pet?userId=demo_pet&clientType=unity
 ---
 
 *文档版本: v2.2 | 更新日期: 2026-07-20*
+# F9 心宠对话演示扩展（2026-07-27）
+
+`pet_status.payload.status` 可选包含 `demoConversation`：`active`、`phase`、`speaker`、`text` 以及 `companion` (`id`、`name`、`avatar`)。`meeting` 阶段可省略说话者与台词；进入心理咨询室或演示结束时字段为 `null` 或不存在。该字段仅由本地心宠服务器权威下发，Pocket、Sentinel 与 Unity 只读消费。
