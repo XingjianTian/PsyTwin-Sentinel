@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { WorkOrderStatus } from "@prisma/client"
 import { AlertTriangle, CalendarDays, ClipboardList, UserRound } from "lucide-react"
 
 import { getWorkOrderDetail, updateWorkOrderStatus, type WorkOrderDetail } from "@/app/actions/work-order"
+import { WorkOrderStatus } from "@/lib/work-order-status"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {

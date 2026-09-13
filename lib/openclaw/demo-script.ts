@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma"
 import { AGENTS } from "@/lib/openclaw/agents.config"
+import { OPENCLAW_COMPLEX_DEMO_MESSAGE } from "@/lib/openclaw/demo-message"
 import { OPENCLAW_EVENTS, openClawEventBus } from "@/lib/openclaw/event-bus"
 import { sendPetHelpEvent } from "@/lib/openclaw/pet-help-event"
 
-const db = prisma as any
+// 演示指令由客户端安全模块提供并在此透出：前端写死发送的内容与后端匹配条件始终是同一份字面量。
+export { OPENCLAW_COMPLEX_DEMO_MESSAGE }
 
-export const OPENCLAW_COMPLEX_DEMO_MESSAGE =
-  "现在你需要统计本月心理状况不佳学生列表，并且给他们发送温馨通知。请调动DBA让它搜索数据，调动分析师让它来分析，让咨询师待命等待学生接入(因为学生收到通知后他很有可能被需要)"
+const db = prisma as any
 
 const DEMO_TASK_TITLE = "本月心理状况不佳学生筛查与温馨通知联动"
 const DEMO_TASK_DETAIL = "演示模式：检索学生名单、生成风险分析、准备通知话术并安排咨询师待命。"
