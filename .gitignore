@@ -29,3 +29,7 @@ references/
 public/reference-*.png
 .opencode
 .omx/
+
+# Local env backups (may contain secrets)
+.env*.bak*
+*.env.bak*

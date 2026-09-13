@@ -21,27 +21,27 @@ interface AlertItem {
 }
 
 const initialAlerts: AlertItem[] = [
-  { id: 1, name: "张明远", className: "网络2401", type: "心率激增", level: "critical", time: "14:32:08" },
-  { id: 2, name: "李思琪", className: "虚拟2503", type: "语音颤抖", level: "warning", time: "14:31:45" },
-  { id: 3, name: "王博文", className: "大数据2502", type: "睡眠异常", level: "warning", time: "14:30:22" },
-  { id: 4, name: "陈雨晴", className: "软件2402", type: "情绪波动", level: "critical", time: "14:29:10" },
-  { id: 5, name: "赵天宇", className: "信安2401", type: "社交退缩", level: "warning", time: "14:28:03" },
-  { id: 6, name: "刘思远", className: "数媒2401", type: "心率激增", level: "critical", time: "14:27:50" },
-  { id: 7, name: "孙雅琪", className: "网络2401", type: "步态异常", level: "warning", time: "14:26:15" },
-  { id: 8, name: "周航宇", className: "虚拟2503", type: "语音颤抖", level: "critical", time: "14:25:33" },
-  { id: 9, name: "黄思萌", className: "软件2402", type: "进食异常", level: "warning", time: "14:24:48" },
-  { id: 10, name: "吴志远", className: "大数据2502", type: "社交退缩", level: "critical", time: "14:23:12" },
+  { id: 1, name: "张*远", className: "网络2401", type: "心率激增", level: "critical", time: "14:32:08" },
+  { id: 2, name: "李*琪", className: "虚拟2503", type: "语音颤抖", level: "warning", time: "14:31:45" },
+  { id: 3, name: "王*文", className: "大数据2502", type: "睡眠异常", level: "warning", time: "14:30:22" },
+  { id: 4, name: "陈*晴", className: "软件2402", type: "情绪波动", level: "critical", time: "14:29:10" },
+  { id: 5, name: "赵*宇", className: "信安2401", type: "社交退缩", level: "warning", time: "14:28:03" },
+  { id: 6, name: "刘*远", className: "数媒2401", type: "心率激增", level: "critical", time: "14:27:50" },
+  { id: 7, name: "孙*琪", className: "网络2401", type: "步态异常", level: "warning", time: "14:26:15" },
+  { id: 8, name: "周*宇", className: "虚拟2503", type: "语音颤抖", level: "critical", time: "14:25:33" },
+  { id: 9, name: "黄*萌", className: "软件2402", type: "进食异常", level: "warning", time: "14:24:48" },
+  { id: 10, name: "吴*远", className: "大数据2502", type: "社交退缩", level: "critical", time: "14:23:12" },
 ]
 
 const newAlertPool: Omit<AlertItem, "id" | "time" | "className">[] = [
-  { name: "林志豪", type: "心率激增", level: "critical" },
-  { name: "郑雨萱", type: "情绪波动", level: "warning" },
-  { name: "韩明辉", type: "语音颤抖", level: "critical" },
-  { name: "马天翔", type: "睡眠异常", level: "warning" },
-  { name: "杨梦琪", type: "步态异常", level: "critical" },
-  { name: "徐国栋", type: "社交退缩", level: "warning" },
-  { name: "罗诗涵", type: "进食异常", level: "critical" },
-  { name: "谢子轩", type: "心率激增", level: "warning" },
+  { name: "林*豪", type: "心率激增", level: "critical" },
+  { name: "郑*萱", type: "情绪波动", level: "warning" },
+  { name: "韩*辉", type: "语音颤抖", level: "critical" },
+  { name: "马*翔", type: "睡眠异常", level: "warning" },
+  { name: "杨*琪", type: "步态异常", level: "critical" },
+  { name: "徐*栋", type: "社交退缩", level: "warning" },
+  { name: "罗*涵", type: "进食异常", level: "critical" },
+  { name: "谢*轩", type: "心率激增", level: "warning" },
 ]
 
 function getTimeStr() {
