@@ -50,7 +50,8 @@ function formatOrderTime(date: Date): string {
  */
 export async function getRiskWorkOrders(): Promise<RiskWorkOrder[]> {
   const orders = await cacheAside(
-    "risk:workorders:pending:v4",
+    // v5：姓名脱敏改造，升级键版本以丢弃可能残留未脱敏数据的旧缓存
+    "risk:workorders:pending:v5",
     async () => {
       const orders = await prisma.workOrder.findMany({
         where: {
