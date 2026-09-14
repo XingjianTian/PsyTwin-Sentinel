@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server"
 
+import { MOCK_QUERY_ANSWER, splitMockAnswerChunks } from "@/lib/lightrag-mock-answer"
+
 const LIGHTRAG_URL =
   process.env.LIGHTRAG_API_URL ??
   process.env.NEXT_PUBLIC_LIGHTRAG_WEBUI_URL ??
@@ -413,6 +415,52 @@ const EMBED_BOOTSTRAP = `
   })()
 </script>`
 
+const MOCK_QUERY_PATHS = new Set(["query", "query/stream"])
+
+// 演示模式下每段之间的间隔，用于模拟真实检索的逐段输出节奏。
+const MOCK_STREAM_DELAY_MS = 100
+
+/**
+ * 是否启用检索写死（演示模式）。
+ *
+ * 必须在函数内读取环境变量：模块顶层常量在测试里无法被切换。
+ * 默认开启，显式设为 off 才恢复真实检索。
+ */
+function isQueryMockEnabled() {
+  return (process.env.LIGHTRAG_QUERY_MOCK ?? "on").trim().toLowerCase() !== "off"
+}
+
+function createMockQueryResponse() {
+  return Response.json({ response: MOCK_QUERY_ANSWER })
+}
+
+/**
+ * 以 NDJSON 逐段推送固定回答，贴合上游 /query/stream 的响应形状；
+ * 前端 queryTextStream() 逐行读取 parsed.response 拼接即可还原完整回答。
+ */
+function createMockQueryStreamResponse() {
+  const chunks = splitMockAnswerChunks()
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(`${JSON.stringify({ response: `${chunk}\n\n` })}\n`))
+        await new Promise((resolve) => setTimeout(resolve, MOCK_STREAM_DELAY_MS))
+      }
+      controller.close()
+    },
+  })
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  })
+}
+
 function getTargetUrl(path: string[]) {
   const normalizedPath = path.join("/")
   if (normalizedPath === "webui") {
@@ -444,6 +492,16 @@ function createResponseHeaders(source: Headers, options: { isHtml: boolean; isSt
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params
+  const normalizedPath = path.join("/")
+
+  // 演示模式：检索请求直接返回固定回答，不再触达上游 LLM。
+  // 用精确匹配而非前缀匹配，避免误伤 /query/data、/query/stream 之外的更具体端点。
+  if (isQueryMockEnabled() && MOCK_QUERY_PATHS.has(normalizedPath)) {
+    return normalizedPath === "query/stream"
+      ? createMockQueryStreamResponse()
+      : createMockQueryResponse()
+  }
+
   const targetUrl = getTargetUrl(path)
   targetUrl.search = request.nextUrl.search
   const isStaticAsset = request.method === "GET" && path[0] === "webui" && path[1] === "assets"
