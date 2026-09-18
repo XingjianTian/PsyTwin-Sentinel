@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
 import {
   RadarChart,
   PolarGrid,
@@ -16,22 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Radar, Clock, Check, AlertTriangle, Activity } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-interface StudentDetail {
-  id: string
-  name: string
-  psychProfile: {
-    adversityQuotient: number
-    emotionalStability: number
-    socialTendency: number
-    stressResistance: number
-    selfAwareness: number
-    empathy: number
-    willpower: number
-    adaptability: number
-    overallScore: number
-  } | null
-}
+import { useStudentDetail } from "@/components/student-detail-context"
 
 interface TimelineEvent {
   id: string
@@ -72,28 +56,16 @@ function RadarTooltipContent({ active, payload }: RadarTooltipProps) {
 }
 
 export default function StudentProfilePage() {
-  const params = useParams()
-  const studentId = params.id as string
-  
-  const [student, setStudent] = useState<StudentDetail | null>(null)
+  const student = useStudentDetail()
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [studentRes, timelineRes] = await Promise.all([
-          fetch(`/api/students/${studentId}`),
-          fetch(`/api/students/${studentId}/timeline`),
-        ])
-        
-        if (!studentRes.ok) throw new Error("Failed to fetch student")
+        const timelineRes = await fetch(`/api/students/${student.id}/timeline`)
         if (!timelineRes.ok) throw new Error("Failed to fetch timeline")
-        
-        const studentData = await studentRes.json()
         const timelineData = await timelineRes.json()
-        
-        setStudent(studentData)
         setTimelineEvents(timelineData.events?.slice(0, 5) || [])
       } catch (error) {
         console.error("Failed to fetch data:", error)
@@ -102,7 +74,7 @@ export default function StudentProfilePage() {
       }
     }
     fetchData()
-  }, [studentId])
+  }, [student.id])
 
   if (loading) {
     return <ProfileSkeleton />

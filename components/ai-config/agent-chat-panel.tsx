@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AGENT_DESCRIPTIONS } from "@/lib/openclaw/agents.config"
 import { sendAgentRequest } from "@/lib/openclaw/agent-chat"
-import { OPENCLAW_COMPLEX_DEMO_MESSAGE } from "@/lib/openclaw/demo-script"
+import { OPENCLAW_COMPLEX_DEMO_MESSAGE } from "@/lib/openclaw/demo-message"
 import type { AgentGridItem } from "./agent-grid-label"
 
 interface AgentChatPanelProps {
@@ -21,7 +21,7 @@ const AGENT_AVATAR_MAP: Record<string, string> = {
   dba: "/agents-icons/DBA.png",
   relayer: "/agents-icons/Relayer.png",
   therapist: "/agents-icons/Therapist.png",
-  main: "/agents-icons/psytwin.jpg",
+  main: "/psytwin-logo.jpg",
 }
 
 function getAgentAvatar(agentId: string): string | null {

@@ -5,6 +5,7 @@ __v0_jsx-dev-runtime.ts
 
 # Common ignores
 node_modules/
+.venv-video-relay/
 .next/
 .env*.local
 .env
@@ -28,3 +29,7 @@ references/
 public/reference-*.png
 .opencode
 .omx/
+
+# Local env backups (may contain secrets)
+.env*.bak*
+*.env.bak*

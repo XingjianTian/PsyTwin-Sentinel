@@ -1,0 +1,21 @@
+=== Task 4 - Prisma deps verification ===
+
+--- Check 1: npm list @prisma/client ---
+my-project@0.1.0 D:\AllProjects\AI-Projects\PsyTwin-Sentinel
+└── @prisma/client@6.19.2
+
+RESULT: PASS - @prisma/client@6.19.2
+
+--- Check 2: npm list prisma ---
+my-project@0.1.0 D:\AllProjects\AI-Projects\PsyTwin-Sentinel
+├─┬ @prisma/client@6.19.2
+│ └── prisma@6.19.2 deduped
+└── prisma@6.19.2
+
+RESULT: PASS - prisma@6.19.2
+
+--- Check 3: npm list tsx ---
+my-project@0.1.0 D:\AllProjects\AI-Projects\PsyTwin-Sentinel
+└── tsx@4.21.0
+
+RESULT: PASS - tsx@4.21.0

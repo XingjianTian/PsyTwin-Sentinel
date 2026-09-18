@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { Bell, Search } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
@@ -13,13 +12,13 @@ export function DashboardHeader() {
       {/* Left: Logo & Title */}
       <div className="flex items-center gap-3">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-white">
-          <Image
+          <img
             src="/psytwin-logo.jpg"
             alt="心图 PsyTwin logo"
-            fill
-            sizes="36px"
-            className="object-contain"
-            priority
+            width={36}
+            height={36}
+            decoding="async"
+            className="h-9 w-9 object-contain"
           />
         </div>
         <h1 className="text-base font-semibold tracking-wide text-foreground">

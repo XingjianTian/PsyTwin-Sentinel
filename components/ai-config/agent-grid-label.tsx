@@ -25,7 +25,7 @@ const AGENT_AVATAR_MAP: Record<string, string> = {
   "dba": "/agents-icons/DBA.png",
   "relayer": "/agents-icons/Relayer.png",
   "therapist": "/agents-icons/Therapist.png",
-  "main": "/agents-icons/psytwin.jpg",
+  "main": "/psytwin-logo.jpg",
 }
 
 // 根据 agent ID 获取头像路径

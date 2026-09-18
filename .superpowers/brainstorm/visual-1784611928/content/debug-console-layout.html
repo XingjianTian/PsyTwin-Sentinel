@@ -1,0 +1,71 @@
+<style>
+  .layout-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:20px; }
+  .layout-card { border:1px solid #ddd6fe; border-radius:16px; background:#fff; overflow:hidden; cursor:pointer; transition:.18s ease; box-shadow:0 8px 24px rgba(76,29,149,.06); }
+  .layout-card:hover { transform:translateY(-2px); border-color:#8b5cf6; box-shadow:0 12px 30px rgba(124,58,237,.13); }
+  .layout-card.selected { outline:3px solid #8b5cf6; outline-offset:2px; }
+  .mini-top { height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 10px; background:#fafafa; border-bottom:1px solid #eee; font-size:9px; color:#52525b; }
+  .switch { display:flex; gap:3px; background:#f1f1f3; padding:2px; border-radius:6px; }
+  .switch b { background:#fff; color:#7c3aed; padding:3px 7px; border-radius:4px; box-shadow:0 1px 2px #ddd; }
+  .mini-body { height:245px; padding:9px; background:#fbfbfd; font-size:9px; color:#52525b; }
+  .status { display:flex; gap:5px; align-items:center; border:1px solid #e4e4e7; background:#fff; border-radius:8px; padding:7px; margin-bottom:7px; }
+  .dot { width:6px; height:6px; border-radius:999px; background:#22c55e; }
+  .pill { margin-left:auto; padding:3px 6px; border-radius:5px; background:#ede9fe; color:#7c3aed; }
+  .cols { display:grid; grid-template-columns:1.25fr .75fr; gap:7px; height:198px; }
+  .panel { background:#fff; border:1px solid #e4e4e7; border-radius:8px; padding:7px; overflow:hidden; }
+  .visual { height:108px; border-radius:7px; background:linear-gradient(145deg,#ede9fe,#f5f3ff 55%,#ddd6fe); display:grid; place-items:center; color:#7c3aed; font-size:13px; font-weight:700; }
+  .controls { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; margin-top:6px; }
+  .ctl { padding:6px 3px; text-align:center; border-radius:5px; background:#f4f4f5; }
+  .action { background:#7c3aed; color:#fff; }
+  .log { height:45px; margin-top:6px; border-radius:5px; padding:5px; background:#18181b; color:#a7f3d0; font-family:monospace; line-height:1.5; }
+  .tabs { display:flex; gap:4px; padding-bottom:7px; }
+  .tab { padding:5px 7px; background:#f4f4f5; border-radius:5px; }
+  .tab.on { background:#ede9fe; color:#7c3aed; font-weight:700; }
+  .center-device { height:116px; border-radius:8px; background:linear-gradient(145deg,#f5f3ff,#ede9fe); display:grid; place-items:center; color:#7c3aed; font-size:13px; font-weight:700; }
+  .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:6px; }
+  .metric { padding:8px 3px; border-radius:5px; background:#f4f4f5; text-align:center; }
+  .dense-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; height:198px; }
+  .dense { background:#fff; border:1px solid #e4e4e7; border-radius:7px; padding:6px; }
+  .dense .bar { height:5px; border-radius:4px; background:#ddd6fe; margin:6px 0; }
+  .card-copy { padding:14px 15px 16px; }
+  .card-copy h3 { margin:0 0 5px; font-size:16px; }
+  .card-copy p { margin:0; color:#71717a; font-size:13px; line-height:1.55; }
+  .recommended { color:#7c3aed; font-size:11px; font-weight:700; letter-spacing:.04em; }
+  @media(max-width:900px){ .layout-grid{grid-template-columns:1fr;} }
+</style>
+
+<h2>“心宠调试”采用哪种控制台布局？</h2>
+<p class="subtitle">三个方案都保留顶部“心宠管理 / 心宠调试”切换，差别在于设备控制、媒体预览与日志的组织方式。</p>
+
+<div class="layout-grid">
+  <div class="layout-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="mini-top"><div class="switch"><span>心宠管理</span><b>心宠调试</b></div><span>● 设备在线</span></div>
+    <div class="mini-body">
+      <div class="status"><span class="dot"></span><b>Reachy Mini Lite</b><span>COM8 · daemon 1.8.0</span><span class="pill">运行中</span></div>
+      <div class="cols">
+        <div class="panel"><div class="visual">实时摄像头 / 机器人姿态</div><div class="controls"><div class="ctl">唤醒</div><div class="ctl">休眠</div><div class="ctl">媒体测试</div><div class="ctl">动作测试</div></div></div>
+        <div class="panel"><b>快速控制</b><div class="controls"><div class="ctl action">启动设备</div><div class="ctl">停止设备</div><div class="ctl">头部归中</div><div class="ctl">天线测试</div></div><div class="log">[ready] USB connected<br>[ok] daemon :8000<br>[ok] motors ready</div></div>
+      </div>
+    </div>
+    <div class="card-copy"><div class="recommended">推荐</div><h3>A · 实时控制舱</h3><p>左侧聚焦机器人画面和姿态，右侧集中常用操作与日志；最适合现场联调，一屏完成闭环。</p></div>
+  </div>
+
+  <div class="layout-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="mini-top"><div class="switch"><span>心宠管理</span><b>心宠调试</b></div><span>● 设备在线</span></div>
+    <div class="mini-body">
+      <div class="status"><span class="dot"></span><b>Reachy Mini Lite</b><span class="pill">运行中</span></div>
+      <div class="panel" style="height:198px"><div class="tabs"><span class="tab on">设备</span><span class="tab">控制</span><span class="tab">媒体</span><span class="tab">动作</span><span class="tab">日志</span></div><div class="center-device">当前标签页：设备概览</div><div class="metrics"><div class="metric"><b>COM8</b><br>USB</div><div class="metric"><b>8000</b><br>Daemon</div><div class="metric"><b>9/9</b><br>电机</div></div></div>
+    </div>
+    <div class="card-copy"><h3>B · 分步工作台</h3><p>按设备、控制、媒体、动作和日志拆成标签页；内容更从容，但联调时需要频繁切换。</p></div>
+  </div>
+
+  <div class="layout-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="mini-top"><div class="switch"><span>心宠管理</span><b>心宠调试</b></div><span>● 设备在线</span></div>
+    <div class="mini-body">
+      <div class="status"><span class="dot"></span><b>Reachy Mini Lite</b><span>高级诊断模式</span><span class="pill">运行中</span></div>
+      <div class="dense-grid"><div class="dense"><b>进程与端口</b><div class="bar"></div><div class="bar"></div><div class="bar"></div></div><div class="dense"><b>电机状态</b><div class="bar"></div><div class="bar"></div><div class="bar"></div></div><div class="dense"><b>音视频链路</b><div class="bar"></div><div class="bar"></div><div class="bar"></div></div><div class="dense"><b>实时日志</b><div class="log" style="height:48px">INFO serial open<br>INFO backend ready</div></div></div>
+    </div>
+    <div class="card-copy"><h3>C · 工程诊断台</h3><p>高密度展示进程、端口、电机和媒体指标；适合工程师，但对普通咨询师不够友好。</p></div>
+  </div>
+</div>
+
+<p style="margin-top:18px;color:#71717a;font-size:13px">点击一个方案进行选择。选择只用于设计确认，不会修改项目。</p>

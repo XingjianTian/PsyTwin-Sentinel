@@ -12,14 +12,16 @@ import {
   type ReachyDevicePhase,
   type ReachyDeviceSnapshot,
 } from "@/lib/pet-ai/reachy-device"
+import type { ReachyNetworkConnection } from "@/lib/pet-ai/reachy-network"
 import { ReachyCommandQueue } from "@/lib/pet-ai/reachy-command-queue"
 import {
   getReachyLifecycleWarningUpdate,
   type ReachyLifecycleWarning,
 } from "@/lib/pet-ai/reachy-lifecycle-warning"
-import { mergeReachyLogs } from "@/lib/pet-ai/reachy-ready-console-state"
+import { mergeReachyLogs, sanitizePetFacingDeviceSnapshot, toPetFacingText } from "@/lib/pet-ai/reachy-ready-console-state"
 
 const DEVICE_API_PATH = "/api/pet-ai/reachy/device"
+const NETWORK_API_PATH = "/api/pet-ai/reachy/network"
 const ACTIVE_POLL_INTERVAL_MS = 1_000
 const IDLE_POLL_INTERVAL_MS = 3_000
 const activePhases = new Set<ReachyDevicePhase>([
@@ -66,7 +68,7 @@ function ConsoleLoadingState() {
 function BridgeOfflineState({ message, onRetry }: { message: string; onRetry: () => void }) {
   const detail = message && message !== "心宠设备控制桥未运行"
     ? message
-    : "无法读取 Windows 宿主机上的 Reachy 设备状态。请先确认 Host Bridge 已安装并处于运行状态。"
+    : "无法读取 Windows 宿主机上的心宠设备状态。请先确认 Host Bridge 已安装并处于运行状态。"
   return (
     <section className="mx-auto w-full max-w-3xl rounded-xl border bg-card px-5 py-10 text-center" role="alert">
       <span className="mx-auto flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -88,6 +90,9 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
   const [pollError, setPollError] = useState("")
   const [commandError, setCommandError] = useState("")
   const [commandPending, setCommandPending] = useState(false)
+  const [wifiPending, setWifiPending] = useState(false)
+  const [wifiError, setWifiError] = useState("")
+  const [wifiConnection, setWifiConnection] = useState<ReachyNetworkConnection | null>(null)
   const [lifecycleWarnings, setLifecycleWarnings] = useState<ReachyLifecycleWarning[]>([])
   const snapshotRef = useRef<ReachyDeviceSnapshot | null>(null)
   const logCursorRef = useRef(0)
@@ -99,13 +104,14 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     const payload = await readPayload<ReachyDeviceSnapshot>(response)
     if (generation !== requestGenerationRef.current) return null
     if (!response.ok || !payload.data) {
-      throw new Error(payload.message || "设备状态读取失败")
+      throw new Error(toPetFacingText(payload.message || "设备状态读取失败"))
     }
+    const safeSnapshot = sanitizePetFacingDeviceSnapshot(payload.data)
     const merged = {
-      ...payload.data,
+      ...safeSnapshot,
       logs: mergeReachyLogs(
         snapshotRef.current?.logs ?? { cursor: 0, items: [] },
-        payload.data.logs,
+        safeSnapshot.logs,
       ),
     }
     logCursorRef.current = merged.logs.cursor
@@ -147,7 +153,7 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
       body: JSON.stringify(command),
     })
     const payload = await readPayload<unknown>(response)
-    if (!response.ok) throw new Error(payload.message || "设备命令执行失败")
+    if (!response.ok) throw new Error(toPetFacingText(payload.message || "设备命令执行失败"))
     const warningUpdate = getReachyLifecycleWarningUpdate(command, payload.data)
     if (warningUpdate !== null) setLifecycleWarnings(warningUpdate)
     await fetchSnapshot()
@@ -186,9 +192,29 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
     void fetchSnapshot().catch((error) => setPollError((error as Error).message))
   }
 
+  const connectWifi = useCallback(async (host: string, port: number) => {
+    setWifiPending(true)
+    setWifiError("")
+    try {
+      const response = await fetch(NETWORK_API_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ host, port }),
+      })
+      const payload = await readPayload<ReachyNetworkConnection>(response)
+      if (!response.ok || !payload.data) throw new Error(payload.message || "Wi-Fi 连接失败")
+      setWifiConnection(payload.data)
+    } catch (error) {
+      setWifiConnection(null)
+      setWifiError((error as Error).message)
+    } finally {
+      setWifiPending(false)
+    }
+  }, [])
+
   return (
     <section
-      aria-label="Reachy 设备调试"
+      aria-label="心宠设备调试"
       className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-muted/35 p-3 sm:p-4"
     >
       {pollError && snapshot ? (
@@ -235,7 +261,11 @@ export function ReachyDebugConsole({ onReturnToManagement }: { onReturnToManagem
           snapshot={snapshot}
           commandPending={commandPending}
           commandError={commandError}
+          wifiPending={wifiPending}
+          wifiError={wifiError}
+          wifiConnection={wifiConnection}
           onDiscover={() => void runCommand({ action: "discover" })}
+          onConnectWifi={(host, port) => void connectWifi(host, port)}
           onStart={(serialPort) => void runCommand({ action: "start", serialPort })}
           onRetry={(serialPort) => void runCommand({ action: "start", serialPort })}
         />

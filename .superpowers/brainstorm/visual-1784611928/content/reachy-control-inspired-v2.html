@@ -1,0 +1,104 @@
+<style>
+  .concept { border:1px solid #e4e4e7; border-radius:18px; overflow:hidden; background:#f7f7fa; box-shadow:0 18px 50px rgba(24,24,27,.10); }
+  .sentinel-bar { height:54px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; background:white; border-bottom:1px solid #e4e4e7; }
+  .sentinel-title { display:flex; align-items:center; gap:9px; font-weight:750; color:#27272a; }
+  .sentinel-title i { width:26px; height:26px; display:grid; place-items:center; border-radius:9px; background:#f0e8ff; color:#7c3aed; font-style:normal; }
+  .mode-switch { display:flex; gap:3px; padding:3px; border-radius:9px; background:#f4f4f5; font-size:12px; }
+  .mode-switch span { padding:7px 13px; border-radius:7px; color:#71717a; }
+  .mode-switch b { padding:7px 13px; border-radius:7px; background:white; color:#7c3aed; box-shadow:0 1px 4px rgba(0,0,0,.10); }
+  .reachy-shell { background:#171717; color:#f4f4f5; min-height:520px; padding:22px; }
+  .device-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .device-top h3 { margin:0; color:#fff; font-size:18px; }
+  .device-state { display:flex; align-items:center; gap:8px; color:#a1a1aa; font-size:12px; }
+  .green-dot { width:8px; height:8px; border-radius:999px; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.10); }
+  .dashboard { display:grid; grid-template-columns:1.04fr .96fr; gap:22px; }
+  .left,.right { min-width:0; }
+  .robot-stage { height:254px; position:relative; border:1px solid #323236; border-radius:18px; overflow:hidden; background:linear-gradient(180deg,#1d1d1f,#18181a); }
+  .grid-floor { position:absolute; left:-10%; right:-10%; bottom:-13%; height:55%; opacity:.32; background-image:linear-gradient(#555 1px,transparent 1px),linear-gradient(90deg,#555 1px,transparent 1px); background-size:26px 26px; transform:perspective(200px) rotateX(52deg); }
+  .robot { position:absolute; inset:28px 0 30px; display:flex; align-items:center; justify-content:center; }
+  .robot-head { position:absolute; top:45px; width:116px; height:74px; border-radius:30px; background:linear-gradient(145deg,#fafafa,#c9c9c9); box-shadow:0 14px 30px #000; }
+  .eye { position:absolute; top:22px; width:32px; height:32px; border-radius:50%; background:#111; border:6px solid #555; }
+  .eye.one { left:18px; }.eye.two { right:18px; }
+  .antenna { position:absolute; top:-56px; width:4px; height:66px; background:#bbb; transform-origin:bottom; }
+  .antenna.one { left:22px; transform:rotate(-9deg); }.antenna.two { right:22px; transform:rotate(9deg); }
+  .robot-body { position:absolute; top:124px; width:108px; height:112px; border-radius:34px 34px 46px 46px; background:linear-gradient(145deg,#eee,#a9a9a9); box-shadow:0 18px 30px #000; }
+  .circle-button { position:absolute; top:16px; width:42px; height:42px; border:1px solid #ff9f00; border-radius:50%; display:grid; place-items:center; color:#ff9f00; font-size:19px; }
+  .power { left:16px; }.settings { right:16px; }
+  .ready { position:absolute; left:18px; bottom:16px; padding:7px 12px; border:1px solid #15803d; border-radius:10px; color:#35dc78; background:#13271b; font-size:12px; font-weight:700; }
+  .camera-pip { position:absolute; right:18px; bottom:16px; width:112px; height:66px; border-radius:11px; border:1px solid #4b4b50; background:linear-gradient(135deg,#574b61,#29242e 46%,#52525b); display:grid; place-items:center; font-size:11px; color:#ddd; }
+  .device-meta { display:flex; align-items:flex-end; justify-content:space-between; margin:14px 0; }
+  .device-name { font-size:22px; font-weight:800; color:#fff; }
+  .usb-tag { display:inline-block; margin-left:6px; padding:3px 6px; border-radius:5px; background:#29292c; color:#a1a1aa; font-size:10px; vertical-align:middle; }
+  .version { margin-top:4px; font-family:monospace; font-size:10px; color:#71717a; }
+  .audio-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .audio-card { border:1px solid #38383d; border-radius:13px; padding:10px 12px; background:#1c1c1e; }
+  .audio-card strong { color:#a1a1aa; font-size:10px; letter-spacing:.03em; }
+  .slider { display:flex; align-items:center; gap:8px; margin-top:10px; color:#d4d4d8; }
+  .slider-line { flex:1; height:3px; background:#ff9f00; border-radius:4px; position:relative; }
+  .slider-line:after { content:""; position:absolute; right:0; top:-4px; width:11px; height:11px; background:#ff9f00; border-radius:50%; }
+  .logs { margin-top:10px; height:88px; border:1px solid #38383d; border-radius:12px; background:#151517; padding:9px 11px; font-family:monospace; font-size:9px; color:#d4d4d8; line-height:1.65; overflow:hidden; }
+  .log-title { color:#71717a; font-family:system-ui; font-weight:700; margin-bottom:4px; }
+  .log-green { color:#39df79; }.log-blue { color:#60a5fa; }
+  .section-title { margin:2px 0 10px; color:#fff; font-size:20px; font-weight:800; }
+  .section-copy { margin:-5px 0 13px; color:#71717a; font-size:11px; }
+  .app-card { height:162px; border:1px dashed #505057; border-radius:16px; display:grid; place-items:center; text-align:center; background:#1a1a1c; }
+  .app-card .app-icon { width:52px; height:52px; margin:auto; display:grid; place-items:center; border-radius:16px; background:#24202e; color:#c4b5fd; font-size:25px; }
+  .app-card strong { display:block; margin-top:9px; font-size:14px; }
+  .orange-button { display:inline-block; margin-top:10px; padding:8px 14px; border:1px solid #ff9f00; border-radius:9px; color:#ff9f00; font-size:11px; font-weight:750; }
+  .quick-title { margin-top:18px; }
+  .quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  .quick-card { height:134px; border:1px solid #35353a; border-radius:15px; background:#1d1d20; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .quick-card .big-icon { font-size:31px; }.quick-card strong { margin-top:8px; font-size:15px; color:#fff; }
+  .quick-card span { margin-top:9px; padding:6px 13px; border:1px solid #ff9f00; color:#ff9f00; border-radius:8px; font-size:10px; font-weight:700; }
+  .startup-strip { margin-top:18px; border-radius:14px; border:1px solid #323236; background:#1b1b1d; padding:15px 18px; }
+  .startup-strip h4 { margin:0 0 12px; text-align:center; color:white; font-size:13px; }
+  .steps { display:grid; grid-template-columns:repeat(4,1fr); }
+  .step { position:relative; text-align:center; color:#71717a; font-size:9px; }
+  .step:not(:last-child):after { content:""; position:absolute; left:58%; right:-42%; top:9px; height:2px; background:#22c55e; }
+  .step i { position:relative; z-index:1; width:19px; height:19px; margin:0 auto 5px; display:grid; place-items:center; border-radius:50%; border:2px solid #22c55e; color:#22c55e; background:#1b1b1d; font-style:normal; font-size:8px; }
+  .step.current i { border-color:#d4d4d8; color:#d4d4d8; }.step.pending i { border-color:#3f3f46; color:#3f3f46; }
+  .step.current { color:#d4d4d8; font-weight:700; }.step.done { color:#22c55e; }
+  .approval { display:flex; justify-content:center; gap:12px; margin-top:18px; }
+  .choice { padding:10px 18px; border-radius:10px; cursor:pointer; border:1px solid #d4d4d8; background:#fff; font-weight:700; color:#3f3f46; }
+  .choice.primary { color:#7c3aed; border-color:#a78bfa; background:#f5f3ff; }
+  .choice.selected { outline:3px solid #8b5cf6; outline-offset:2px; }
+  @media(max-width:900px){ .dashboard{grid-template-columns:1fr}.reachy-shell{padding:14px}.robot-stage{height:230px} }
+</style>
+
+<h2>基于真实 Reachy Mini Control 的 Sentinel 版本</h2>
+<p class="subtitle">保留原版的设备舱、连接阶段、媒体卡片、日志、应用与快捷控制结构；外层仍属于 Sentinel，顶部可随时切回“心宠管理”。</p>
+
+<div class="concept">
+  <div class="sentinel-bar">
+    <div class="sentinel-title"><i>⌁</i><span>心宠 AI 管理中心</span></div>
+    <div class="mode-switch"><span>心宠管理</span><b>心宠调试</b></div>
+  </div>
+  <div class="reachy-shell">
+    <div class="device-top"><h3>Reachy Mini</h3><div class="device-state"><span class="green-dot"></span>USB 已连接 · 服务正常</div></div>
+    <div class="dashboard">
+      <div class="left">
+        <div class="robot-stage">
+          <div class="grid-floor"></div>
+          <div class="circle-button power">⏻</div><div class="circle-button settings">⚙</div>
+          <div class="robot"><div class="robot-head"><i class="antenna one"></i><i class="antenna two"></i><i class="eye one"></i><i class="eye two"></i></div><div class="robot-body"></div></div>
+          <div class="ready">● Ready</div><div class="camera-pip">实时摄像头</div>
+        </div>
+        <div class="device-meta"><div><div class="device-name">Reachy Mini <span class="usb-tag">USB · COM5</span></div><div class="version">Host Bridge 1.0 · Daemon 1.8.0 · ClawBody healthy</div></div></div>
+        <div class="audio-grid"><div class="audio-card"><strong>SPEAKER</strong><div class="slider">🔊<span class="slider-line"></span></div></div><div class="audio-card"><strong>MICROPHONE</strong><div class="slider">🎙<span class="slider-line"></span></div></div></div>
+        <div class="logs"><div class="log-title">LOGS</div><span class="log-blue">●</span> USB device COM5 detected<br><span class="log-green">●</span> Daemon listening on localhost:8000<br><span class="log-green">●</span> Motors enabled · media ready<br><span class="log-green">●</span> ClawBody connected from Docker</div>
+      </div>
+      <div class="right">
+        <div class="section-title">Applications</div><div class="section-copy">运行和管理 Reachy 上的心宠应用</div>
+        <div class="app-card"><div><div class="app-icon">✦</div><strong>ClawBody · 测试心宠</strong><div class="orange-button">打开会话控制</div></div></div>
+        <div class="section-title quick-title">Quick Actions</div>
+        <div class="quick-grid"><div class="quick-card"><div class="big-icon">♡</div><strong>Expressions</strong><span>打开动作库</span></div><div class="quick-card"><div class="big-icon">🎮</div><strong>Controller</strong><span>打开控制器</span></div></div>
+        <div class="startup-strip"><h4>连接进度 · via USB</h4><div class="steps"><div class="step done"><i>✓</i>START</div><div class="step done"><i>✓</i>CONNECT</div><div class="step current"><i>•</i>HEALTHCHECK</div><div class="step pending"><i>•</i>APPS</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="approval">
+  <div class="choice primary" data-choice="approve-v2" onclick="toggleSelect(this)">方向正确，继续细化</div>
+  <div class="choice" data-choice="revise-v2" onclick="toggleSelect(this)">还需要调整</div>
+</div>

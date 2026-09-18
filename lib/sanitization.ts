@@ -28,15 +28,71 @@ export interface DetailedStudent extends SanitizedStudent {
   };
 }
 
+/** 纯中文（含少数民族姓名的间隔号），不含字母、数字、标点 */
+const CN_NAME_ONLY = /^[\u4e00-\u9fa5]+(?:[·•][\u4e00-\u9fa5]+)*$/;
+
+/** 机构 / 角色 / 占位符，不是人名，不参与脱敏 */
+const NON_PERSON_WORDS = new Set([
+  "系统管理员",
+  "管理员",
+  "心理咨询师",
+  "心理辅导员",
+  "咨询师",
+  "辅导员",
+  "测试学生",
+  "测试用户",
+  "未知用户",
+  "匿名用户",
+  "匿名的你",
+  "主智能体",
+  "小心宠",
+  "小暖",
+  "系统",
+]);
+
+/**
+ * 机构 / 场景 / 称谓类词尾，避免把「医学院」「心理咨询中心」「王老师」误当成人名。
+ * 称谓（老师、同学、医生…）本身不是姓名，打码后既不可读也无助于隐私保护。
+ */
+const NON_PERSON_SUFFIX =
+  /(学院|大学|学校|学部|学系|中心|办公室|工作处|部门|管理处|医院|公司|集团|团队|小组|平台|系统|服务|设施|教室|实验室|宿舍|食堂|图书馆|老师|教师|同学|学生|医生|医师|教授|咨询师|管理员|辅导员|主任|院长|经理|主管|师傅|先生|女士|小姐|护士|警官|律师|博士|硕士)$/;
+
+/**
+ * 判断一个字符串是否「像中文人名」
+ * 仅纯中文（2-4 字，或含间隔号的少数民族姓名），且不在机构/角色排除表内
+ */
+export function isPersonName(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  if (!text || NON_PERSON_WORDS.has(text)) return false;
+  if (!CN_NAME_ONLY.test(text)) return false;
+  if (NON_PERSON_SUFFIX.test(text)) return false;
+  const length = Array.from(text.replace(/[·•]/g, "")).length;
+  return length >= 2 && length <= 4;
+}
+
 /**
  * 脱敏姓名
- * 张小明 -> 张**
+ * 张宇     -> 张*
+ * 张明远   -> 张*明
+ * 欧阳明月 -> 欧**月
  */
 export function maskName(name: string): string {
-  if (!name || name.length === 0) return "**";
-  if (name.length === 1) return name + "*";
-  if (name.length === 2) return name[0] + "*";
-  return name[0] + "**";
+  if (!name) return "";
+  const chars = Array.from(name.trim());
+  const length = chars.length;
+  if (length <= 1) return name;
+  if (length === 2) return chars[0] + "*";
+  if (length === 3) return chars[0] + "*" + chars[2];
+  return chars[0] + "*".repeat(length - 2) + chars[length - 1];
+}
+
+/**
+ * 安全脱敏：仅对「像人名」的字符串打码，其它内容原样返回
+ * 已脱敏的字符串含 `*`，isPersonName 判定为 false，因此天然幂等
+ */
+export function maskNameSafe(name: string): string {
+  return isPersonName(name) ? maskName(name) : name;
 }
 
 /**

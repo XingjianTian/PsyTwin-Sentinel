@@ -241,7 +241,7 @@ function generateFallbackMockData() {
   return [
     {
       id: "stu-001",
-      name: "张明远",
+      name: "张*远",
       studentId: "2024001",
       room: "心理咨询室 A02",
       scenario: "社交焦虑脱敏",
@@ -258,7 +258,7 @@ function generateFallbackMockData() {
     },
     {
       id: "stu-002",
-      name: "李思琪",
+      name: "李*琪",
       studentId: "2024023",
       room: "减压舱 B01",
       scenario: "考试压力释放",

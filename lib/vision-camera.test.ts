@@ -4,9 +4,35 @@ import test, { type TestContext } from "node:test"
 
 import {
   createReachyCameraPreviewController,
+  isStreamUsingCamera,
   reachyMiniCameraAdapter,
   type ReachyMiniCameraSession,
 } from "./vision-camera"
+
+test("reuses a permission stream that already belongs to the Reachy camera", () => {
+  const track = {
+    label: "Reachy Mini Camera",
+    getSettings: () => ({ deviceId: "reachy" }),
+  } as MediaStreamTrack
+  const stream = {
+    getVideoTracks: () => [track],
+  } as MediaStream
+
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "reachy", label: "Reachy Mini Camera" }), true)
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "other", label: "Reachy Mini Camera" }), true)
+})
+
+test("does not reuse a permission stream from another camera", () => {
+  const track = {
+    label: "HD WebCam",
+    getSettings: () => ({ deviceId: "laptop" }),
+  } as MediaStreamTrack
+  const stream = {
+    getVideoTracks: () => [track],
+  } as MediaStream
+
+  assert.equal(isStreamUsingCamera(stream, { deviceId: "reachy", label: "Reachy Mini Camera" }), false)
+})
 
 type MediaDevicesStub = Pick<MediaDevices, "enumerateDevices" | "getUserMedia">
 
@@ -128,7 +154,7 @@ test("reports when no labeled Reachy Mini camera is available", async (t) => {
 
   await assert.rejects(
     reachyMiniCameraAdapter.start(),
-    new Error("Reachy Mini 摄像头未被浏览器识别"),
+    new Error("心宠摄像头未被浏览器识别"),
   )
   assert.equal(permissionTrack.stopCount, 1)
 })
@@ -151,7 +177,7 @@ test("maps a busy camera error without changing device readiness", async (t) => 
 
   await assert.rejects(
     reachyMiniCameraAdapter.start(),
-    new Error("Reachy Mini 摄像头正被 daemon 或其他程序占用"),
+    new Error("心宠摄像头正被设备服务或其他程序占用"),
   )
   assert.equal(permissionTrack.stopCount, 1)
 })
@@ -189,7 +215,7 @@ test("maps current and legacy no-device errors to the safe unavailable message",
   for (const errorName of errorNames) {
     await assert.rejects(
       reachyMiniCameraAdapter.start(),
-      new Error("Reachy Mini 摄像头未被浏览器识别"),
+      new Error("心宠摄像头未被浏览器识别"),
       errorName,
     )
   }
@@ -210,7 +236,7 @@ test("bounds unknown browser camera errors without exposing their message", asyn
     reachyMiniCameraAdapter.start(),
     (error: unknown) => {
       assert.ok(error instanceof Error)
-      assert.equal(error.message, "无法打开 Reachy Mini 摄像头")
+      assert.equal(error.message, "无法打开心宠摄像头")
       assert.doesNotMatch(error.message, /private|device-path/i)
       return true
     },

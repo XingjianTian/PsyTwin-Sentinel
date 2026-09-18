@@ -615,35 +615,35 @@ export function ConsultationRoomView() {
 
       {/* 顶部统计 */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-emerald-200/80 bg-emerald-50/60 transition-[background-color,border-color] hover:border-emerald-300">
           <CardContent className="flex items-center gap-4 p-4">
             <div className="rounded-full bg-green-100 p-3 dark:bg-green-900">
               <DoorOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">可用房间</p>
+              <p className="text-sm font-medium text-emerald-800/75">可用房间</p>
               <p className="text-2xl font-bold">{availableCount}</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-amber-200/80 bg-amber-50/60 transition-[background-color,border-color] hover:border-amber-300">
           <CardContent className="flex items-center gap-4 p-4">
             <div className="rounded-full bg-amber-100 p-3 dark:bg-amber-900">
               <Users className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">使用中</p>
+              <p className="text-sm font-medium text-amber-800/75">使用中</p>
               <p className="text-2xl font-bold">{inUseCount}</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-sky-200/80 bg-sky-50/60 transition-[background-color,border-color] hover:border-sky-300">
           <CardContent className="flex items-center gap-4 p-4">
             <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
               <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">设备在线率</p>
+              <p className="text-sm font-medium text-sky-800/75">设备在线率</p>
               <p className="text-2xl font-bold">
                 {(() => {
                   // 计算所有设备的在线率

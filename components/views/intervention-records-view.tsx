@@ -27,6 +27,7 @@ const interventionTypes = ["全部", "定期面谈", "CBT治疗", "团体辅导"
 const statusColor: Record<string, string> = {
   "已完成": "border-green-500/30 bg-green-500/10 text-green-600",
   "进展中": "border-purple-500/30 bg-purple-500/10 text-purple-600",
+  "平静": "border-sky-500/30 bg-sky-500/10 text-sky-600",
 }
 
 const typeColor: Record<string, string> = {
@@ -38,6 +39,18 @@ const typeColor: Record<string, string> = {
 }
 
 const ITEMS_PER_PAGE = 10
+
+const DEMO_INTERVENTION_RECORD: InterventionRecordItem = {
+  id: "test-01",
+  name: "测试学生",
+  cls: "演示班级",
+  type: "初次评估",
+  counselor: "小芯",
+  duration: "1分钟",
+  result: "情绪稳定",
+  status: "平静",
+  date: "1 分钟前",
+}
 
 export function InterventionRecordsView() {
   const [records, setRecords] = useState<InterventionRecordItem[]>([])
@@ -56,7 +69,7 @@ export function InterventionRecordsView() {
   async function loadRecords() {
     try {
       const data = await getInterventionRecords()
-      setRecords(data)
+      setRecords([DEMO_INTERVENTION_RECORD, ...data])
       setError(null)
     } catch {
       setError("记录加载失败，请稍后重试")
@@ -247,28 +260,32 @@ export function InterventionRecordsView() {
                         </Badge>
                       </td>
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedRecordId(record.id)
-                              setDetailDialogOpen(true)
-                            }}
-                            disabled={actingId === record.id}
-                            className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs text-foreground transition-colors hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            详情
-                          </button>
-                          {/* 只有进展中的记录才显示"标记完成"按钮 */}
-                          {record.status === "进展中" && (
+                        {record.id === DEMO_INTERVENTION_RECORD.id ? (
+                          <span className="text-xs text-muted-foreground">演示记录</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
                             <button
-                              onClick={() => updateStatus(record.id)}
+                              onClick={() => {
+                                setSelectedRecordId(record.id)
+                                setDetailDialogOpen(true)
+                              }}
                               disabled={actingId === record.id}
-                              className="rounded border border-success/30 bg-success/10 px-2 py-1 text-xs text-success transition-colors hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs text-foreground transition-colors hover:bg-secondary/50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              标记完成
+                              详情
                             </button>
-                          )}
-                        </div>
+                            {/* 只有进展中的记录才显示"标记完成"按钮 */}
+                            {record.status === "进展中" && (
+                              <button
+                                onClick={() => updateStatus(record.id)}
+                                disabled={actingId === record.id}
+                                className="rounded border border-success/30 bg-success/10 px-2 py-1 text-xs text-success transition-colors hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                标记完成
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -9,35 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Radar, Clock, FileText, ArrowLeft, Sparkles } from "lucide-react"
 import { useEffect, useState } from "react"
-// import { getStudentDetail, type StudentDetail } from "@/app/actions/students"
+import type { StudentDetail } from "@/app/actions/students"
+import { StudentDetailProvider } from "@/components/student-detail-context"
 
-interface StudentDetail {
-  id: string
-  name: string
-  studentNo: string
-  className: string
-  gender: string | null
-  birthDate: string | null
-  mbti: string | null
-  riskLevel: string
-  faculty: { id: string; name: string } | null
-  psychProfile: {
-    adversityQuotient: number
-    emotionalStability: number
-    socialTendency: number
-    stressResistance: number
-    selfAwareness: number
-    empathy: number
-    willpower: number
-    adaptability: number
-    overallScore: number
-  } | null
-  stats: {
-    totalAlerts: number
-    totalInterventions: number
-    totalVRSessions: number
-  }
-}
 import { riskLevelConfig } from "@/lib/student-config"
 
 const tabs = [
@@ -159,9 +133,11 @@ export default function StudentDetailLayout({
       </div>
 
       {/* Page Content */}
-      <div className="min-h-[400px]">
-        {children}
-      </div>
+      <StudentDetailProvider student={student}>
+        <div className="min-h-[400px]">
+          {children}
+        </div>
+      </StudentDetailProvider>
     </div>
   )
 }
