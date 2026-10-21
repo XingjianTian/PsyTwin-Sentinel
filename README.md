@@ -4,18 +4,21 @@
 
 校园心理健康数字孪生管理平台，面向心理中心与辅导员，将多模态监测、学生档案、风险预警、干预记录与服务预约汇集在同一工作台。
 
-![PsyTwin Sentinel 管理工作台](docs/images/dashboard.jpg)
+## 系统预览
 
-*本地项目历史运行演示截图。截图中的指标用于展示界面，不代表模型性能评测结果。*
+### RAG 知识库
 
-<details>
-<summary>查看风险预警界面</summary>
+![RAG 知识库管理界面](docs/images/rag-knowledge-base.jpg)
 
-![风险预警管理演示界面](docs/images/warnings.jpg)
+### 实时多模态直播舱
 
-*本地项目历史运行演示截图。指标不代表模型性能评测结果，数据与设备状态以实际接入为准。*
+![实时多模态直播舱运行界面](docs/images/live-cabin.jpg)
 
-</details>
+### 多模态数据分析
+
+![生理与语音信号分析界面](docs/images/multimodal-analysis.jpg)
+
+*以上为本地项目不同阶段的运行演示截图。RAG 图展示早期管理界面，当前已接入 LightRAG；界面指标不代表模型性能评测结果。*
 
 ## 核心能力
 
@@ -26,6 +29,7 @@
 | 风险预警与干预 | 管理风险线索、跟进记录和干预流程。 |
 | 设备与预约管理 | 在同一入口切换预约排期、疗愈空间与设备状态。 |
 | 心图·AI助手 | 通过 OpenClaw 编排 AI 对话，并可附加 LightRAG 检索上下文。 |
+| 心宠 AI 管理 | 学生心宠画像、双层 AI 协作与 Reachy Mini 设备调试。 |
 | LightRAG 知识库 | 在管理台中接入文档管理、知识图谱与检索问答。 |
 
 ## 技术栈
@@ -62,6 +66,7 @@ npm run dev
 
 - [产品需求](docs/PRD.md)
 - [跨端 API 契约](docs/api_contract.md)
+- [Reachy Mini 配置与实时联调](docs/REACHY_MINI_SETUP_GUIDE.md)
 - [LightRAG 接入](docs/LIGHTRAG_INTEGRATION.md)
 - [心宠系统架构](docs/pet-system-architecture.md)
 - [更新记录](docs/CHANGELOG.md)

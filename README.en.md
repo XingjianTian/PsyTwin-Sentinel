@@ -4,18 +4,21 @@
 
 A campus mental health digital twin management platform for counseling centers and student advisors. Sentinel brings multimodal monitoring, student profiles, risk alerts, intervention records, and service appointments into one workspace.
 
-![PsyTwin Sentinel management dashboard](docs/images/dashboard.jpg)
+## System preview
 
-*Historical demo screenshot from a local project run. The metrics shown illustrate the interface and are not model performance evaluation results.*
+### RAG knowledge base
 
-<details>
-<summary>View the risk alert interface</summary>
+![RAG knowledge base management](docs/images/rag-knowledge-base.jpg)
 
-![Risk alert management demo](docs/images/warnings.jpg)
+### Live multimodal monitoring
 
-*Historical demo screenshot from a local project run. Metrics are not model performance evaluation results; available data and device states depend on the connected services.*
+![Live multimodal monitoring workspace](docs/images/live-cabin.jpg)
 
-</details>
+### Multimodal data analysis
+
+![Physiological and speech signal analysis](docs/images/multimodal-analysis.jpg)
+
+*Screenshots from local demo runs at different stages of development. The RAG screenshot shows an earlier management interface; the current implementation integrates LightRAG. Displayed metrics are not model performance evaluation results.*
 
 ## Features
 
@@ -26,6 +29,7 @@ A campus mental health digital twin management platform for counseling centers a
 | Risk alerts and interventions | Track risk indicators, follow-up records, and intervention workflows. |
 | Devices and appointments | Switch between scheduling, therapeutic spaces, and device status from one entry point. |
 | PsyTwin AI Assistant | Coordinate AI conversations through OpenClaw, with optional LightRAG retrieval context. |
+| Pet AI management | Student pet profiles, two-layer AI collaboration, and Reachy Mini device debugging. |
 | LightRAG knowledge base | Access document management, knowledge graphs, and retrieval-based Q&A within the management console. |
 
 ## Stack
@@ -64,6 +68,7 @@ The detailed guides below are currently in Chinese.
 
 - [Product requirements](docs/PRD.md)
 - [Cross-client API contract](docs/api_contract.md)
+- [Reachy Mini setup and live integration](docs/REACHY_MINI_SETUP_GUIDE.md)
 - [LightRAG integration](docs/LIGHTRAG_INTEGRATION.md)
 - [Pet system architecture](docs/pet-system-architecture.md)
 - [Changelog](docs/CHANGELOG.md)
