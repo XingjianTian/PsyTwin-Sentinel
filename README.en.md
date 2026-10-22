@@ -16,7 +16,7 @@ A campus mental health digital twin management platform for counseling centers a
 
 ### Live multimodal monitoring
 
-![Live multimodal monitoring workspace with opaque face redaction](docs/images/live-cabin.jpg)
+![Live multimodal monitoring workspace with opaque face redaction](docs/images/live-cabin-redacted.jpg)
 
 ### Multimodal data analysis
 

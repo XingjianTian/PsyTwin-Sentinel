@@ -16,7 +16,7 @@
 
 ### 实时多模态直播舱
 
-![实时多模态直播舱运行界面，人脸已不透明遮挡](docs/images/live-cabin.jpg)
+![实时多模态直播舱运行界面，人脸已不透明遮挡](docs/images/live-cabin-redacted.jpg)
 
 ### 多模态数据分析
 
