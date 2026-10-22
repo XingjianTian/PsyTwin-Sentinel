@@ -4,6 +4,10 @@
 
 校园心理健康数字孪生管理平台，面向心理中心与辅导员，将多模态监测、学生档案、风险预警、干预记录与服务预约汇集在同一工作台。
 
+![Reachy Mini 与 Sentinel 的设备、语音和动作集成](docs/images/reachy-mini-overview.png)
+
+*Reachy Mini 集成示意；机器人插画来自 [Pollen Robotics](https://github.com/pollen-robotics/reachy_mini/blob/54f5efcfa8c228c674d97de2f85996515143b8ce/ts/host/src/assets/reachy-standard.svg)，按 [Apache-2.0](docs/images/third-party/reachy-mini-LICENSE.txt) 使用，已添加项目集成布局。非项目设备实拍或在线验收记录。*
+
 ## 系统预览
 
 ### RAG 知识库
@@ -12,7 +16,7 @@
 
 ### 实时多模态直播舱
 
-![实时多模态直播舱运行界面](docs/images/live-cabin.jpg)
+![实时多模态直播舱运行界面，人脸已不透明遮挡](docs/images/live-cabin.jpg)
 
 ### 多模态数据分析
 

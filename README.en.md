@@ -4,6 +4,10 @@
 
 A campus mental health digital twin management platform for counseling centers and student advisors. Sentinel brings multimodal monitoring, student profiles, risk alerts, intervention records, and service appointments into one workspace.
 
+![Reachy Mini device, speech and motion integration with Sentinel](docs/images/reachy-mini-overview.png)
+
+*Integration illustration, not a photo of our deployed device or live acceptance evidence. Robot artwork: [Pollen Robotics](https://github.com/pollen-robotics/reachy_mini/blob/54f5efcfa8c228c674d97de2f85996515143b8ce/ts/host/src/assets/reachy-standard.svg), [Apache-2.0](docs/images/third-party/reachy-mini-LICENSE.txt); project integration layout added.*
+
 ## System preview
 
 ### RAG knowledge base
@@ -12,7 +16,7 @@ A campus mental health digital twin management platform for counseling centers a
 
 ### Live multimodal monitoring
 
-![Live multimodal monitoring workspace](docs/images/live-cabin.jpg)
+![Live multimodal monitoring workspace with opaque face redaction](docs/images/live-cabin.jpg)
 
 ### Multimodal data analysis
 
