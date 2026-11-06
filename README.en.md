@@ -1,6 +1,6 @@
 # PsyTwin Sentinel · 心图·网络
 
-[简体中文](README.md) | **English**
+**English (primary)** | [简体中文](README.zh-CN.md)
 
 A campus mental health digital twin management platform for counseling centers and student advisors. Sentinel brings multimodal monitoring, student profiles, risk alerts, intervention records, and service appointments into one workspace.
 
